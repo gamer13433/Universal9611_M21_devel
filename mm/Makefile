@@ -114,6 +114,7 @@ obj-$(CONFIG_DEBUG_PAGE_REF) += debug_page_ref.o
 obj-$(CONFIG_HARDENED_USERCOPY) += usercopy.o
 obj-$(CONFIG_PERCPU_STATS) += percpu-stats.o
 obj-$(CONFIG_HMM) += hmm.o
+obj-$(CONFIG_PROCESS_RECLAIM)	+= process_reclaim.o
 obj-$(CONFIG_PAGE_BOOST_RECORDING) += io_record.o
 
 # [IOPP-Wformat-v1.0.4.14.patch]
@@ -122,4 +123,3 @@ obj-$(CONFIG_PAGE_BOOST_RECORDING) += io_record.o
 # and that the conversions specified in the format string make sense.
 CFLAGS_backing-dev.o = -Wformat
 CFLAGS_page-writeback.o = -Wformat
-
