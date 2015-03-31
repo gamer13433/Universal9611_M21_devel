@@ -277,6 +277,9 @@ unsigned long read_word_at_a_time(const void *addr)
 
 #endif /* __ASSEMBLY__ */
 
+#ifndef __noreorder
+#define __noreorder
+#endif
 #ifndef __optimize
 # define __optimize(level)
 #endif
