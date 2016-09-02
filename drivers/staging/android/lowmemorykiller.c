@@ -45,6 +45,7 @@
 #include <linux/ratelimit.h>
 
 
+
 static u32 lowmem_debug_level = 1;
 static short lowmem_adj[6] = {
 	0,
@@ -159,10 +160,11 @@ static unsigned long lowmem_scan(struct shrinker *s, struct shrink_control *sc)
 	short selected_oom_score_adj;
 	int array_size = ARRAY_SIZE(lowmem_adj);
 	int other_free = global_zone_page_state(NR_FREE_PAGES) - totalreserve_pages;
+
 	int other_file = global_node_page_state(NR_FILE_PAGES) -
 
 				global_node_page_state(NR_SHMEM) -
-
+				global_node_page_state(NR_UNEVICTABLE) -
 				total_swapcache_pages();
 
 
@@ -281,6 +283,7 @@ static unsigned long lowmem_scan(struct shrinker *s, struct shrink_control *sc)
 			task_set_lmk_waiting(selected);
 
 		task_unlock(selected);
+
 		lowmem_print(1, "Killing '%s' (%d), adj %hd,\n"
 #if defined(CONFIG_SWAP)
 				 "   to free %ldkB (%ldKB %ldKB) on behalf of '%s' (%d) because\n"
