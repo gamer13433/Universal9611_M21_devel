@@ -211,6 +211,7 @@ struct timer_base {
 } ____cacheline_aligned;
 
 static DEFINE_PER_CPU(struct timer_base, timer_bases[NR_BASES]);
+struct timer_base timer_base_deferrable;
 
 static atomic_t deferrable_pending;
 #ifdef CONFIG_NO_HZ_COMMON
@@ -266,6 +267,7 @@ int timer_migration_handler(struct ctl_table *table, int write,
 	mutex_unlock(&timer_keys_mutex);
 	return ret;
 }
+
 
 #endif /* NO_HZ_COMMON */
 
@@ -849,10 +851,11 @@ static inline struct timer_base *get_timer_cpu_base(u32 tflags, u32 cpu)
 	 * If the timer is deferrable and NO_HZ_COMMON is set then we need
 	 * to use the deferrable base.
 	 */
-	if (IS_ENABLED(CONFIG_NO_HZ_COMMON) && (tflags & TIMER_DEFERRABLE))
-
-		base = per_cpu_ptr(&timer_bases[BASE_DEF], cpu);
-
+	if (IS_ENABLED(CONFIG_NO_HZ_COMMON) && (tflags & TIMER_DEFERRABLE)) {
+		base = &timer_base_deferrable;
+		if (tflags & TIMER_PINNED)
+			base = per_cpu_ptr(&timer_bases[BASE_DEF], cpu);
+	}
 	return base;
 }
 
@@ -864,10 +867,11 @@ static inline struct timer_base *get_timer_this_cpu_base(u32 tflags)
 	 * If the timer is deferrable and NO_HZ_COMMON is set then we need
 	 * to use the deferrable base.
 	 */
-	if (IS_ENABLED(CONFIG_NO_HZ_COMMON) && (tflags & TIMER_DEFERRABLE))
-
-		base = this_cpu_ptr(&timer_bases[BASE_DEF]);
-
+	if (IS_ENABLED(CONFIG_NO_HZ_COMMON) && (tflags & TIMER_DEFERRABLE)) {
+		base = &timer_base_deferrable;
+		if (tflags & TIMER_PINNED)
+			base = this_cpu_ptr(&timer_bases[BASE_DEF]);
+	}
 	return base;
 }
 
@@ -988,6 +992,7 @@ __mod_timer(struct timer_list *timer, unsigned long expires, bool pending_only)
 
 
 
+
 			return 1;
 
 		/*
@@ -998,6 +1003,7 @@ __mod_timer(struct timer_list *timer, unsigned long expires, bool pending_only)
 		 */
 		base = lock_timer_base(timer, &flags);
 		forward_timer_base(base);
+
 
 
 
@@ -1118,6 +1124,7 @@ int mod_timer(struct timer_list *timer, unsigned long expires)
 EXPORT_SYMBOL(mod_timer);
 
 /**
+
 
 
 
@@ -1734,10 +1741,12 @@ static __latent_entropy void run_timer_softirq(struct softirq_action *h)
 
 
 
-	__run_timers(base);
-	if (IS_ENABLED(CONFIG_NO_HZ_COMMON))
 
+	__run_timers(base);
+	if (IS_ENABLED(CONFIG_NO_HZ_COMMON)) {
+		__run_timers(&timer_base_deferrable);
 		__run_timers(this_cpu_ptr(&timer_bases[BASE_DEF]));
+	}
 }
 
 	if ((atomic_cmpxchg(&deferrable_pending, 1, 0) &&
@@ -1774,8 +1783,11 @@ static void process_timeout(unsigned long __data)
 
 
 
+
+
 {
 	wake_up_process((struct task_struct *)__data);
+
 
 
 

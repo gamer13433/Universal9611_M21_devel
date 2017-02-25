@@ -92,6 +92,7 @@ struct timer_list {
 
 void init_timer_key(struct timer_list *timer, unsigned int flags,
 
+
 		    const char *name, struct lock_class_key *key);
 
 #ifdef CONFIG_DEBUG_OBJECTS_TIMERS
@@ -104,6 +105,7 @@ extern void destroy_timer_on_stack(struct timer_list *timer);
 static inline void destroy_timer_on_stack(struct timer_list *timer) { }
 static inline void init_timer_on_stack_key(struct timer_list *timer,
 					   unsigned int flags, const char *name,
+
 
 					   struct lock_class_key *key)
 {
@@ -141,6 +143,8 @@ static inline void init_timer_on_stack_key(struct timer_list *timer,
 	__init_timer((timer), TIMER_DEFERRABLE | TIMER_PINNED)
 #define init_timer_on_stack(timer)					\
 	__init_timer_on_stack((timer), 0)
+
+
 
 
 #define __setup_timer(_timer, _fn, _data, _flags)			\
@@ -225,6 +229,8 @@ extern void add_timer(struct timer_list *timer);
 
 extern int try_to_del_timer_sync(struct timer_list *timer);
 
+
+extern struct timer_base timer_base_deferrable;
 
 #ifdef CONFIG_SMP
   extern int del_timer_sync(struct timer_list *timer);
