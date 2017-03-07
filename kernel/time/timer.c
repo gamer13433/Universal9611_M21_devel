@@ -269,6 +269,7 @@ int timer_migration_handler(struct ctl_table *table, int write,
 }
 
 
+
 #endif /* NO_HZ_COMMON */
 
 
@@ -993,6 +994,7 @@ __mod_timer(struct timer_list *timer, unsigned long expires, bool pending_only)
 
 
 
+
 			return 1;
 
 		/*
@@ -1003,6 +1005,7 @@ __mod_timer(struct timer_list *timer, unsigned long expires, bool pending_only)
 		 */
 		base = lock_timer_base(timer, &flags);
 		forward_timer_base(base);
+
 
 
 
@@ -1124,6 +1127,7 @@ int mod_timer(struct timer_list *timer, unsigned long expires)
 EXPORT_SYMBOL(mod_timer);
 
 /**
+
 
 
 
@@ -1742,6 +1746,7 @@ static __latent_entropy void run_timer_softirq(struct softirq_action *h)
 
 
 
+
 	__run_timers(base);
 	if (IS_ENABLED(CONFIG_NO_HZ_COMMON)) {
 		__run_timers(&timer_base_deferrable);
@@ -1785,8 +1790,10 @@ static void process_timeout(unsigned long __data)
 
 
 
+
 {
 	wake_up_process((struct task_struct *)__data);
+
 
 
 
@@ -2011,11 +2018,18 @@ static void __init init_timer_cpu(int cpu)
 	}
 }
 
+static inline void init_timer_deferrable_global(void)
+{
+	timer_base_deferrable.cpu = nr_cpu_ids;
+	raw_spin_lock_init(&timer_base_deferrable.lock);
+	timer_base_deferrable.clk = jiffies;
+}
 
 static void __init init_timer_cpus(void)
 {
 	int cpu;
 
+	init_timer_deferrable_global();
 
 	for_each_possible_cpu(cpu)
 		init_timer_cpu(cpu);
