@@ -213,6 +213,9 @@ struct timer_base {
 
 static DEFINE_PER_CPU(struct timer_base, timer_bases[NR_BASES]);
 
+static atomic_t deferrable_pending;
+
+
 #if defined(CONFIG_SMP) && defined(CONFIG_NO_HZ_COMMON)
 unsigned int sysctl_timer_migration = 0;
 
@@ -221,9 +224,11 @@ void timers_update_migration(bool update_nohz)
 	bool on = sysctl_timer_migration && tick_nohz_active;
 	unsigned int cpu;
 
+
 	/* Avoid the loop, if nothing to update */
 	if (this_cpu_read(timer_bases[BASE_STD].migration_enabled) == on)
 		return;
+
 
 	for_each_possible_cpu(cpu) {
 		per_cpu(timer_bases[BASE_STD].migration_enabled, cpu) = on;
@@ -252,6 +257,7 @@ int timer_migration_handler(struct ctl_table *table, int write,
 	return ret;
 }
 #endif
+
 
 static unsigned long round_jiffies_common(unsigned long j, int cpu,
 		bool force_up)
@@ -473,9 +479,12 @@ static inline void timer_set_idx(struct timer_list *timer, unsigned int idx)
  */
 static inline unsigned calc_index(unsigned expires, unsigned lvl)
 {
+
 	expires = (expires + LVL_GRAN(lvl)) >> LVL_SHIFT(lvl);
+
 	return LVL_OFFS(lvl) + (expires & LVL_MASK);
 }
+
 
 static int calc_wheel_index(unsigned long expires, unsigned long clk)
 {
@@ -711,9 +720,11 @@ static inline void debug_timer_assert_init(struct timer_list *timer)
 }
 
 static void do_init_timer(struct timer_list *timer, unsigned int flags,
+
 			  const char *name, struct lock_class_key *key);
 
 void init_timer_on_stack_key(struct timer_list *timer, unsigned int flags,
+
 			     const char *name, struct lock_class_key *key)
 {
 	debug_object_init_on_stack(timer, &timer_debug_descr);
@@ -759,9 +770,11 @@ static inline void debug_assert_init(struct timer_list *timer)
 }
 
 static void do_init_timer(struct timer_list *timer, unsigned int flags,
+
 			  const char *name, struct lock_class_key *key)
 {
 	timer->entry.pprev = NULL;
+
 	timer->flags = flags | raw_smp_processor_id();
 	lockdep_init_map(&timer->lockdep_map, name, key, 0);
 }
@@ -769,6 +782,7 @@ static void do_init_timer(struct timer_list *timer, unsigned int flags,
 /**
  * init_timer_key - initialize a timer
  * @timer: the timer to be initialized
+
  * @flags: timer flags
  * @name: name of the timer
  * @key: lockdep class key of the fake lock used for tracking timer
@@ -778,6 +792,7 @@ static void do_init_timer(struct timer_list *timer, unsigned int flags,
  * other timer functions.
  */
 void init_timer_key(struct timer_list *timer, unsigned int flags,
+
 		    const char *name, struct lock_class_key *key)
 {
 	debug_init(timer);
@@ -821,7 +836,9 @@ static inline struct timer_base *get_timer_cpu_base(u32 tflags, u32 cpu)
 	 * to use the deferrable base.
 	 */
 	if (IS_ENABLED(CONFIG_NO_HZ_COMMON) && (tflags & TIMER_DEFERRABLE))
+
 		base = per_cpu_ptr(&timer_bases[BASE_DEF], cpu);
+
 	return base;
 }
 
@@ -834,7 +851,9 @@ static inline struct timer_base *get_timer_this_cpu_base(u32 tflags)
 	 * to use the deferrable base.
 	 */
 	if (IS_ENABLED(CONFIG_NO_HZ_COMMON) && (tflags & TIMER_DEFERRABLE))
+
 		base = this_cpu_ptr(&timer_bases[BASE_DEF]);
+
 	return base;
 }
 
@@ -858,6 +877,7 @@ get_target_base(struct timer_base *base, unsigned tflags)
 
 static inline void forward_timer_base(struct timer_base *base)
 {
+
 	unsigned long jnow;
 
 	/*
@@ -881,6 +901,7 @@ static inline void forward_timer_base(struct timer_base *base)
 		base->clk = jnow;
 	else
 		base->clk = base->next_expiry;
+
 }
 #else
 static inline struct timer_base *
@@ -931,6 +952,7 @@ static struct timer_base *lock_timer_base(struct timer_list *timer,
 	}
 }
 
+
 static inline int
 __mod_timer(struct timer_list *timer, unsigned long expires, bool pending_only)
 {
@@ -953,6 +975,7 @@ __mod_timer(struct timer_list *timer, unsigned long expires, bool pending_only)
 		 * timer with this expiry.
 		 */
 		if (timer->expires == expires)
+
 			return 1;
 
 		/*
@@ -964,6 +987,7 @@ __mod_timer(struct timer_list *timer, unsigned long expires, bool pending_only)
 		base = lock_timer_base(timer, &flags);
 		forward_timer_base(base);
 
+
 		clk = base->clk;
 		idx = calc_wheel_index(expires, clk);
 
@@ -973,6 +997,7 @@ __mod_timer(struct timer_list *timer, unsigned long expires, bool pending_only)
 		 * subsequent call will exit in the expires check above.
 		 */
 		if (idx == timer_get_idx(timer)) {
+
 			timer->expires = expires;
 			ret = 1;
 			goto out_unlock;
@@ -1075,6 +1100,7 @@ int mod_timer(struct timer_list *timer, unsigned long expires)
 EXPORT_SYMBOL(mod_timer);
 
 /**
+
  * add_timer - start a timer
  * @timer: the timer to be added
  *
@@ -1472,6 +1498,31 @@ static u64 cmp_next_hrtimer_event(u64 basem, u64 expires)
 	return DIV_ROUND_UP_ULL(nextevt, TICK_NSEC) * TICK_NSEC;
 }
 
+
+#ifdef CONFIG_SMP
+/*
+ * check_pending_deferrable_timers - Check for unbound deferrable timer expiry
+ * @cpu - Current CPU
+ *
+ * The function checks whether any global deferrable pending timers
+ * are exipired or not. This function does not check cpu bounded
+ * diferrable pending timers expiry.
+ *
+ * The function returns true when a cpu unbounded deferrable timer is expired.
+ */
+bool check_pending_deferrable_timers(int cpu)
+{
+	if (cpu == tick_do_timer_cpu ||
+		tick_do_timer_cpu == TICK_DO_TIMER_NONE) {
+		if (time_after_eq(jiffies, timer_base_deferrable.clk)
+			&& !atomic_cmpxchg(&deferrable_pending, 0, 1)) {
+			return true;
+		}
+	}
+	return false;
+}
+#endif
+
 /**
  * get_next_timer_interrupt - return the time (clock mono) of the next timer
  * @basej:	base time jiffies
@@ -1571,6 +1622,7 @@ static int collect_expired_timers(struct timer_base *base,
 		if (time_after(next, now)) {
 			/* The call site will increment clock! */
 			base->clk = now - 1;
+
 			return 0;
 		}
 		base->clk = next;
@@ -1657,8 +1709,15 @@ static __latent_entropy void run_timer_softirq(struct softirq_action *h)
 
 	__run_timers(base);
 	if (IS_ENABLED(CONFIG_NO_HZ_COMMON))
+
 		__run_timers(this_cpu_ptr(&timer_bases[BASE_DEF]));
 }
+
+	if ((atomic_cmpxchg(&deferrable_pending, 1, 0) &&
+		tick_do_timer_cpu == TICK_DO_TIMER_NONE) ||
+		tick_do_timer_cpu == smp_processor_id())
+		__run_timers(&timer_base_deferrable);
+
 
 /*
  * Called by the local, per-CPU timer interrupt on SMP.
@@ -1681,8 +1740,10 @@ void run_local_timers(void)
 }
 
 static void process_timeout(unsigned long __data)
+
 {
 	wake_up_process((struct task_struct *)__data);
+
 }
 
 /**
@@ -1752,6 +1813,7 @@ signed long __sched schedule_timeout(signed long timeout)
 
 	setup_timer_on_stack(&timer, process_timeout, (unsigned long)current);
 	__mod_timer(&timer, expire, false);
+
 	schedule();
 	del_singleshot_timer_sync(&timer);
 
@@ -1899,9 +1961,11 @@ static void __init init_timer_cpu(int cpu)
 	}
 }
 
+
 static void __init init_timer_cpus(void)
 {
 	int cpu;
+
 
 	for_each_possible_cpu(cpu)
 		init_timer_cpu(cpu);

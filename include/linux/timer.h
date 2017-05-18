@@ -91,10 +91,12 @@ struct timer_list {
 		TIMER_INITIALIZER(_function, _expires, _data)
 
 void init_timer_key(struct timer_list *timer, unsigned int flags,
+
 		    const char *name, struct lock_class_key *key);
 
 #ifdef CONFIG_DEBUG_OBJECTS_TIMERS
 extern void init_timer_on_stack_key(struct timer_list *timer,
+
 				    unsigned int flags, const char *name,
 				    struct lock_class_key *key);
 extern void destroy_timer_on_stack(struct timer_list *timer);
@@ -102,6 +104,7 @@ extern void destroy_timer_on_stack(struct timer_list *timer);
 static inline void destroy_timer_on_stack(struct timer_list *timer) { }
 static inline void init_timer_on_stack_key(struct timer_list *timer,
 					   unsigned int flags, const char *name,
+
 					   struct lock_class_key *key)
 {
 	init_timer_key(timer, flags, name, key);
@@ -119,6 +122,7 @@ static inline void init_timer_on_stack_key(struct timer_list *timer,
 	do {								\
 		static struct lock_class_key __key;			\
 		init_timer_on_stack_key((_timer), (_flags), #_timer, &__key); \
+
 	} while (0)
 #else
 #define __init_timer(_timer, _flags)					\
@@ -137,6 +141,7 @@ static inline void init_timer_on_stack_key(struct timer_list *timer,
 	__init_timer((timer), TIMER_DEFERRABLE | TIMER_PINNED)
 #define init_timer_on_stack(timer)					\
 	__init_timer_on_stack((timer), 0)
+
 
 #define __setup_timer(_timer, _fn, _data, _flags)			\
 	do {								\
@@ -203,6 +208,10 @@ extern int del_timer(struct timer_list * timer);
 extern int mod_timer(struct timer_list *timer, unsigned long expires);
 extern int mod_timer_pending(struct timer_list *timer, unsigned long expires);
 
+#ifdef CONFIG_SMP
+extern bool check_pending_deferrable_timers(int cpu);
+#endif
+
 /*
  * The jiffies value which is added to now, when there is no timer
  * in the timer wheel:
@@ -215,6 +224,7 @@ extern void timer_quiesce_cpu(void *cpup);
 extern void add_timer(struct timer_list *timer);
 
 extern int try_to_del_timer_sync(struct timer_list *timer);
+
 
 #ifdef CONFIG_SMP
   extern int del_timer_sync(struct timer_list *timer);
