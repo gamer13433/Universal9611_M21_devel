@@ -2829,6 +2829,8 @@ static const struct file_operations proc_vmalloc_operations = {
 
 static int __init proc_vmalloc_init(void)
 {
+	if (IS_ENABLED(CONFIG_PROC_STRIPPED))
+		return 0;
 	proc_create("vmallocinfo", S_IRUSR, NULL, &proc_vmalloc_operations);
 	atomic_long_set(&nr_vmalloc_pages, 0);
 	show_mem_extra_notifier_register(&vmalloc_size_nb);

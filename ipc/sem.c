@@ -205,8 +205,11 @@ void sem_exit_ns(struct ipc_namespace *ns)
 
 int __init sem_init(void)
 {
+<<<<<<< HEAD
 	const int err = sem_init_ns(&init_ipc_ns);
 
+	if (IS_ENABLED(CONFIG_PROC_STRIPPED))
+		return;
 	ipc_init_proc_interface("sysvipc/sem",
 				"       key      semid perms      nsems   uid   gid  cuid  cgid      otime      ctime\n",
 				IPC_SEM_IDS, sysvipc_sem_proc_show);
