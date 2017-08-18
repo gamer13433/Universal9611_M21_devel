@@ -270,6 +270,7 @@ int timer_migration_handler(struct ctl_table *table, int write,
 
 
 
+
 #endif /* NO_HZ_COMMON */
 
 
@@ -493,12 +494,18 @@ static inline void timer_set_idx(struct timer_list *timer, unsigned int idx)
  */
 static inline unsigned calc_index(unsigned expires, unsigned lvl)
 {
-
-	expires = (expires + LVL_GRAN(lvl)) >> LVL_SHIFT(lvl);
+	if (expires & ~(UINT_MAX << LVL_SHIFT(lvl)))
+		expires = (expires + LVL_GRAN(lvl)) >> LVL_SHIFT(lvl);
+	else
+		expires = expires >> LVL_SHIFT(lvl);
 
 	return LVL_OFFS(lvl) + (expires & LVL_MASK);
 }
 
+static inline unsigned int calc_index_min_granularity(unsigned int  expires)
+{
+	return LVL_OFFS(0) + ((expires >> LVL_SHIFT(0)) & LVL_MASK);
+}
 
 static int calc_wheel_index(unsigned long expires, unsigned long clk)
 {
@@ -506,7 +513,7 @@ static int calc_wheel_index(unsigned long expires, unsigned long clk)
 	unsigned int idx;
 
 	if (delta < LVL_START(1)) {
-		idx = calc_index(expires, 0);
+		idx = calc_index_min_granularity(expires);
 	} else if (delta < LVL_START(2)) {
 		idx = calc_index(expires, 1);
 	} else if (delta < LVL_START(3)) {
@@ -995,6 +1002,7 @@ __mod_timer(struct timer_list *timer, unsigned long expires, bool pending_only)
 
 
 
+
 			return 1;
 
 		/*
@@ -1127,6 +1135,7 @@ int mod_timer(struct timer_list *timer, unsigned long expires)
 EXPORT_SYMBOL(mod_timer);
 
 /**
+
 
 
 
@@ -1747,6 +1756,7 @@ static __latent_entropy void run_timer_softirq(struct softirq_action *h)
 
 
 
+
 	__run_timers(base);
 	if (IS_ENABLED(CONFIG_NO_HZ_COMMON)) {
 		__run_timers(&timer_base_deferrable);
@@ -1791,8 +1801,10 @@ static void process_timeout(unsigned long __data)
 
 
 
+
 {
 	wake_up_process((struct task_struct *)__data);
+
 
 
 
