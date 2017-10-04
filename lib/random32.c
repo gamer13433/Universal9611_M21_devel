@@ -40,6 +40,7 @@
 #include <linux/sched.h>
 #include <asm/unaligned.h>
 
+
 /**
  *	prandom_u32_state - seeded pseudo-random number generator.
  *	@state: pointer to state structure holding seeded state.
@@ -60,6 +61,7 @@ u32 prandom_u32_state(struct rnd_state *state)
 EXPORT_SYMBOL(prandom_u32_state);
 
 /**
+
  *	prandom_bytes_state - get the requested number of pseudo-random bytes
  *
  *	@state: pointer to state structure holding seeded state.
@@ -90,6 +92,7 @@ void prandom_bytes_state(struct rnd_state *state, void *buf, size_t bytes)
 }
 EXPORT_SYMBOL(prandom_bytes_state);
 
+
 static void prandom_warmup(struct rnd_state *state)
 {
 	/* Calling RNG ten times to satisfy recurrence condition */
@@ -104,6 +107,9 @@ static void prandom_warmup(struct rnd_state *state)
 	prandom_u32_state(state);
 	prandom_u32_state(state);
 }
+
+
+
 
 void prandom_seed_full_state(struct rnd_state __percpu *pcpu_state)
 {
@@ -123,6 +129,7 @@ void prandom_seed_full_state(struct rnd_state __percpu *pcpu_state)
 	}
 }
 EXPORT_SYMBOL(prandom_seed_full_state);
+
 
 #ifdef CONFIG_RANDOM32_SELFTEST
 static struct prandom_test1 {
