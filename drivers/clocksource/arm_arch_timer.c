@@ -29,6 +29,7 @@
 #include <linux/acpi.h>
 
 #include <asm/arch_timer.h>
+
 #include <asm/virt.h>
 
 #include <clocksource/arm_arch_timer.h>
@@ -52,6 +53,7 @@
 #define CNTFRQ		0x10
 #define CNTP_TVAL	0x28
 #define CNTP_CTL	0x2c
+
 #define CNTV_TVAL	0x38
 #define CNTV_CTL	0x3c
 
@@ -78,6 +80,7 @@ static bool arch_counter_suspend_stop;
 static bool vdso_default = true;
 static bool arch_timer_use_clocksource_only;
 
+static cpumask_t evtstrm_available = CPU_MASK_NONE;
 static bool evtstrm_enable = IS_ENABLED(CONFIG_ARM_ARCH_TIMER_EVTSTREAM);
 
 static int __init early_evtstrm_cfg(char *buf)
@@ -288,6 +291,7 @@ static struct ate_acpi_oem_info hisi_161010101_oem_info[] = {
 };
 #endif
 
+
 #ifdef CONFIG_ARM64_ERRATUM_858921
 static u64 notrace arm64_858921_read_cntvct_el0(void)
 {
@@ -300,6 +304,7 @@ static u64 notrace arm64_858921_read_cntvct_el0(void)
 #endif
 
 #ifdef CONFIG_ARM_ARCH_TIMER_OOL_WORKAROUND
+
 DEFINE_PER_CPU(const struct arch_timer_erratum_workaround *,
 	       timer_unstable_counter_workaround);
 EXPORT_SYMBOL_GPL(timer_unstable_counter_workaround);
@@ -382,6 +387,7 @@ static const struct arch_timer_erratum_workaround ool_workarounds[] = {
 		.read_cntvct_el0 = arm64_858921_read_cntvct_el0,
 	},
 #endif
+
 };
 
 typedef bool (*ate_match_fn_t)(const struct arch_timer_erratum_workaround *,
@@ -741,6 +747,7 @@ static void arch_timer_evtstrm_enable(int divider)
 #ifdef CONFIG_COMPAT
 	compat_elf_hwcap |= COMPAT_HWCAP_EVTSTRM;
 #endif
+	cpumask_set_cpu(smp_processor_id(), &evtstrm_available);
 }
 
 static void arch_timer_configure_evtstream(void)
@@ -885,6 +892,17 @@ u32 arch_timer_get_rate(void)
 	return arch_timer_rate;
 }
 
+
+bool arch_timer_evtstrm_available(void)
+{
+	/*
+	 * We might get called from a preemptible context. This is fine
+	 * because availability of the event stream should be always the same
+	 * for a preemptible context and context where we might resume a task.
+	 */
+	return cpumask_test_cpu(raw_smp_processor_id(), &evtstrm_available);
+}
+
 static u64 arch_counter_get_cntvct_mem(void)
 {
 	u32 vct_lo, vct_hi, tmp_hi;
@@ -950,6 +968,8 @@ static int arch_timer_dying_cpu(unsigned int cpu)
 {
 	struct clock_event_device *clk = this_cpu_ptr(arch_timer_evt);
 
+	cpumask_clear_cpu(smp_processor_id(), &evtstrm_available);
+
 	/*
 	 * If arch_timer is used to clocksource only,
 	 * it doesn't need to setup clockevent configuration.
@@ -969,10 +989,16 @@ static DEFINE_PER_CPU(unsigned long, saved_cntkctl);
 static int arch_timer_cpu_pm_notify(struct notifier_block *self,
 				    unsigned long action, void *hcpu)
 {
-	if (action == CPU_PM_ENTER)
+	if (action == CPU_PM_ENTER) {
 		__this_cpu_write(saved_cntkctl, arch_timer_get_cntkctl());
-	else if (action == CPU_PM_ENTER_FAILED || action == CPU_PM_EXIT)
+
+		cpumask_clear_cpu(smp_processor_id(), &evtstrm_available);
+	} else if (action == CPU_PM_ENTER_FAILED || action == CPU_PM_EXIT) {
 		arch_timer_set_cntkctl(__this_cpu_read(saved_cntkctl));
+
+		if (elf_hwcap & HWCAP_EVTSTRM)
+			cpumask_set_cpu(smp_processor_id(), &evtstrm_available);
+	}
 	return NOTIFY_OK;
 }
 
@@ -1140,9 +1166,11 @@ static bool __init arch_timer_needs_of_probing(void)
 
 static int __init arch_timer_common_init(void)
 {
+
 	arch_timer_banner(arch_timers_present);
 	arch_counter_register(arch_timers_present);
 	return arch_timer_arch_init();
+
 }
 
 /**
@@ -1417,6 +1445,7 @@ static int __init arch_timer_mem_of_init(struct device_node *np)
 	ret = arch_timer_mem_frame_register(frame);
 	if (!ret && !arch_timer_needs_of_probing())
 		ret = arch_timer_common_init();
+
 out:
 	kfree(timer_mem);
 	return ret;
