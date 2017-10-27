@@ -26,6 +26,7 @@
 #include <linux/sched/clock.h>
 #include <linux/sched/debug.h>
 #include "sched/sched.h"
+#include <linux/sched/isolation.h>
 
 #include <asm/irq_regs.h>
 #include <linux/kvm_para.h>

@@ -29,6 +29,7 @@
 #include <linux/syscalls.h>
 #include <linux/debug-snapshot.h>
 #include <linux/ems.h>
+#include <linux/sched/isolation.h>
 
 #include <asm/switch_to.h>
 #include <asm/tlb.h>
