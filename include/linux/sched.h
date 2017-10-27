@@ -216,8 +216,6 @@ enum task_event {
 	IRQ_UPDATE	= 5,
 };
 
-extern cpumask_var_t			cpu_isolated_map;
-
 extern void scheduler_tick(void);
 
 #define	MAX_SCHEDULE_TIMEOUT		LONG_MAX
