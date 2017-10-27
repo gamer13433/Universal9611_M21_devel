@@ -664,6 +664,7 @@ static int generate_sched_domains(cpumask_var_t **domains,
 	int csn;		/* how many cpuset ptrs in csa so far */
 	int i, j, k;		/* indices for partition finding loops */
 	cpumask_var_t *doms;	/* resulting partition; i.e. sched domains */
+
 	struct sched_domain_attr *dattr;  /* attributes for custom domains */
 	int ndoms = 0;		/* number of sched domains in result */
 	int nslot;		/* next empty doms[] struct cpumask slot */
@@ -672,6 +673,7 @@ static int generate_sched_domains(cpumask_var_t **domains,
 	doms = NULL;
 	dattr = NULL;
 	csa = NULL;
+
 
 	/* Special case for the 99% of systems with one, full, sched domain */
 	if (is_sched_load_balance(&top_cpuset)) {
@@ -807,6 +809,7 @@ restart:
 	BUG_ON(nslot != ndoms);
 
 done:
+
 	kfree(csa);
 
 	/*
@@ -986,6 +989,7 @@ static int update_cpumask(struct cpuset *cs, struct cpuset *trialcs,
 	}
 
 	if (!cpumask_subset(trialcs->cpus_requested, cpu_present_mask))
+
 		return -EINVAL;
 
 	cpumask_and(trialcs->cpus_allowed, trialcs->cpus_requested, cpu_active_mask);
