@@ -51,6 +51,7 @@
 #include <linux/nmi.h>
 #include <linux/sec_debug.h>
 #include <linux/debug-snapshot.h>
+#include <linux/sched/isolation.h>
 
 #include "workqueue_internal.h"
 
