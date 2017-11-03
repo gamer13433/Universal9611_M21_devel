@@ -75,10 +75,14 @@ KBUILD_AFLAGS	+= $(lseinstr) $(brokengasinst)
 KBUILD_CFLAGS	+= $(call cc-option,-mabi=lp64)
 KBUILD_AFLAGS	+= $(call cc-option,-mabi=lp64)
 
+
+KBUILD_CFLAGS	+= $(call cc-ifversion, -ge, 0500, -DCONFIG_ARCH_SUPPORTS_INT128)
+
 ifeq ($(CONFIG_CPU_BIG_ENDIAN), y)
 KBUILD_CPPFLAGS	+= -mbig-endian
 CHECKFLAGS	+= -D__AARCH64EB__
 AS		+= -EB
+
 ifeq ($(ld-name),gold)
 LDFLAGS		+= -EB -maarch64_elf64_be_vec
 else
@@ -91,6 +95,7 @@ else
 KBUILD_CPPFLAGS	+= -mlittle-endian
 CHECKFLAGS	+= -D__AARCH64EL__
 AS		+= -EL
+
 ifeq ($(ld-name),gold)
 LDFLAGS		+= -EL -maarch64_elf64_le_vec
 else
@@ -131,6 +136,7 @@ KBUILD_CFLAGS += $(call cc-disable-warning, asm-operand-widths)
 endif
 
 # KASAN_SHADOW_OFFSET = VA_START + (1 << (VA_BITS - 3)) - (1 << 61)
+
 # in 32-bit arithmetic
 KASAN_SHADOW_OFFSET := $(shell printf "0x%08x00000000\n" $$(( \
 			(0xffffffff & (-1 << ($(CONFIG_ARM64_VA_BITS) - 32))) \
@@ -147,17 +153,22 @@ core-$(CONFIG_CRYPTO) += arch/arm64/crypto/
 libs-y		:= arch/arm64/lib/ $(libs-y)
 core-$(CONFIG_EFI_STUB) += $(objtree)/drivers/firmware/efi/libstub/lib.a
 
+
 # Default target when executing plain make
 boot		:= arch/arm64/boot
 ifeq ($(CONFIG_BUILD_ARM64_APPENDED_DTB_IMAGE),y)
 KBUILD_IMAGE	:= $(boot)/$(subst $\",,$(CONFIG_BUILD_ARM64_APPENDED_KERNEL_IMAGE_NAME))
+
 else
 KBUILD_IMAGE	:= $(boot)/Image.gz
+
 endif
 
 KBUILD_DTBS	:= dtbs
 
 all:	Image $(KBUILD_DTBS) $(subst $\",,$(CONFIG_BUILD_ARM64_APPENDED_KERNEL_IMAGE_NAME))
+
+
 
 
 Image: vmlinux
