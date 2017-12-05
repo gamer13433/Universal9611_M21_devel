@@ -20,6 +20,7 @@ sha2-ce-y := sha2-ce-glue.o sha2-ce-core.o
 
 obj-$(CONFIG_CRYPTO_AES_ARM64_CE) += aes-ce-cipher.o
 aes-ce-cipher-y := aes-ce-core.o aes-ce-glue.o
+CFLAGS_aes-ce-cipher.o += $(DISABLE_LTO)
 
 obj-$(CONFIG_CRYPTO_AES_ARM64_CE_BLK) += aes-ce-blk.o
 aes-ce-blk-y := aes-glue-ce.o aes-ce.o
