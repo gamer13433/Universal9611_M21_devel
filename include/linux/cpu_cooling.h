@@ -30,9 +30,6 @@
 
 struct cpufreq_policy;
 
-typedef int (*get_static_t)(cpumask_t *cpumask, int interval,
-			    unsigned long voltage, u32 *power);
-
 /**
  * struct cpufreq_cooling_device - data for cooling device with cpufreq
  * @id: unique integer value corresponding to each cpufreq_cooling_device
@@ -40,6 +37,7 @@ typedef int (*get_static_t)(cpumask_t *cpumask, int interval,
  * @last_load: load measured by the latest call to cpufreq_get_requested_power()
  * @cpufreq_state: integer value representing the current state of cpufreq
  *	cooling	devices.
+ * @last_load: load measured by the latest call to cpufreq_get_requested_power()
  * @clipped_freq: integer value representing the absolute value of the clipped
  *	frequency.
  * @max_level: maximum cooling level. One less than total number of valid
@@ -50,7 +48,6 @@ typedef int (*get_static_t)(cpumask_t *cpumask, int interval,
  * @policy: cpufreq policy.
  * @node: list_head to link all cpufreq_cooling_device together.
  * @idle_time: idle time stats
- * @plat_get_static_power: callback to calculate the static power
  *
  * This structure is required for keeping information of each registered
  * cpufreq_cooling_device.
@@ -66,7 +63,6 @@ struct cpufreq_cooling_device {
 	struct cpufreq_policy *policy;
 	struct list_head node;
 	struct time_in_idle *idle_time;
-	get_static_t plat_get_static_power;
 	int *var_table;
 	int *var_coeff;
 	int *asv_coeff;
