@@ -721,9 +721,11 @@ static inline void debug_timer_assert_init(struct timer_list *timer)
 
 static void do_init_timer(struct timer_list *timer, unsigned int flags,
 
+
 			  const char *name, struct lock_class_key *key);
 
 void init_timer_on_stack_key(struct timer_list *timer, unsigned int flags,
+
 
 			     const char *name, struct lock_class_key *key)
 {
@@ -770,6 +772,7 @@ static inline void debug_assert_init(struct timer_list *timer)
 }
 
 static void do_init_timer(struct timer_list *timer, unsigned int flags,
+
 
 			  const char *name, struct lock_class_key *key)
 {
@@ -953,6 +956,7 @@ static struct timer_base *lock_timer_base(struct timer_list *timer,
 }
 
 
+
 static inline int
 __mod_timer(struct timer_list *timer, unsigned long expires, bool pending_only)
 {
@@ -976,6 +980,7 @@ __mod_timer(struct timer_list *timer, unsigned long expires, bool pending_only)
 		 */
 		if (timer->expires == expires)
 
+
 			return 1;
 
 		/*
@@ -986,6 +991,7 @@ __mod_timer(struct timer_list *timer, unsigned long expires, bool pending_only)
 		 */
 		base = lock_timer_base(timer, &flags);
 		forward_timer_base(base);
+
 
 
 		clk = base->clk;
@@ -999,6 +1005,7 @@ __mod_timer(struct timer_list *timer, unsigned long expires, bool pending_only)
 		if (idx == timer_get_idx(timer)) {
 
 			timer->expires = expires;
+
 			ret = 1;
 			goto out_unlock;
 		}
@@ -1010,6 +1017,7 @@ __mod_timer(struct timer_list *timer, unsigned long expires, bool pending_only)
 	ret = detach_if_pending(timer, base, false);
 	if (!ret && pending_only)
 		goto out_unlock;
+
 
 	new_base = get_target_base(base, timer->flags);
 
@@ -1100,6 +1108,8 @@ int mod_timer(struct timer_list *timer, unsigned long expires)
 EXPORT_SYMBOL(mod_timer);
 
 /**
+
+
 
  * add_timer - start a timer
  * @timer: the timer to be added
@@ -1623,6 +1633,7 @@ static int collect_expired_timers(struct timer_base *base,
 			/* The call site will increment clock! */
 			base->clk = now - 1;
 
+
 			return 0;
 		}
 		base->clk = next;
@@ -1707,6 +1718,7 @@ static __latent_entropy void run_timer_softirq(struct softirq_action *h)
 {
 	struct timer_base *base = this_cpu_ptr(&timer_bases[BASE_STD]);
 
+
 	__run_timers(base);
 	if (IS_ENABLED(CONFIG_NO_HZ_COMMON))
 
@@ -1741,8 +1753,11 @@ void run_local_timers(void)
 
 static void process_timeout(unsigned long __data)
 
+
+
 {
 	wake_up_process((struct task_struct *)__data);
+
 
 }
 
@@ -1904,6 +1919,7 @@ static void __migrate_timers(unsigned int cpu, bool remove_pinned)
 	struct timer_base *new_base;
 	unsigned long flags;
 	int b, i;
+
 
 	for (b = 0; b < NR_BASES; b++) {
 		old_base = per_cpu_ptr(&timer_bases[b], cpu);
