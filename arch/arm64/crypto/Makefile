@@ -26,6 +26,9 @@ aes-ce-cipher-y := aes-ce-core.o aes-ce-glue.o
 obj-$(CONFIG_CRYPTO_AES_ARM64_CE_BLK) += aes-ce-blk.o
 aes-ce-blk-y := aes-glue-ce.o aes-ce.o
 
+obj-$(CONFIG_CRYPTO_SHA512_ARM64_CE) += sha512-ce.o
+sha512-ce-y := sha512-ce-glue.o sha512-ce-core.o
+
 obj-$(CONFIG_CRYPTO_GHASH_ARM64_CE) += ghash-ce.o
 ghash-ce-y := ghash-ce-glue.o ghash-ce-core.o
 
