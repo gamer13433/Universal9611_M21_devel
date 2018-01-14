@@ -203,8 +203,7 @@ struct timer_base {
 	unsigned long		clk;
 	unsigned long		next_expiry;
 	unsigned int		cpu;
-	bool			migration_enabled;
-	bool			nohz_active;
+
 	bool			is_idle;
 	bool			must_forward_clk;
 	DECLARE_BITMAP(pending_map, WHEEL_SIZE);
@@ -214,49 +213,60 @@ struct timer_base {
 static DEFINE_PER_CPU(struct timer_base, timer_bases[NR_BASES]);
 
 static atomic_t deferrable_pending;
+#ifdef CONFIG_NO_HZ_COMMON
 
+DEFINE_STATIC_KEY_FALSE(timers_nohz_active);
+static DEFINE_MUTEX(timer_keys_mutex);
 
-#if defined(CONFIG_SMP) && defined(CONFIG_NO_HZ_COMMON)
+static void timer_update_keys(struct work_struct *work);
+static DECLARE_WORK(timer_update_work, timer_update_keys);
+
+#ifdef CONFIG_SMP
 unsigned int sysctl_timer_migration = 0;
 
-void timers_update_migration(bool update_nohz)
+DEFINE_STATIC_KEY_FALSE(timers_migration_enabled);
+
+
+static void timers_update_migration(void)
 {
-	bool on = sysctl_timer_migration && tick_nohz_active;
-	unsigned int cpu;
+	if (sysctl_timer_migration && tick_nohz_active)
+		static_branch_enable(&timers_migration_enabled);
+	else
+		static_branch_disable(&timers_migration_enabled);
+}
+#else
+static inline void timers_update_migration(void) { }
+#endif /* !CONFIG_SMP */
 
+static void timer_update_keys(struct work_struct *work)
+{
+	mutex_lock(&timer_keys_mutex);
+	timers_update_migration();
+	static_branch_enable(&timers_nohz_active);
+	mutex_unlock(&timer_keys_mutex);
 
-	/* Avoid the loop, if nothing to update */
-	if (this_cpu_read(timer_bases[BASE_STD].migration_enabled) == on)
-		return;
+}
 
-
-	for_each_possible_cpu(cpu) {
-		per_cpu(timer_bases[BASE_STD].migration_enabled, cpu) = on;
-		per_cpu(timer_bases[BASE_DEF].migration_enabled, cpu) = on;
-		per_cpu(hrtimer_bases.migration_enabled, cpu) = on;
-		if (!update_nohz)
-			continue;
-		per_cpu(timer_bases[BASE_STD].nohz_active, cpu) = true;
-		per_cpu(timer_bases[BASE_DEF].nohz_active, cpu) = true;
-		per_cpu(hrtimer_bases.nohz_active, cpu) = true;
-	}
+void timers_update_nohz(void)
+{
+	schedule_work(&timer_update_work);
 }
 
 int timer_migration_handler(struct ctl_table *table, int write,
 			    void __user *buffer, size_t *lenp,
 			    loff_t *ppos)
 {
-	static DEFINE_MUTEX(mutex);
+
 	int ret;
 
-	mutex_lock(&mutex);
+	mutex_lock(&timer_keys_mutex);
 	ret = proc_dointvec_minmax(table, write, buffer, lenp, ppos);
 	if (!ret && write)
-		timers_update_migration(false);
-	mutex_unlock(&mutex);
+		timers_update_migration();
+	mutex_unlock(&timer_keys_mutex);
 	return ret;
 }
-#endif
+#endif /* NO_HZ_COMMON */
 
 
 static unsigned long round_jiffies_common(unsigned long j, int cpu,
@@ -546,7 +556,7 @@ __internal_add_timer(struct timer_base *base, struct timer_list *timer)
 static void
 trigger_dyntick_cpu(struct timer_base *base, struct timer_list *timer)
 {
-	if (!IS_ENABLED(CONFIG_NO_HZ_COMMON) || !base->nohz_active)
+	if (!is_timers_nohz_active())
 		return;
 
 	/*
@@ -865,22 +875,22 @@ static inline struct timer_base *get_timer_base(u32 tflags)
 	return get_timer_cpu_base(tflags, tflags & TIMER_CPUMASK);
 }
 
-#ifdef CONFIG_NO_HZ_COMMON
+
 static inline struct timer_base *
 get_target_base(struct timer_base *base, unsigned tflags)
 {
-#ifdef CONFIG_SMP
-	if ((tflags & TIMER_PINNED) || !base->migration_enabled)
-		return get_timer_this_cpu_base(tflags);
-	return get_timer_cpu_base(tflags, get_nohz_timer_target());
-#else
-	return get_timer_this_cpu_base(tflags);
+#if defined(CONFIG_SMP) && defined(CONFIG_NO_HZ_COMMON)
+	if (static_branch_likely(&timers_migration_enabled) &&
+	    !(tflags & TIMER_PINNED))
+		return get_timer_cpu_base(tflags, get_nohz_timer_target());
+
 #endif
+	return get_timer_this_cpu_base(tflags);
 }
 
 static inline void forward_timer_base(struct timer_base *base)
 {
-
+#ifdef CONFIG_NO_HZ_COMMON
 	unsigned long jnow;
 
 	/*
@@ -905,16 +915,9 @@ static inline void forward_timer_base(struct timer_base *base)
 	else
 		base->clk = base->next_expiry;
 
-}
-#else
-static inline struct timer_base *
-get_target_base(struct timer_base *base, unsigned tflags)
-{
-	return get_timer_this_cpu_base(tflags);
-}
 
-static inline void forward_timer_base(struct timer_base *base) { }
 #endif
+}
 
 
 /*
@@ -957,6 +960,7 @@ static struct timer_base *lock_timer_base(struct timer_list *timer,
 
 
 
+
 static inline int
 __mod_timer(struct timer_list *timer, unsigned long expires, bool pending_only)
 {
@@ -981,6 +985,7 @@ __mod_timer(struct timer_list *timer, unsigned long expires, bool pending_only)
 		if (timer->expires == expires)
 
 
+
 			return 1;
 
 		/*
@@ -991,6 +996,7 @@ __mod_timer(struct timer_list *timer, unsigned long expires, bool pending_only)
 		 */
 		base = lock_timer_base(timer, &flags);
 		forward_timer_base(base);
+
 
 
 
@@ -1005,6 +1011,7 @@ __mod_timer(struct timer_list *timer, unsigned long expires, bool pending_only)
 		if (idx == timer_get_idx(timer)) {
 
 			timer->expires = expires;
+
 
 			ret = 1;
 			goto out_unlock;
@@ -1108,6 +1115,7 @@ int mod_timer(struct timer_list *timer, unsigned long expires)
 EXPORT_SYMBOL(mod_timer);
 
 /**
+
 
 
 
@@ -1634,6 +1642,7 @@ static int collect_expired_timers(struct timer_base *base,
 			base->clk = now - 1;
 
 
+
 			return 0;
 		}
 		base->clk = next;
@@ -1719,6 +1728,7 @@ static __latent_entropy void run_timer_softirq(struct softirq_action *h)
 	struct timer_base *base = this_cpu_ptr(&timer_bases[BASE_STD]);
 
 
+
 	__run_timers(base);
 	if (IS_ENABLED(CONFIG_NO_HZ_COMMON))
 
@@ -1755,8 +1765,11 @@ static void process_timeout(unsigned long __data)
 
 
 
+
+
 {
 	wake_up_process((struct task_struct *)__data);
+
 
 
 }
@@ -1919,6 +1932,7 @@ static void __migrate_timers(unsigned int cpu, bool remove_pinned)
 	struct timer_base *new_base;
 	unsigned long flags;
 	int b, i;
+
 
 
 	for (b = 0; b < NR_BASES; b++) {
