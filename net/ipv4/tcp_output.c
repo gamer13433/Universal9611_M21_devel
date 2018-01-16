@@ -206,6 +206,8 @@ static inline void tcp_event_ack_sent(struct sock *sk, unsigned int pkts,
 
 
 
+
+
 /* Determine a window scaling and initial window to offer.
  * Based on the assumption that the given amount of space
  * will be offered. Store the results in the tp structure.
@@ -256,6 +258,7 @@ void tcp_select_initial_window(int __space, __u32 mss,
 			(*rcv_wscale)++;
 		}
 	}
+
 
 
 
@@ -954,6 +957,7 @@ enum hrtimer_restart tcp_pace_kick(struct hrtimer *timer)
 	return HRTIMER_NORESTART;
 }
 
+
 static void tcp_internal_pacing(struct sock *sk, const struct sk_buff *skb)
 {
 	u64 len_ns;
@@ -964,6 +968,7 @@ static void tcp_internal_pacing(struct sock *sk, const struct sk_buff *skb)
 	rate = sk->sk_pacing_rate;
 	if (!rate || rate == ~0U)
 		return;
+
 
 	len_ns = (u64)skb->len * NSEC_PER_SEC;
 	do_div(len_ns, rate);
@@ -1001,6 +1006,7 @@ static int __tcp_transmit_skb(struct sock *sk, struct sk_buff *skb,
 	tp = tcp_sk(sk);
 
 	if (clone_it) {
+
 		oskb = skb;
 		if (unlikely(skb_cloned(skb)))
 			skb = pskb_copy(skb, gfp_mask);
@@ -1461,6 +1467,7 @@ static inline int __tcp_mtu_to_mss(struct sock *sk, int pmtu)
 
 	/* Then reserve room for full set of TCP options and 8 bytes of data */
 	mss_now = max(mss_now, sock_net(sk)->ipv4.sysctl_tcp_min_snd_mss);
+
 	return mss_now;
 }
 
@@ -1701,7 +1708,7 @@ static u32 tcp_tso_autosize(const struct sock *sk, unsigned int mss_now,
 {
 	u32 bytes, segs;
 
-	bytes = min(sk->sk_pacing_rate >> 10,
+	bytes = min(sk->sk_pacing_rate >> sk->sk_pacing_shift,
 		    sk->sk_gso_max_size - 1 - MAX_TCP_HEADER);
 
 	/* Goal is to send at least one packet per ms,
@@ -1713,6 +1720,7 @@ static u32 tcp_tso_autosize(const struct sock *sk, unsigned int mss_now,
 
 	return segs;
 }
+
 
 /* Return the number of segments we want in the skb we are transmitting.
  * See if congestion control module wants to decide; otherwise, autosize.
@@ -1912,6 +1920,7 @@ static bool tcp_tso_should_defer(struct sock *sk, struct sk_buff *skb,
 	struct tcp_sock *tp = tcp_sk(sk);
 	struct sk_buff *head;
 	int win_divisor;
+
 
 	if (icsk->icsk_ca_state >= TCP_CA_Recovery)
 		goto send_now;
@@ -2219,7 +2228,7 @@ static bool tcp_small_queue_check(struct sock *sk, const struct sk_buff *skb,
 {
 	unsigned int limit;
 
-	limit = max(2 * skb->truesize, sk->sk_pacing_rate >> 10);
+	limit = max(2 * skb->truesize, sk->sk_pacing_rate >> sk->sk_pacing_shift);
 	if (factor > 0) {
 		limit = min_t(u32, limit, sysctl_tcp_limit_output_bytes);
 		limit <<= factor;
@@ -2433,6 +2442,7 @@ repair:
 		/* Send one loss probe per tail loss episode. */
 		if (push_one != 2)
 			tcp_schedule_loss_probe(sk, false);
+
 		return false;
 	}
 	return !tp->packets_out && tcp_send_head(sk);
@@ -2565,6 +2575,7 @@ void tcp_send_loss_probe(struct sock *sk)
 probe_sent:
 	/* Record snd_nxt for loss detection. */
 	tp->tlp_high_seq = tp->snd_nxt;
+
 
 	NET_INC_STATS(sock_net(sk), LINUX_MIB_TCPLOSSPROBES);
 	/* Reset s.t. tcp_rearm_rto will restart timer from now */
@@ -2994,6 +3005,7 @@ int tcp_retransmit_skb(struct sock *sk, struct sk_buff *skb, int segs)
  * retransmitted data is acknowledged.  It tries to continue
  * resending the rest of the retransmit queue, until either
  * we've sent it all or the congestion window limit is reached.
+
  */
 void tcp_xmit_retransmit_queue(struct sock *sk)
 {
@@ -3571,6 +3583,7 @@ void tcp_send_delayed_ack(struct sock *sk)
 	int ato = icsk->icsk_ack.ato;
 	unsigned long timeout;
 
+
 	if (ato > TCP_DELACK_MIN) {
 		const struct tcp_sock *tp = tcp_sk(sk);
 		int max_ato = HZ / 2;
@@ -3627,6 +3640,7 @@ void __tcp_send_ack(struct sock *sk, u32 rcv_nxt)
 	if (sk->sk_state == TCP_CLOSE)
 		return;
 
+
 	/* We are not putting this on the write queue, so
 	 * tcp_transmit_skb() will set the ownership to this
 	 * sock.
@@ -3660,6 +3674,7 @@ void tcp_send_ack(struct sock *sk)
 {
 	__tcp_send_ack(sk, tcp_sk(sk)->rcv_nxt);
 }
+
 
 /* This routine sends a packet with an out of date sequence
  * number. It assumes the other end will try to ack it.
