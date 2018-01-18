@@ -266,6 +266,7 @@ int timer_migration_handler(struct ctl_table *table, int write,
 	mutex_unlock(&timer_keys_mutex);
 	return ret;
 }
+
 #endif /* NO_HZ_COMMON */
 
 
@@ -986,6 +987,7 @@ __mod_timer(struct timer_list *timer, unsigned long expires, bool pending_only)
 
 
 
+
 			return 1;
 
 		/*
@@ -996,6 +998,7 @@ __mod_timer(struct timer_list *timer, unsigned long expires, bool pending_only)
 		 */
 		base = lock_timer_base(timer, &flags);
 		forward_timer_base(base);
+
 
 
 
@@ -1115,6 +1118,7 @@ int mod_timer(struct timer_list *timer, unsigned long expires)
 EXPORT_SYMBOL(mod_timer);
 
 /**
+
 
 
 
@@ -1729,6 +1733,7 @@ static __latent_entropy void run_timer_softirq(struct softirq_action *h)
 
 
 
+
 	__run_timers(base);
 	if (IS_ENABLED(CONFIG_NO_HZ_COMMON))
 
@@ -1767,8 +1772,11 @@ static void process_timeout(unsigned long __data)
 
 
 
+
+
 {
 	wake_up_process((struct task_struct *)__data);
+
 
 
 
