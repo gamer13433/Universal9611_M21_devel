@@ -565,10 +565,9 @@ static void srcu_gp_end(struct srcu_struct *sp)
 	if (!rcu_seq_state(gpseq) &&
 	    ULONG_CMP_LT(gpseq, sp->srcu_gp_seq_needed)) {
 		srcu_gp_start(sp);
+
 		raw_spin_unlock_irq_rcu_node(sp);
-		/* Throttle expedited grace periods: Should be rare! */
-		srcu_reschedule(sp, rcu_seq_ctr(gpseq) & 0x3ff
-				    ? 0 : SRCU_INTERVAL);
+		srcu_reschedule(sp, 0);
 	} else {
 		raw_spin_unlock_irq_rcu_node(sp);
 	}
