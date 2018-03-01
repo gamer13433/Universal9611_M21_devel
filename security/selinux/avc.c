@@ -156,7 +156,8 @@ static void avc_dump_query(struct audit_buffer *ab, u32 ssid, u32 tsid, u16 tcla
 	char *scontext;
 	u32 scontext_len;
 
-	rc = security_sid_to_context(ssid, &scontext, &scontext_len);
+	rc = security_sid_to_context(&selinux_state, ssid,
+				     &scontext, &scontext_len);
 	if (rc)
 		audit_log_format(ab, "ssid=%d", ssid);
 	else {
@@ -164,7 +165,8 @@ static void avc_dump_query(struct audit_buffer *ab, u32 ssid, u32 tsid, u16 tcla
 		kfree(scontext);
 	}
 
-	rc = security_sid_to_context(tsid, &scontext, &scontext_len);
+	rc = security_sid_to_context(&selinux_state, tsid,
+				     &scontext, &scontext_len);
 	if (rc)
 		audit_log_format(ab, " tsid=%d", tsid);
 	else {
@@ -987,7 +989,8 @@ static noinline struct avc_node *avc_compute_av(u32 ssid, u32 tsid,
 {
 	rcu_read_unlock();
 	INIT_LIST_HEAD(&xp_node->xpd_head);
-	security_compute_av(ssid, tsid, tclass, avd, &xp_node->xp);
+	security_compute_av(&selinux_state, ssid, tsid, tclass,
+			    avd, &xp_node->xp);
 	rcu_read_lock();
 	return avc_insert(ssid, tsid, tclass, avd, xp_node);
 }
@@ -1000,62 +1003,8 @@ static noinline int avc_denied(u32 ssid, u32 tsid,
 	if (flags & AVC_STRICT)
 		return -EACCES;
 
-// [ SEC_SELINUX_PORTING_COMMON
-#ifdef SEC_SELINUX_DEBUG
-
-	/* SEC_SELINUX : denied && auditallow means "never happen" at current sepolicy. Valid Enforcing denial only. */
-	if ((requested & avd->auditallow) && selinux_enforcing && !(avd->flags & AVD_FLAGS_PERMISSIVE)) {
-
-		char *scontext, *tcontext;
-		const char **perms;
-		int i, perm;
-		int rc1, rc2;
-		u32 scontext_len, tcontext_len;
-
-		perms = secclass_map[tclass-1].perms;
-		i = 0;
-		perm = 1;
-		while (i < (sizeof(requested) * 8)) {
-			if ((perm & requested) && perms[i])
-				break;
-			i++;
-			perm <<= 1;
-		}
-
-		rc1 = security_sid_to_context(ssid, &scontext, &scontext_len);
-		rc2 = security_sid_to_context(tsid, &tcontext, &tcontext_len);
-
-		if (rc1 || rc2) {
-			pr_err("SELinux DEBUG : %s: ssid=%d tsid=%d tclass=%s perm=%s requested(%d) auditallow(%d)\n",
-		       __func__, ssid, tsid, secclass_map[tclass-1].name, perms[i], requested, avd->auditallow);
-		} else{
-			pr_err("SELinux DEBUG : %s: scontext=%s tcontext=%s tclass=%s perm=%s requested(%d) auditallow(%d)\n",
-		       __func__, scontext, tcontext, secclass_map[tclass-1].name, perms[i], requested, avd->auditallow);
-		}
-
-		/* print call stack */
-		pr_err("SELinux DEBUG : FATAL denial and start dump_stack\n");
-		dump_stack();
-
-		/* enforcing : SIGABRT and take debuggerd log */
-		if (selinux_enforcing && !(avd->flags & AVD_FLAGS_PERMISSIVE)) {
-			pr_err("SELinux DEBUG : send SIGABRT to current tsk\n");
-			send_sig(SIGABRT, current, 2);
-		}
-
-		if (!rc1)
-			kfree(scontext);
-		if (!rc2)
-			kfree(tcontext);
-	}
-#endif
-
-#ifdef CONFIG_ALWAYS_ENFORCE
-	if (!(avd->flags & AVD_FLAGS_PERMISSIVE))
-#else
-	if (selinux_enforcing && !(avd->flags & AVD_FLAGS_PERMISSIVE))
-#endif
-// ] SEC_SELINUX_PORTING_COMMON
+	if (is_enforcing(&selinux_state) &&
+	    !(avd->flags & AVD_FLAGS_PERMISSIVE))
 		return -EACCES;
 
 	avc_update_node(AVC_CALLBACK_GRANT, requested, driver, xperm, ssid,
@@ -1116,8 +1065,8 @@ int avc_has_extended_perms(u32 ssid, u32 tsid, u16 tclass, u32 requested,
 			goto decision;
 		}
 		rcu_read_unlock();
-		security_compute_xperms_decision(ssid, tsid, tclass, driver,
-						&local_xpd);
+		security_compute_xperms_decision(&selinux_state, ssid, tsid,
+						 tclass, driver, &local_xpd);
 		rcu_read_lock();
 		avc_update_node(AVC_CALLBACK_ADD_XPERMS, requested, driver, xperm,
 				ssid, tsid, tclass, avd.seqno, &local_xpd, 0);
