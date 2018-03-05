@@ -94,6 +94,7 @@ extern int selinux_android_netlink_route;
 /* limitation of boundary depth  */
 #define POLICYDB_BOUNDS_MAXDEPTH	4
 
+struct selinux_avc;
 struct selinux_ss;
 
 struct selinux_state {
@@ -104,10 +105,12 @@ struct selinux_state {
 	bool checkreqprot;
 	bool initialized;
 	bool policycap[__POLICYDB_CAPABILITY_MAX];
+	struct selinux_avc *avc;
 	struct selinux_ss *ss;
 };
 
 void selinux_ss_init(struct selinux_ss **ss);
+void selinux_avc_init(struct selinux_avc **avc);
 
 extern struct selinux_state selinux_state;
 
