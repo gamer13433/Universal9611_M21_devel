@@ -2084,7 +2084,8 @@ static void rcu_nocb_wait_gp(struct rcu_data *rdp)
 	struct rcu_node *rnp = rdp->mynode;
 
 	raw_spin_lock_irqsave_rcu_node(rnp, flags);
-	needwake = rcu_start_future_gp(rnp, rdp, &c);
+	c = rcu_cbs_completed(rdp->rsp, rnp);
+	needwake = rcu_start_this_gp(rnp, rdp, c);
 	raw_spin_unlock_irqrestore_rcu_node(rnp, flags);
 	if (needwake)
 		rcu_gp_kthread_wake(rdp->rsp);
@@ -2093,7 +2094,7 @@ static void rcu_nocb_wait_gp(struct rcu_data *rdp)
 	 * Wait for the grace period.  Do so interruptibly to avoid messing
 	 * up the load average.
 	 */
-	trace_rcu_future_gp(rnp, rdp, c, TPS("StartWait"));
+	trace_rcu_this_gp(rnp, rdp, c, TPS("StartWait"));
 	for (;;) {
 		swait_event_interruptible_exclusive(
 			rnp->nocb_gp_wq[c & 0x1],
@@ -2101,9 +2102,9 @@ static void rcu_nocb_wait_gp(struct rcu_data *rdp)
 		if (likely(d))
 			break;
 		WARN_ON(signal_pending(current));
-		trace_rcu_future_gp(rnp, rdp, c, TPS("ResumeWait"));
+		trace_rcu_this_gp(rnp, rdp, c, TPS("ResumeWait"));
 	}
-	trace_rcu_future_gp(rnp, rdp, c, TPS("EndWait"));
+	trace_rcu_this_gp(rnp, rdp, c, TPS("EndWait"));
 	smp_mb(); /* Ensure that CB invocation happens after GP end. */
 }
 
