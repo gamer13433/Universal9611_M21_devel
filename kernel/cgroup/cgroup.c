@@ -145,14 +145,14 @@ static struct static_key_true *cgroup_subsys_on_dfl_key[] = {
 };
 #undef SUBSYS
 
-static DEFINE_PER_CPU(struct cgroup_cpu_stat, cgrp_dfl_root_cpu_stat);
+static DEFINE_PER_CPU(struct cgroup_rstat_cpu, cgrp_dfl_root_rstat_cpu);
 
 /*
  * The default hierarchy, reserved for the subsystems that are otherwise
  * unattached - it never has more than a single cgroup, and all tasks are
  * part of that cgroup.
  */
-struct cgroup_root cgrp_dfl_root = { .cgrp.cpu_stat = &cgrp_dfl_root_cpu_stat };
+struct cgroup_root cgrp_dfl_root = { .cgrp.rstat_cpu = &cgrp_dfl_root_rstat_cpu };
 EXPORT_SYMBOL_GPL(cgrp_dfl_root);
 
 /*
@@ -4710,7 +4710,6 @@ static struct cftype cgroup_base_files[] = {
 		.name = "cgroup.stat",
 		.seq_show = cgroup_stat_show,
 	},
-<<<<<<< HEAD
 #ifdef CONFIG_PSI
 	{
 		.name = "io.pressure",
@@ -4737,13 +4736,11 @@ static struct cftype cgroup_base_files[] = {
 		.release = cgroup_pressure_release,
 	},
 #endif /* CONFIG_PSI */
-=======
 	{
 		.name = "cpu.stat",
 		.flags = CFTYPE_NOT_ON_ROOT,
 		.seq_show = cpu_stat_show,
 	},
->>>>>>> d41bf8c9deaed (cgroup, sched: Move basic cpu stats from cgroup.stat to cpu.stat)
 	{ }	/* terminate */
 };
 
@@ -4806,7 +4803,7 @@ static void css_free_rwork_fn(struct work_struct *work)
 			kernfs_put(cgrp->kn);
 			psi_cgroup_free(cgrp);
 			if (cgroup_on_dfl(cgrp))
-				cgroup_stat_exit(cgrp);
+				cgroup_rstat_exit(cgrp);
 			kfree(cgrp);
 		} else {
 			/*
@@ -5033,7 +5030,7 @@ static struct cgroup *cgroup_create(struct cgroup *parent)
 		goto out_free_cgrp;
 
 	if (cgroup_on_dfl(parent)) {
-		ret = cgroup_stat_init(cgrp);
+		ret = cgroup_rstat_init(cgrp);
 		if (ret)
 			goto out_cancel_ref;
 	}
@@ -5106,7 +5103,7 @@ out_idr_free:
 	cgroup_idr_remove(&root->cgroup_idr, cgrp->id);
 out_stat_exit:
 	if (cgroup_on_dfl(parent))
-		cgroup_stat_exit(cgrp);
+		cgroup_rstat_exit(cgrp);
 out_cancel_ref:
 	percpu_ref_exit(&cgrp->self.refcnt);
 out_free_cgrp:
@@ -5499,7 +5496,7 @@ int __init cgroup_init(void)
 	BUG_ON(cgroup_init_cftypes(NULL, cgroup_base_files));
 	BUG_ON(cgroup_init_cftypes(NULL, cgroup1_base_files));
 
-	cgroup_stat_boot();
+	cgroup_rstat_boot();
 
 	/*
 	 * The latency of the synchronize_sched() is too high for cgroups,
