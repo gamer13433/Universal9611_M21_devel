@@ -1,3 +1,4 @@
+
 /*
  *  bus driver for ccwgroup
  *
@@ -322,8 +323,9 @@ int ccwgroup_create_dev(struct device *parent, struct ccwgroup_driver *gdrv,
 	struct ccw_dev_id dev_id;
 	int rc, i;
 
-	gdev = kzalloc(sizeof(*gdev) + num_devices * sizeof(gdev->cdev[0]),
-		       GFP_KERNEL);
+
+	gdev = kzalloc(struct_size(gdev, cdev, num_devices), GFP_KERNEL);
+
 	if (!gdev)
 		return -ENOMEM;
 
@@ -373,6 +375,7 @@ int ccwgroup_create_dev(struct device *parent, struct ccwgroup_driver *gdrv,
 		rc = -EINVAL;
 		goto error;
 	}
+
 
 	dev_set_name(&gdev->dev, "%s", dev_name(&gdev->cdev[0]->dev));
 	gdev->dev.groups = ccwgroup_attr_groups;
