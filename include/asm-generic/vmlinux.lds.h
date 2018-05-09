@@ -124,7 +124,11 @@
 
 #ifdef CONFIG_TRACE_BRANCH_PROFILING
 #define LIKELY_PROFILE()	VMLINUX_SYMBOL(__start_annotated_branch_profile) = .; \
+<<<<<<< HEAD
 				KEEP(*(_ftrace_annotated_branch))	\
+=======
+				KEEP(*(_ftrace_annotated_branch))		      \
+>>>>>>> 244bb9a0a566 (kbuild: Fix asm-generic/vmlinux.lds.h for LD_DEAD_CODE_DATA_ELIMINATION)
 				VMLINUX_SYMBOL(__stop_annotated_branch_profile) = .;
 #else
 #define LIKELY_PROFILE()
@@ -132,7 +136,11 @@
 
 #ifdef CONFIG_PROFILE_ALL_BRANCHES
 #define BRANCH_PROFILE()	VMLINUX_SYMBOL(__start_branch_profile) = .;   \
+<<<<<<< HEAD
 				KEEP(*(_ftrace_branch))			\
+=======
+				KEEP(*(_ftrace_branch))			      \
+>>>>>>> 244bb9a0a566 (kbuild: Fix asm-generic/vmlinux.lds.h for LD_DEAD_CODE_DATA_ELIMINATION)
 				VMLINUX_SYMBOL(__stop_branch_profile) = .;
 #else
 #define BRANCH_PROFILE()
