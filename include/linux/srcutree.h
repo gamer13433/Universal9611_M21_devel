@@ -134,7 +134,7 @@ struct srcu_struct {
  */
 #define __DEFINE_SRCU(name, is_static)					\
 	static DEFINE_PER_CPU(struct srcu_data, name##_srcu_data);\
-	is_static struct srcu_struct name = __SRCU_STRUCT_INIT(name)
+	is_static struct srcu_struct name = __SRCU_STRUCT_INIT(name, name##_srcu_data)
 #define DEFINE_SRCU(name)		__DEFINE_SRCU(name, /* not static */)
 #define DEFINE_STATIC_SRCU(name)	__DEFINE_SRCU(name, static)
 
