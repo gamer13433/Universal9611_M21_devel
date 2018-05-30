@@ -1668,8 +1668,14 @@ ttwu_stat(struct task_struct *p, int cpu, int wake_flags)
 	if (!schedstat_enabled())
 		return;
 
-	rq = this_rq();
+/* Force all trivial, unbound kthreads onto the big cluster */
+	if (p->flags & PF_KTHREAD && p->pid != 1 &&
+		cpumask_equal(new_mask, cpu_all_mask))
+		new_mask = cpu_perf_mask;
+		
 
+	rq = this_rq();
+		
 #ifdef CONFIG_SMP
 	if (cpu == rq->cpu) {
 		schedstat_inc(rq->ttwu_local);
