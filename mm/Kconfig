@@ -162,6 +162,7 @@ config MEMORY_HOTPLUG
 	depends on SPARSEMEM || X86_64_ACPI_NUMA
 	depends on ARCH_ENABLE_MEMORY_HOTPLUG
 
+
 config MEMORY_HOTPLUG_SPARSE
 	def_bool y
 	depends on SPARSEMEM && MEMORY_HOTPLUG
@@ -181,6 +182,7 @@ config MEMORY_HOTPLUG_DEFAULT_ONLINE
 	  'online' state by default.
 	  Say N here if you want the default policy to keep all hot-plugged
 	  memory blocks in 'offline' state.
+
 
 config MEMORY_HOTREMOVE
 	bool "Allow for memory hot remove"
@@ -598,6 +600,7 @@ config ZSMALLOC
 	  returned by an alloc().  This handle must be mapped in order to
 	  access the allocated space.
 
+
 config ZSMALLOC_STAT
 	bool "Export zsmalloc statistics"
 	depends on ZSMALLOC
@@ -723,6 +726,7 @@ config HMM
 config HMM_MIRROR
 	bool "HMM mirror CPU page table into a device page table"
 	depends on ARCH_HAS_HMM
+
 	select HMM
 	help
 	  Select HMM_MIRROR if you want to mirror range of the CPU page table of a
@@ -776,6 +780,7 @@ config INCREASE_MAXIMUM_SWAPPINESS
 config LARGE_DIRTY_BUFFER
 	bool "Use large dirty_threshold value by enabling dirty_ratio"
 	default y
+
 	help
 	  This config enables dirty_ratio/dirty_background_ratio,
 	  and it means large dirty_threshold value in 64bit architectures.
@@ -794,6 +799,14 @@ config DIRECT_RECLAIM_FILE_PAGES_ONLY
 	depends on SWAP
 	default y
 
+config HAVE_LOW_MEMORY_KILLER
+	bool "Have user/kernel space low memory killer"
+	default n
+	help
+	  Say 'y' if you have a user/kernel low memory killer and thus you
+	  want page allocator to provide sufficient time before it triggers
+	  Out of Memory killer.
+	  
 config BALANCE_ANON_FILE_RECLAIM
 	bool "During reclaim treat anon and file backed pages equally"
 	depends on SWAP
