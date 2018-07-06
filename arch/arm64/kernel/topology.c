@@ -11,7 +11,9 @@
  * for more details.
  */
 
+
 #include <linux/arch_topology.h>
+
 #include <linux/cpu.h>
 #include <linux/cpumask.h>
 #include <linux/init.h>
@@ -23,6 +25,7 @@
 #include <linux/sched/topology.h>
 #include <linux/sched/energy.h>
 #include <linux/slab.h>
+
 #include <linux/string.h>
 
 #include <asm/cpu.h>
@@ -218,6 +221,7 @@ EXPORT_SYMBOL_GPL(cpu_topology);
 const struct cpumask *cpu_coregroup_mask(int cpu)
 {
 	return &cpu_topology[cpu].core_sibling;
+
 }
 
 static void update_siblings_masks(unsigned int cpuid)
@@ -230,6 +234,7 @@ static void update_siblings_masks(unsigned int cpuid)
 		cpu_topo = &cpu_topology[cpu];
 
 		if (cpuid_topo->cluster_id != cpu_topo->cluster_id)
+
 			continue;
 
 		cpumask_set_cpu(cpuid, &cpu_topo->core_sibling);
@@ -288,6 +293,7 @@ topology_populated:
 static int smt_flags(void)
 {
 	return cpu_smt_flags() | topology_smt_flags();
+
 }
 #endif
 
@@ -295,6 +301,7 @@ static int smt_flags(void)
 static int core_flags(void)
 {
 	return cpu_core_flags() | topology_core_flags();
+
 }
 #endif
 
@@ -303,8 +310,22 @@ static int cpu_flags(void)
 	return topology_cpu_flags();
 }
 
-static inline
-const struct sched_group_energy * const cpu_core_energy(int cpu)
+void remove_cpu_topology(unsigned int cpu)
+{
+	int sibling;
+
+	for_each_cpu(sibling, topology_core_cpumask(cpu))
+		cpumask_clear_cpu(cpu, topology_core_cpumask(sibling));
+	for_each_cpu(sibling, topology_sibling_cpumask(cpu))
+		cpumask_clear_cpu(cpu, topology_sibling_cpumask(sibling));
+	for_each_cpu(sibling, topology_llc_cpumask(cpu))
+		cpumask_clear_cpu(cpu, topology_llc_cpumask(sibling));
+
+	clear_cpu_topology(cpu);
+}
+
+static inline 
+const struct sched_group_energy * const cpu_core_energy(cpu)
 {
 	return sge_array[cpu][SD_LEVEL0];
 }
@@ -337,6 +358,7 @@ static void __init reset_cpu_topology(void)
 {
 	unsigned int cpu;
 
+
 	for_each_possible_cpu(cpu) {
 		struct cpu_topology *cpu_topo = &cpu_topology[cpu];
 
@@ -344,12 +366,15 @@ static void __init reset_cpu_topology(void)
 		cpu_topo->core_id = 0;
 		cpu_topo->cluster_id = -1;
 
+
 		cpumask_clear(&cpu_topo->core_sibling);
 		cpumask_set_cpu(cpu, &cpu_topo->core_sibling);
 		cpumask_clear(&cpu_topo->thread_sibling);
 		cpumask_set_cpu(cpu, &cpu_topo->thread_sibling);
 	}
+
 }
+
 
 void __init init_cpu_topology(void)
 {
