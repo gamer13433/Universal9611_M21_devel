@@ -160,6 +160,7 @@ source "drivers/remoteproc/Kconfig"
 
 source "drivers/rpmsg/Kconfig"
 
+
 source "drivers/soc/Kconfig"
 
 source "drivers/devfreq/Kconfig"
@@ -241,6 +242,8 @@ source "drivers/vibrator/Kconfig"
 source "drivers/fingerprint/Kconfig"
 
 source "drivers/security/samsung/icdrv/Kconfig"
+
+source "drivers/energy_model/Kconfig"
 
 source "drivers/security/samsung/tzic/Kconfig"
 
