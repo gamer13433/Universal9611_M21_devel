@@ -208,13 +208,7 @@ struct rcu_data {
 	int tick_nohz_enabled_snap;	/* Previously seen value from sysfs. */
 #endif /* #ifdef CONFIG_RCU_FAST_NO_HZ */
 
-	/* 4) reasons this CPU needed to be kicked by force_quiescent_state */
-	unsigned long dynticks_fqs;	/* Kicked due to dynticks idle. */
-	unsigned long cond_resched_completed;
-					/* Grace period that needs help */
-					/*  from cond_resched(). */
-
-	/* 5) __rcu_pending() statistics. */
+	/* 4) __rcu_pending() statistics. */
 	unsigned long n_rcu_pending;	/* rcu_pending() calls since boot. */
 	unsigned long n_rp_core_needs_qs;
 	unsigned long n_rp_report_qs;
@@ -225,11 +219,11 @@ struct rcu_data {
 	unsigned long n_rp_nocb_defer_wakeup;
 	unsigned long n_rp_need_nothing;
 
-	/* 6) _rcu_barrier(), OOM callbacks, and expediting. */
+	/* 5) _rcu_barrier(), OOM callbacks, and expediting. */
 	struct rcu_head barrier_head;
 	int exp_dynticks_snap;		/* Double-check need for IPI. */
 
-	/* 7) Callback offloading. */
+	/* 6) Callback offloading. */
 #ifdef CONFIG_RCU_NOCB_CPU
 	struct rcu_head *nocb_head;	/* CBs waiting for kthread. */
 	struct rcu_head **nocb_tail;
