@@ -64,6 +64,7 @@
 #include <linux/page_owner.h>
 #include <linux/kthread.h>
 #include <linux/memcontrol.h>
+
 #include <linux/ftrace.h>
 #include <linux/lockdep.h>
 #include <linux/nmi.h>
@@ -147,6 +148,7 @@ DEFINE_STATIC_KEY_FALSE(init_on_free);
 EXPORT_SYMBOL(init_on_free);
 
 static int __init early_init_on_alloc(char *buf)
+
 {
 	int ret;
 	bool bool_result;
@@ -276,6 +278,7 @@ char * const migratetype_names[MIGRATE_TYPES] = {
 #ifdef CONFIG_CMA
 	"CMA",
 #endif
+
 #ifdef CONFIG_MEMORY_ISOLATION
 	"Isolate",
 #endif
@@ -1828,6 +1831,7 @@ inline void post_alloc_hook(struct page *page, unsigned int order,
 
 	arch_alloc_page(page, order);
 	kernel_map_pages(page, 1 << order, 1);
+
 	kasan_alloc_pages(page, order);
 	kernel_poison_pages(page, 1 << order, 1);
 	set_page_owner(page, order, gfp_flags);
@@ -1836,10 +1840,12 @@ inline void post_alloc_hook(struct page *page, unsigned int order,
 static void prep_new_page(struct page *page, unsigned int order, gfp_t gfp_flags,
 							unsigned int alloc_flags)
 {
+
 	post_alloc_hook(page, order, gfp_flags);
 
 	if (!free_pages_prezeroed() && want_init_on_alloc(gfp_flags))
 		kernel_init_free_pages(page, 1 << order);
+
 
 	if (order && (gfp_flags & __GFP_COMP))
 		prep_compound_page(page, order);
@@ -2371,6 +2377,7 @@ static struct page *__rmqueue(struct zone *zone, unsigned int order,
 {
 	struct page *page = NULL;
 
+
 #ifdef CONFIG_KANOND
 	wakeup_kanond();
 #endif
@@ -2392,8 +2399,10 @@ static struct page *__rmqueue(struct zone *zone, unsigned int order,
 	}
 
 	trace_mm_page_alloc_zone_locked(page, order, migratetype);
+
 	return page;
 }
+
 
 /*
  * Obtain a specified number of elements from the buddy allocator, all under
@@ -2409,6 +2418,7 @@ static int rmqueue_bulk(struct zone *zone, unsigned int order,
 	spin_lock(&zone->lock);
 	for (i = 0; i < count; ++i) {
 		struct page *page = __rmqueue(zone, order, migratetype);
+
 		if (unlikely(page == NULL))
 			break;
 
@@ -2445,6 +2455,7 @@ static int rmqueue_bulk(struct zone *zone, unsigned int order,
 	spin_unlock(&zone->lock);
 	return alloced;
 }
+
 
 #ifdef CONFIG_NUMA
 /*
@@ -2837,13 +2848,17 @@ static struct page *__rmqueue_pcplist(struct zone *zone, int migratetype,
 {
 	struct page *page;
 
+
 	do {
 		if (list_empty(list)) {
 			pcp->count += rmqueue_bulk(zone, 0,
 					pcp->batch, list,
+
 					migratetype, cold);
 			if (unlikely(list_empty(list)))
+
 				return NULL;
+
 		}
 
 		if (cold)
@@ -2942,14 +2957,17 @@ struct page *rmqueue(struct zone *preferred_zone,
 
 	do {
 		page = NULL;
+
 		if (alloc_flags & ALLOC_HARDER) {
 			page = __rmqueue_smallest(zone, order, MIGRATE_HIGHATOMIC);
 			if (page)
 				trace_mm_page_alloc_zone_locked(page, order, migratetype);
 		}
+
 		if (!page)
 			page = __rmqueue(zone, order, migratetype_rmqueue);
 	} while (page && check_new_pages(page, order));
+
 	spin_unlock(&zone->lock);
 	if (!page)
 		goto failed;
@@ -3091,6 +3109,7 @@ bool __zone_watermark_ok(struct zone *z, unsigned int order, unsigned long mark,
 		min -= min / 2;
 
 	if (unlikely(alloc_harder)) {
+
 		/*
 		 * OOM victims can try even harder than normal ALLOC_HARDER
 		 * users on the grounds that it's definitely going to be in
@@ -3102,6 +3121,7 @@ bool __zone_watermark_ok(struct zone *z, unsigned int order, unsigned long mark,
 		else
 			min -= min / 4;
 	}
+
 
 	/*
 	 * Check watermarks for an order-0 allocation request. If these
@@ -3124,6 +3144,7 @@ bool __zone_watermark_ok(struct zone *z, unsigned int order, unsigned long mark,
 			continue;
 
 		for (mt = 0; mt < MIGRATE_PCPTYPES; mt++) {
+
 			if (!list_empty(&area->free_list[mt]))
 				return true;
 		}
@@ -3153,11 +3174,14 @@ static inline bool zone_watermark_fast(struct zone *z, unsigned int order,
 {
 	long free_pages;
 
+
 	free_pages = zone_page_state(z, NR_FREE_PAGES);
+
 
 	/*
 	 * Fast check for order-0 only. If this fails then the reserves
 	 * need to be calculated.
+
 	 */
 	if (!order) {
 		long fast_free;
@@ -3338,6 +3362,7 @@ static void warn_alloc_show_mem(gfp_t gfp_mask, nodemask_t *nodemask)
 		filter &= ~SHOW_MEM_FILTER_NODES;
 
 	show_mem(filter, nodemask);
+
 }
 
 void warn_alloc(gfp_t gfp_mask, nodemask_t *nodemask, const char *fmt, ...)
@@ -3538,6 +3563,7 @@ __alloc_pages_direct_compact(gfp_t gfp_mask, unsigned int order,
 	return NULL;
 }
 
+
 static inline bool
 should_compact_retry(struct alloc_context *ac, int order, int alloc_flags,
 		     enum compact_result compact_result,
@@ -3552,6 +3578,7 @@ should_compact_retry(struct alloc_context *ac, int order, int alloc_flags,
 
 	if (!order)
 		return false;
+
 
 	if (compaction_made_progress(compact_result))
 		(*compaction_retries)++;
@@ -3870,6 +3897,7 @@ should_reclaim_retry(gfp_t gfp_mask, unsigned order,
 	 * always increment the no progress counter for them
 	 */
 	if (did_some_progress && order <= PAGE_ALLOC_COSTLY_ORDER)
+
 		*no_progress_loops = 0;
 	else
 		(*no_progress_loops)++;
@@ -3993,10 +4021,12 @@ __alloc_pages_slowpath(gfp_t gfp_mask, unsigned int order,
 	enum compact_result compact_result;
 	int compaction_retries;
 	int no_progress_loops;
+
 	unsigned int cpuset_mems_cookie;
 	int reserve_flags;
 
 	/*
+
 	 * We also sanity check to catch abuse of atomic reserves being used by
 	 * callers that are not in atomic context.
 	 */
@@ -4112,6 +4142,7 @@ retry:
 	if (!can_direct_reclaim)
 		goto nopage;
 
+
 	/* Avoid recursion of direct reclaim */
 	if (current->flags & PF_MEMALLOC)
 		goto nopage;
@@ -4149,7 +4180,8 @@ retry:
 	 * implementation of the compaction depends on the sufficient amount
 	 * of free memory (see __compaction_suitable)
 	 */
-	if (did_some_progress > 0 &&
+	if ((did_some_progress > 0 || lmk_kill_possible()) &&
+
 			should_compact_retry(ac, order, alloc_flags,
 				compact_result, &compact_priority,
 				&compaction_retries))
@@ -4256,6 +4288,7 @@ static inline bool prepare_alloc_pages(gfp_t gfp_mask, unsigned int order,
 		return false;
 
 	if (IS_ENABLED(CONFIG_CMA) && ac->migratetype == MIGRATE_MOVABLE)
+
 		*alloc_flags |= ALLOC_CMA;
 
 	return true;
@@ -4673,6 +4706,7 @@ long si_mem_available(void)
 	 * Part of the reclaimable slab and other kernel memory consists of
 	 * items that are in use, and cannot be freed. Cap this estimate at the
 	 * low watermark.
+
 	 */
 	reclaimable = global_node_page_state(NR_SLAB_RECLAIMABLE) +
 			global_node_page_state(NR_KERNEL_MISC_RECLAIMABLE);
@@ -7703,6 +7737,7 @@ int __alloc_contig_range(unsigned long start, unsigned long end,
 	if (ret)
 		return ret;
 
+
 	/*
 	 * In case of -EBUSY, we'd like to know which page causes problem.
 	 * So, just fall through. test_pages_isolated() has a tracepoint
@@ -7741,6 +7776,7 @@ int __alloc_contig_range(unsigned long start, unsigned long end,
 	if (drain) {
 		lru_add_drain_all();
 		drain_all_pages(cc.zone);
+
 
 		while (!PageBuddy(pfn_to_page(outer_start))) {
 			if (++order >= MAX_ORDER) {
@@ -7788,6 +7824,7 @@ int __alloc_contig_range(unsigned long start, unsigned long end,
 done:
 	undo_isolate_page_range(pfn_max_align_down(start),
 				pfn_max_align_up(end), migratetype);
+
 	return ret;
 }
 

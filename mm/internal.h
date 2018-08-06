@@ -40,6 +40,7 @@ void page_writeback_init(void);
 
 int do_swap_page(struct vm_fault *vmf);
 
+
 void free_pgtables(struct mmu_gather *tlb, struct vm_area_struct *start_vma,
 		unsigned long floor, unsigned long ceiling);
 
@@ -547,6 +548,15 @@ static inline bool is_migrate_highatomic_page(struct page *page)
 }
 
 void setup_zone_pageset(struct zone *zone);
+
+#ifdef CONFIG_ANDROID_LOW_MEMORY_KILLER
+extern bool lmk_kill_possible(void);
+#else
+static inline bool lmk_kill_possible(void)
+{
+	return false;
+}
+#endif
 
 /*
  * A cached value of the page's pageblock's migratetype, used when the page is

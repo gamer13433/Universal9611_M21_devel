@@ -238,7 +238,8 @@ unsigned long zone_reclaimable_pages(struct zone *zone)
 
 	nr = zone_page_state_snapshot(zone, NR_ZONE_INACTIVE_FILE) +
 		zone_page_state_snapshot(zone, NR_ZONE_ACTIVE_FILE);
-	if (get_nr_swap_pages() > 0)
+	if (get_nr_swap_pages() > 0 || lmk_kill_possible())
+
 		nr += zone_page_state_snapshot(zone, NR_ZONE_INACTIVE_ANON) +
 			zone_page_state_snapshot(zone, NR_ZONE_ACTIVE_ANON);
 
@@ -1031,6 +1032,7 @@ static unsigned long shrink_page_list(struct list_head *page_list,
 
 		VM_BUG_ON_PAGE(PageActive(page), page);
 
+
 		sc->nr_scanned++;
 
 		if (unlikely(!page_evictable(page)))
@@ -1119,6 +1121,7 @@ static unsigned long shrink_page_list(struct list_head *page_list,
 			if (current_is_kswapd() &&
 			    PageReclaim(page) &&
 			    pgdat && test_bit(PGDAT_WRITEBACK, &pgdat->flags)) {
+
 				nr_immediate++;
 				goto activate_locked;
 
@@ -1245,6 +1248,7 @@ static unsigned long shrink_page_list(struct list_head *page_list,
 			if (page_is_file_cache(page) &&
 			    (!current_is_kswapd() || !PageReclaim(page) ||
 			    (pgdat && !test_bit(PGDAT_DIRTY, &pgdat->flags)))) {
+
 				/*
 				 * Immediately reclaim when written back.
 				 * Similar in principal to deactivate_page()
@@ -1476,6 +1480,7 @@ unsigned long reclaim_pages_from_list(struct list_head *page_list,
 
 	list_for_each_entry(page, page_list, lru)
 		ClearPageActive(page);
+
 	nr_reclaimed = shrink_page_list(page_list, NULL, &sc,
 				TTU_IGNORE_ACCESS, NULL, true);
 
@@ -1760,12 +1765,15 @@ static int too_many_isolated(struct pglist_data *pgdat, int file,
 		return 0;
 
 	if (file) {
+
 		inactive = node_page_state(pgdat, NR_INACTIVE_FILE);
 		isolated = node_page_state(pgdat, NR_ISOLATED_FILE);
+
 	} else {
 		inactive = node_page_state(pgdat, NR_INACTIVE_ANON);
 		isolated = node_page_state(pgdat, NR_ISOLATED_ANON);
 	}
+
 
 	/*
 	 * GFP_NOIO/GFP_NOFS callers are allowed to isolate more pages, so they
@@ -1777,6 +1785,7 @@ static int too_many_isolated(struct pglist_data *pgdat, int file,
 
 	return isolated > inactive;
 }
+
 
 static noinline_for_stack void
 putback_inactive_pages(struct lruvec *lruvec, struct list_head *page_list)
@@ -2240,6 +2249,7 @@ static bool inactive_list_is_low(struct lruvec *lruvec, bool file,
 
 	inactive = lruvec_lru_size(lruvec, inactive_lru, sc->reclaim_idx);
 	active = lruvec_lru_size(lruvec, active_lru, sc->reclaim_idx);
+
 
 
 
@@ -2921,6 +2931,7 @@ static bool shrink_node(pg_data_t *pgdat, struct scan_control *sc)
 				    sc->nr_scanned - nr_scanned,
 				    node_lru_pages);
 
+
 		if (reclaim_state) {
 			sc->nr_reclaimed += reclaim_state->reclaimed_slab;
 			reclaim_state->reclaimed_slab = 0;
@@ -3083,6 +3094,7 @@ static void snapshot_refaults(struct mem_cgroup *root_memcg, pg_data_t *pgdat)
 	do {
 		unsigned long refaults;
 		struct lruvec *lruvec;
+
 
 
 
@@ -3720,6 +3732,7 @@ static enum zone_type kswapd_classzone_idx(pg_data_t *pgdat,
 					   enum zone_type prev_classzone_idx)
 {
 	enum zone_type curr_idx = READ_ONCE(pgdat->kswapd_classzone_idx);
+
 
 
 
