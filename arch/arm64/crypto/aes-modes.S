@@ -114,7 +114,9 @@ AES_ENTRY(aes_ecb_encrypt)
 	FRAME_PUSH
 	cbz		w5, .LecbencloopNx
 
+
 	enc_prepare	w3, x2, x5
+
 
 .LecbencloopNx:
 #if INTERLEAVE >= 2
@@ -150,7 +152,9 @@ AES_ENTRY(aes_ecb_decrypt)
 	FRAME_PUSH
 	cbz		w5, .LecbdecloopNx
 
+
 	dec_prepare	w3, x2, x5
+
 
 .LecbdecloopNx:
 #if INTERLEAVE >= 2
@@ -192,8 +196,11 @@ AES_ENDPROC(aes_ecb_decrypt)
 AES_ENTRY(aes_cbc_encrypt)
 	cbz		w6, .Lcbcencloop
 
+
 	ld1		{v0.16b}, [x5]			/* get iv */
 	enc_prepare	w3, x2, x6
+
+
 
 .Lcbcencloop:
 	ld1		{v1.16b}, [x1], #16		/* get next pt block */
@@ -203,6 +210,7 @@ AES_ENTRY(aes_cbc_encrypt)
 	subs		w4, w4, #1
 	bne		.Lcbcencloop
 	st1		{v0.16b}, [x5]			/* return iv */
+
 	ret
 AES_ENDPROC(aes_cbc_encrypt)
 
@@ -211,8 +219,10 @@ AES_ENTRY(aes_cbc_decrypt)
 	FRAME_PUSH
 	cbz		w6, .LcbcdecloopNx
 
+
 	ld1		{v7.16b}, [x5]			/* get iv */
 	dec_prepare	w3, x2, x6
+
 
 .LcbcdecloopNx:
 #if INTERLEAVE >= 2
@@ -241,6 +251,7 @@ AES_ENTRY(aes_cbc_decrypt)
 	eor		v3.16b, v3.16b, v6.16b
 	st1		{v0.16b-v3.16b}, [x0], #64
 #endif
+
 	b		.LcbcdecloopNx
 .Lcbcdec1x:
 	adds		w4, w4, #INTERLEAVE
@@ -273,6 +284,7 @@ AES_ENTRY(aes_ctr_encrypt)
 	enc_prepare	w3, x2, x6
 	ld1		{v4.16b}, [x5]
 
+
 .Lctrnotfirst:
 	umov		x8, v4.d[1]		/* keep swabbed ctr in reg */
 	rev		x8, x8
@@ -297,19 +309,23 @@ AES_ENTRY(aes_ctr_encrypt)
 	eor		v1.16b, v1.16b, v3.16b
 	st1		{v0.16b-v1.16b}, [x0], #32
 #else
-	ldr		q8, =0x30000000200000001	/* addends 1,2,3[,0] */
-	dup		v7.4s, w8
+
+	add         w7, w6, #1
 	mov		v0.16b, v4.16b
-	add		v7.4s, v7.4s, v8.4s
+	add		w8, w6, #2
 	mov		v1.16b, v4.16b
-	rev32		v8.16b, v7.16b
+	add		w9, w6, #3
 	mov		v2.16b, v4.16b
+	rev		w7, w7
 	mov		v3.16b, v4.16b
-	mov		v1.s[3], v8.s[0]
-	mov		v2.s[3], v8.s[1]
-	mov		v3.s[3], v8.s[2]
+	rev		w8, w8
+	mov		v1.s[3], w7
+	rev		w9, w9
+	mov		v2.s[3], w8
+	mov		v3.s[3], w9
 	ld1		{v5.16b-v7.16b}, [x1], #48	/* get 3 input blocks */
 	do_encrypt_block4x
+
 	eor		v0.16b, v5.16b, v0.16b
 	ld1		{v5.16b}, [x1], #16		/* get 1 input block  */
 	eor		v1.16b, v6.16b, v1.16b
@@ -321,6 +337,7 @@ AES_ENTRY(aes_ctr_encrypt)
 	rev		x7, x8
 	ins		v4.d[1], x7
 	cbz		w4, .Lctrout
+
 	b		.LctrloopNx
 .Lctr1x:
 	adds		w4, w4, #INTERLEAVE
@@ -346,6 +363,7 @@ AES_ENTRY(aes_ctr_encrypt)
 .Lctrout:
 	st1		{v4.16b}, [x5]		/* return next CTR value */
 	FRAME_POP
+
 	ret
 
 .Lctrtailblock:
@@ -387,12 +405,14 @@ AES_ENTRY(aes_xts_encrypt)
 	FRAME_PUSH
 	cbz		w7, .LxtsencloopNx
 
+
 	ld1		{v4.16b}, [x6]
 	enc_prepare	w3, x5, x6
 	encrypt_block	v4, w3, x5, x6, w7		/* first tweak */
 	enc_switch_key	w3, x2, x6
 	ldr		q7, .Lxts_mul_x
 	b		.LxtsencNx
+
 
 .LxtsencloopNx:
 	ldr		q7, .Lxts_mul_x
@@ -433,6 +453,7 @@ AES_ENTRY(aes_xts_encrypt)
 	st1		{v0.16b-v3.16b}, [x0], #64
 	mov		v4.16b, v7.16b
 	cbz		w4, .Lxtsencout
+
 	b		.LxtsencloopNx
 #endif
 .Lxtsenc1x:
@@ -451,6 +472,7 @@ AES_ENTRY(aes_xts_encrypt)
 	b		.Lxtsencloop
 .Lxtsencout:
 	FRAME_POP
+
 	ret
 AES_ENDPROC(aes_xts_encrypt)
 
@@ -459,12 +481,14 @@ AES_ENTRY(aes_xts_decrypt)
 	FRAME_PUSH
 	cbz		w7, .LxtsdecloopNx
 
+
 	ld1		{v4.16b}, [x6]
 	enc_prepare	w3, x5, x6
 	encrypt_block	v4, w3, x5, x6, w7		/* first tweak */
 	dec_prepare	w3, x2, x6
 	ldr		q7, .Lxts_mul_x
 	b		.LxtsdecNx
+
 
 .LxtsdecloopNx:
 	ldr		q7, .Lxts_mul_x
@@ -505,6 +529,7 @@ AES_ENTRY(aes_xts_decrypt)
 	st1		{v0.16b-v3.16b}, [x0], #64
 	mov		v4.16b, v7.16b
 	cbz		w4, .Lxtsdecout
+
 	b		.LxtsdecloopNx
 #endif
 .Lxtsdec1x:
@@ -523,6 +548,7 @@ AES_ENTRY(aes_xts_decrypt)
 	b		.Lxtsdecloop
 .Lxtsdecout:
 	FRAME_POP
+
 	ret
 AES_ENDPROC(aes_xts_decrypt)
 
@@ -532,8 +558,11 @@ AES_ENDPROC(aes_xts_decrypt)
 	 */
 AES_ENTRY(aes_mac_update)
 	ld1		{v0.16b}, [x4]			/* get dg */
+
 	enc_prepare	w2, x1, x7
 	cbnz		w5, .Lmacenc
+
+
 
 .Lmacloop:
 	cbz		w3, .Lmacout
@@ -550,5 +579,7 @@ AES_ENTRY(aes_mac_update)
 
 .Lmacout:
 	st1		{v0.16b}, [x4]			/* return dg */
+
 	ret
+
 AES_ENDPROC(aes_mac_update)
