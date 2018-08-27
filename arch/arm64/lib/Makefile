@@ -25,3 +25,4 @@ CFLAGS_REMOVE_xor-neon.o	+= -mgeneral-regs-only
 CFLAGS_xor-neon.o		+= -ffreestanding
 endif
 
+obj-$(CONFIG_CRC32) += crc32.o
