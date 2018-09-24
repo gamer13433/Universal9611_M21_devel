@@ -53,6 +53,7 @@
 #include <linux/freezer.h>
 #include <linux/compat.h>
 #include <linux/debug-snapshot.h>
+#include <linux/delay.h>
 
 #include <linux/uaccess.h>
 
@@ -153,6 +154,7 @@ struct hrtimer_clock_base *lock_hrtimer_base(const struct hrtimer *timer,
 			raw_spin_unlock_irqrestore(&base->cpu_base->lock, *flags);
 		}
 		cpu_relax();
+		ndelay(TIMER_LOCK_TIGHT_LOOP_DELAY_NS);
 	}
 }
 
@@ -470,6 +472,7 @@ static ktime_t __hrtimer_get_next_event(struct hrtimer_cpu_base *cpu_base,
 	struct hrtimer_clock_base *base = cpu_base->clock_base;
 	unsigned int active = cpu_base->active_bases;
 	ktime_t expires, expires_next = KTIME_MAX;
+
 
 	hrtimer_update_next_timer(cpu_base, NULL);
 	for (; active; base++, active >>= 1) {
@@ -905,6 +908,7 @@ static void __remove_hrtimer(struct hrtimer *timer,
 	if (reprogram && timer == cpu_base->next_timer)
 		hrtimer_force_reprogram(cpu_base, 1);
 #endif
+
 }
 
 /*
@@ -913,6 +917,7 @@ static void __remove_hrtimer(struct hrtimer *timer,
 static inline int
 remove_hrtimer(struct hrtimer *timer, struct hrtimer_clock_base *base, bool restart)
 {
+
 	u8 state = timer->state;
 
 	if (state & HRTIMER_STATE_ENQUEUED) {
@@ -933,6 +938,7 @@ remove_hrtimer(struct hrtimer *timer, struct hrtimer_clock_base *base, bool rest
 			state = HRTIMER_STATE_INACTIVE;
 
 		__remove_hrtimer(timer, base, state, reprogram);
+
 		return 1;
 	}
 	return 0;
@@ -983,6 +989,7 @@ void hrtimer_start_range_ns(struct hrtimer *timer, ktime_t tim,
 
 	/* Switch the timer base, if necessary: */
 	new_base = switch_hrtimer_base(timer, base, mode & HRTIMER_MODE_PINNED);
+
 
 	leftmost = enqueue_hrtimer(timer, new_base);
 	if (!leftmost)
@@ -1056,6 +1063,7 @@ int hrtimer_cancel(struct hrtimer *timer)
 		if (ret >= 0)
 			return ret;
 		cpu_relax();
+		ndelay(TIMER_LOCK_TIGHT_LOOP_DELAY_NS);
 	}
 }
 EXPORT_SYMBOL_GPL(hrtimer_cancel);
@@ -1587,6 +1595,7 @@ long hrtimer_nanosleep(const struct timespec64 *rqtp,
 	}
 
 	restart = &current->restart_block;
+
 	restart->nanosleep.clockid = t.timer.base->clockid;
 	restart->nanosleep.expires = hrtimer_get_expires_tv64(&t.timer);
 	set_restart_fn(restart, hrtimer_nanosleep_restart);
@@ -1656,12 +1665,15 @@ int hrtimers_prepare_cpu(unsigned int cpu)
 
 static void migrate_hrtimer_list(struct hrtimer_clock_base *old_base,
 				struct hrtimer_clock_base *new_base)
+
 {
 	struct hrtimer *timer;
 	struct timerqueue_node *node;
 
+
 	while ((node = timerqueue_getnext(&old_base->active))) {
 		timer = container_of(node, struct hrtimer, node);
+
 		BUG_ON(hrtimer_callback_running(timer));
 		debug_deactivate(timer);
 
@@ -1671,6 +1683,7 @@ static void migrate_hrtimer_list(struct hrtimer_clock_base *old_base,
 		 * under us on another CPU
 		 */
 		__remove_hrtimer(timer, old_base, HRTIMER_STATE_ENQUEUED, 0);
+
 		timer->base = new_base;
 		/*
 		 * Enqueue the timers on the new cpu. This does not
@@ -1682,11 +1695,13 @@ static void migrate_hrtimer_list(struct hrtimer_clock_base *old_base,
 		 */
 		enqueue_hrtimer(timer, new_base);
 	}
+
 }
 
 int hrtimers_dead_cpu(unsigned int scpu)
 {
 	struct hrtimer_cpu_base *old_base, *new_base;
+
 	int i;
 
 	BUG_ON(cpu_online(scpu));
@@ -1714,8 +1729,10 @@ int hrtimers_dead_cpu(unsigned int scpu)
 	/* Check, if we got expired work to do */
 	__hrtimer_peek_ahead_timers();
 	local_irq_enable();
+
 	return 0;
 }
+
 
 #endif /* CONFIG_HOTPLUG_CPU */
 
