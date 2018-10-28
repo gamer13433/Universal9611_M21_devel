@@ -66,4 +66,4 @@ config ZRAM_COMP_WRITEBACK
 	depends on ZRAM_WRITEBACK
 	default y
 	help
-	  This feature supports zram compressed writeback.
+	  This feature supports zram compressed writeback.s
