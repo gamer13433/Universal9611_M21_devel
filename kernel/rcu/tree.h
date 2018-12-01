@@ -246,6 +246,10 @@ struct rcu_data {
 					/* Leader CPU takes GP-end wakeups. */
 #endif /* #ifdef CONFIG_RCU_NOCB_CPU */
 
+	/* 6) RCU priority boosting. */
+	struct task_struct *rcu_cpu_kthread_task;
+					/* rcuc per-CPU kthread or NULL. */
+
 	/* 7) Diagnostic data, including RCU CPU stall warnings. */
 	unsigned int softirq_snap;	/* Snapshot of softirq activity. */
 	/* ->rcu_iw* fields protected by leaf rcu_node ->lock. */
