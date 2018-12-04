@@ -20,3 +20,7 @@ CFLAGS_atomic_ll_sc.o	:= -ffixed-x1 -ffixed-x2        		\
 		   -fcall-saved-x18
 
 lib-$(CONFIG_ARCH_HAS_UACCESS_FLUSHCACHE) += uaccess_flushcache.o
+obj-$(CONFIG_XOR_BLOCKS)	+= xor-neon.o
+CFLAGS_REMOVE_xor-neon.o	+= -mgeneral-regs-only
+CFLAGS_xor-neon.o		+= -ffreestanding
+endif
