@@ -132,3 +132,4 @@ L(tail):
 	ret
 
 ENDPROC(strchr_neon)
+EXPORT_SYMBOL_NOKASAN(strchr)

@@ -199,3 +199,4 @@ CPU_LE(	lsl	tmp1, tmp4, tmp1 )	/* Shift (tmp1 & 63).  */
 	b	L(page_cross_entry)
 
 ENDPIPROC(strlen)
+EXPORT_SYMBOL_NOKASAN(strlen)

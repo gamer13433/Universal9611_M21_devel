@@ -144,3 +144,4 @@ L(zero_length):
 	ret
 
 ENDPIPROC(memchr_neon)
+EXPORT_SYMBOL_NOKASAN(memchr)
