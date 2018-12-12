@@ -37,6 +37,7 @@
 #define CREATE_TRACE_POINTS
 #include <trace/events/cpuhp.h>
 
+
 #include "smpboot.h"
 
 /**
@@ -243,6 +244,7 @@ err:
 }
 
 #ifdef CONFIG_SMP
+
 static inline void wait_for_ap_thread(struct cpuhp_cpu_state *st, bool bringup)
 {
 	struct completion *done = bringup ? &st->done_up : &st->done_down;
@@ -299,6 +301,7 @@ void cpus_read_lock(void)
 	percpu_down_read(&cpu_hotplug_lock);
 }
 EXPORT_SYMBOL_GPL(cpus_read_lock);
+
 
 void cpus_read_unlock(void)
 {
@@ -361,6 +364,7 @@ void __weak arch_smt_update(void) { }
 #ifdef CONFIG_HOTPLUG_SMT
 enum cpuhp_smt_control cpu_smt_control __read_mostly = CPU_SMT_ENABLED;
 
+
 void __init cpu_smt_disable(bool force)
 {
 	if (cpu_smt_control == CPU_SMT_FORCE_DISABLED ||
@@ -379,6 +383,7 @@ void __init cpu_smt_disable(bool force)
 /*
  * The decision whether SMT is supported can only be done after the full
  * CPU identification. Called from architecture code.
+
  */
 void __init cpu_smt_check_topology(void)
 {
@@ -399,6 +404,7 @@ static inline bool cpu_smt_allowed(unsigned int cpu)
 		return true;
 
 	if (topology_is_primary_thread(cpu))
+
 		return true;
 
 	/*
@@ -490,6 +496,7 @@ static int bringup_wait_for_ap(unsigned int cpu)
 		return -ECANCELED;
 
 	/* Unpark the hotplug thread of the target cpu */
+
 	kthread_unpark(st->thread);
 
 	/*
@@ -985,6 +992,7 @@ static int cpuhp_down_callbacks(unsigned int cpu, struct cpuhp_cpu_state *st,
 
 	for (; st->state > target; st->state--) {
 		ret = cpuhp_invoke_callback(cpu, st->state, false, NULL, NULL);
+
 		if (ret) {
 			st->target = prev_state;
 			if (st->state < prev_state)
@@ -1126,6 +1134,7 @@ static int __ref _cpu_down(unsigned int cpu, int tasks_frozen,
 
 	cpus_write_lock();
 
+
 	cpuhp_tasks_frozen = tasks_frozen;
 
 	prev_state = cpuhp_set_state(st, target);
@@ -1163,6 +1172,7 @@ static int __ref _cpu_down(unsigned int cpu, int tasks_frozen,
 	}
 
 out:
+
 	cpus_write_unlock();
 	/*
 	 * Do post unplug cleanup. This is still protected against
@@ -1188,6 +1198,18 @@ static int cpu_down_maps_locked(unsigned int cpu, enum cpuhp_state target)
 static int do_cpu_down(unsigned int cpu, enum cpuhp_state target)
 {
 	int err;
+
+	/*
+	 * When cpusets are enabled, the rebuilding of the scheduling
+	 * domains is deferred to a workqueue context. Make sure
+	 * that the work is completed before proceeding to the next
+	 * hotplug. Otherwise scheduler observes an inconsistent
+	 * view of online and offline CPUs in the root domain. If
+	 * the online CPUs are still stuck in the offline (default)
+	 * domain, those CPUs would not be visible when scheduling
+	 * happens on from other CPUs in the root domain.
+	 */
+	cpuset_wait_for_hotplug();
 
 	cpu_maps_update_begin();
 	err = cpu_down_maps_locked(cpu, target);
@@ -1268,6 +1290,7 @@ static int _cpu_up(unsigned int cpu, int tasks_frozen, enum cpuhp_state target)
 
 	cpus_write_lock();
 
+
 	if (!cpu_present(cpu)) {
 		ret = -EINVAL;
 		goto out;
@@ -1314,18 +1337,22 @@ static int _cpu_up(unsigned int cpu, int tasks_frozen, enum cpuhp_state target)
 	target = min((int)target, CPUHP_BRINGUP_CPU);
 	ret = cpuhp_up_callbacks(cpu, st, target);
 out:
+
 	cpus_write_unlock();
 	arch_smt_update();
+
 
 #ifndef CONFIG_TINY_RCU
 	rcu_expedited = rcu_expedited_back;
 #endif
 	return ret;
+
 }
 
 static int do_cpu_up(unsigned int cpu, enum cpuhp_state target)
 {
 	int err = 0;
+
 
 	if (!cpu_possible(cpu)) {
 		pr_err("can't online cpu %d because it is not configured as may-hotadd at boot time\n",
@@ -1335,6 +1362,9 @@ static int do_cpu_up(unsigned int cpu, enum cpuhp_state target)
 #endif
 		return -EINVAL;
 	}
+
+	cpuset_wait_for_hotplug();
+
 
 	err = try_online_node(cpu_to_node(cpu));
 	if (err)
@@ -1354,6 +1384,7 @@ static int do_cpu_up(unsigned int cpu, enum cpuhp_state target)
 	err = _cpu_up(cpu, 0, target);
 out:
 	cpu_maps_update_done();
+
 	return err;
 }
 
@@ -1674,6 +1705,7 @@ static struct cpuhp_step cpuhp_ap_states[] = {
 	[CPUHP_AP_ONLINE] = {
 		.name			= "ap:online",
 	},
+
 	/* Handle smpboot threads park/unpark */
 	[CPUHP_AP_SMPBOOT_THREADS] = {
 		.name			= "smpboot/threads:online",
@@ -1690,6 +1722,7 @@ static struct cpuhp_step cpuhp_ap_states[] = {
 		.startup.single		= perf_event_init_cpu,
 		.teardown.single	= perf_event_exit_cpu,
 	},
+
 	[CPUHP_AP_WORKQUEUE_ONLINE] = {
 		.name			= "workqueue:online",
 		.startup.single		= workqueue_online_cpu,
@@ -2316,6 +2349,7 @@ int cpuhp_smt_disable(enum cpuhp_smt_control ctrlval)
 	}
 	if (!ret)
 		cpu_smt_control = ctrlval;
+
 	cpu_maps_update_done();
 	return ret;
 }
@@ -2326,6 +2360,7 @@ int cpuhp_smt_enable(void)
 
 	cpu_maps_update_begin();
 	cpu_smt_control = CPU_SMT_ENABLED;
+
 	for_each_present_cpu(cpu) {
 		/* Skip online CPUs and CPUs on offline nodes */
 		if (cpu_online(cpu) || !node_online(cpu_to_node(cpu)))
