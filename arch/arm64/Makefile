@@ -84,6 +84,8 @@ ifeq ($(CONFIG_CPU_BIG_ENDIAN), y)
 KBUILD_CPPFLAGS	+= -mbig-endian
 CHECKFLAGS	+= -D__AARCH64EB__
 AS		+= -EB
+
+if (LLVM=0)
 ifeq ($(ld-name),gold)
 LDFLAGS		+= -EB -maarch64_elf64_be_vec
 else
@@ -91,19 +93,26 @@ else
 # it so fall back to the standard linux version if needed.
 LDFLAGS		+= -EB $(call ld-option, -maarch64elfb, -maarch64linuxb)
 endif
-UTS_MACHINE	:= aarch64_be
 else
+LDFLAGS	+= -EB
+endif
+
+UTS_MACHINE	:= aarch64_be
 KBUILD_CPPFLAGS	+= -mlittle-endian
 CHECKFLAGS	+= -D__AARCH64EL__
 AS		+= -EL
+
+ifeq ($(LLVM=0),y)
 ifeq ($(ld-name),gold)
 LDFLAGS		+= -EL -maarch64_elf64_le_vec
 else
 # Same as above, prefer ELF but fall back to linux target if needed.
 LDFLAGS		+= -EL $(call ld-option, -maarch64elf, -maarch64linux)
 endif
-UTS_MACHINE	:= aarch64
+else
+LDFLAGS	+= -EL
 endif
+UTS_MACHINE	:= aarch64
 
 CHECKFLAGS	+= -D__aarch64__ -m64
 

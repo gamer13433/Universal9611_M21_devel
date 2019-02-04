@@ -6,6 +6,7 @@ ccflags-y += -DCC_USE_CLANG
 CFLAGS_fmp_fips_selftest.o = -fno-merge-all-constants
 endif
 ifeq ($(CC_NO_CLANG), 1)
+ccflags-y := $(DISABLE_LTO)
 CFLAGS_fmp_fips_selftest.o = -fno-merge-constants
 endif
 ccflags-y += $(DISABLE_LTO_CLANG) $(DISABLE_CFI_CLANG) -fno-data-sections -fno-function-sections
