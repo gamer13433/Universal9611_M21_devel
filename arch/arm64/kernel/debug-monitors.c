@@ -162,6 +162,7 @@ static void clear_user_regs_spsr_ss(struct user_pt_regs *regs)
 }
 NOKPROBE_SYMBOL(clear_user_regs_spsr_ss);
 
+
 #define set_regs_spsr_ss(r)	set_user_regs_spsr_ss(&(r)->user_regs)
 #define clear_regs_spsr_ss(r)	clear_user_regs_spsr_ss(&(r)->user_regs)
 
