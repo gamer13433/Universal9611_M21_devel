@@ -1009,16 +1009,6 @@ struct task_struct {
 	short				il_prev;
 	short				pref_node_fork;
 #endif
-#ifdef CONFIG_RSEQ
-	struct rseq __user *rseq;
-	u32 rseq_len;
-	u32 rseq_sig;
-	/*
-	 * RmW on rseq_event_mask must be performed atomically
-	 * with respect to preemption.
-	 */
-	unsigned long rseq_event_mask;
-#endif
 #ifdef CONFIG_NUMA_BALANCING
 	int				numa_scan_seq;
 	unsigned int			numa_scan_period;
@@ -1058,6 +1048,15 @@ struct task_struct {
 	unsigned long			numa_pages_migrated;
 #endif /* CONFIG_NUMA_BALANCING */
 	struct tlbflush_unmap_batch	tlb_ubc;
+#ifdef CONFIG_RSEQ
+	struct rseq __user *rseq;
+	u32 rseq_sig;
+	/*
+	 * RmW on rseq_event_mask must be performed atomically
+	 * with respect to preemption.
+	 */
+	unsigned long rseq_event_mask;
+#endif
 	struct rcu_head			rcu;
 	/* Cache last used pipe for splice(): */
 	struct pipe_inode_info		*splice_pipe;
@@ -1850,12 +1849,10 @@ static inline void rseq_fork(struct task_struct *t, unsigned long clone_flags)
 {
 	if (clone_flags & CLONE_THREAD) {
 		t->rseq = NULL;
-		t->rseq_len = 0;
 		t->rseq_sig = 0;
 		t->rseq_event_mask = 0;
 	} else {
 		t->rseq = current->rseq;
-		t->rseq_len = current->rseq_len;
 		t->rseq_sig = current->rseq_sig;
 		t->rseq_event_mask = current->rseq_event_mask;
 		rseq_preempt(t);
@@ -1865,7 +1862,6 @@ static inline void rseq_fork(struct task_struct *t, unsigned long clone_flags)
 static inline void rseq_execve(struct task_struct *t)
 {
 	t->rseq = NULL;
-	t->rseq_len = 0;
 	t->rseq_sig = 0;
 	t->rseq_event_mask = 0;
 }
