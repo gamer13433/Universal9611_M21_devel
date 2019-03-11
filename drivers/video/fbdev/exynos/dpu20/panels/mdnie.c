@@ -1151,9 +1151,9 @@ int mdnie_register(struct device *p, void *data, mdnie_w w, mdnie_r r,
 	mdnie->light_notification = LIGHT_NOTIFICATION_OFF;
 	mdnie->color_lens = COLOR_LENS_OFF;
 
-	mdnie->wrgb_default.r = mdnie->wrgb_ldu.r = 255;
-	mdnie->wrgb_default.g = mdnie->wrgb_ldu.r = 255;
-	mdnie->wrgb_default.b = mdnie->wrgb_ldu.r = 255;
+	mdnie->wrgb_default.r = mdnie->wrgb_ldu.r = 245;
+	mdnie->wrgb_default.g = mdnie->wrgb_ldu.r = 242;
+	mdnie->wrgb_default.b = mdnie->wrgb_ldu.r = 248;
 
 	mdnie->data = data;
 	mdnie->ops.write = w;
