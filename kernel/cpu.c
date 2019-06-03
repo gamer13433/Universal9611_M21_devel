@@ -1404,6 +1404,13 @@ int freeze_secondary_cpus(int primary)
 	for_each_online_cpu(cpu) {
 		if (cpu == primary)
 			continue;
+
+		if (pm_wakeup_pending()) {
+			pr_info("Wakeup pending. Abort CPU freeze\n");
+			error = -EBUSY;
+			break;
+		}
+
 		trace_suspend_resume(TPS("CPU_OFF"), cpu, true);
 		dbg_snapshot_suspend("CPU_OFF", _cpu_down, NULL, cpu, DSS_FLAG_IN);
 		error = _cpu_down(cpu, 1, CPUHP_OFFLINE);
