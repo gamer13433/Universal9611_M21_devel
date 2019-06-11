@@ -1172,6 +1172,16 @@ config SCHED_AUTOGROUP
 	  desktop applications.  Task group autogeneration is currently based
 	  upon task session.
 
+config CPUSETS_ASSIST
+	bool "Cpusets configuration helper"
+	depends on CPUSETS
+	depends on ANDROID
+	help
+	  This option enables the configuration of default cpusets
+	  parameters from kernel.
+
+	  If unsure, say N.
+
 config DEFAULT_USE_ENERGY_AWARE
 	bool "Default to enabling the Energy Aware Scheduler feature"
 	default n
