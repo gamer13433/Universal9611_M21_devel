@@ -840,8 +840,7 @@ static void ipi_cpu_stop(unsigned int cpu, struct pt_regs *regs)
 	dbg_snapshot_save_context(regs);
 	exynos_sdm_flush_secdram();
 
-	while (1)
-		cpu_relax();
+	cpu_park_loop();
 }
 
 #ifdef CONFIG_KEXEC_CORE
