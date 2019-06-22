@@ -1816,6 +1816,7 @@ static void compact_node(int nid)
 	}
 }
 
+extern void zswap_compact(void);
 /* Compact all nodes in the system */
 static void compact_nodes(void)
 {
@@ -1826,6 +1827,8 @@ static void compact_nodes(void)
 
 	for_each_online_node(nid)
 		compact_node(nid);
+
+	zswap_compact();
 }
 
 /* The written value is actually unused, all memory is compacted */
