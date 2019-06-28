@@ -6531,7 +6531,7 @@ static int find_energy_efficient_cpu(struct task_struct *p, int prev_cpu, int sy
 		goto unlock;
 
 	latency_sensitive = uclamp_latency_sensitive(p);
-	boosted = uclamp_boosted(p);
+	boosted = global_boost() ? true : uclamp_boosted(p);
 	target_cap = boosted ? 0 : ULONG_MAX;
 
 	for (; pd; pd = pd->next) {

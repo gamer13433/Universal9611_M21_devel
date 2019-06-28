@@ -191,6 +191,16 @@ enum task_event {
 	TASK_UPDATE     = 4,
 	IRQ_UPDATE	= 5,
 };
+
+/* Global boosting */
+struct global_boost_request {
+	struct plist_node node;
+	char *name;
+	bool active;
+};
+
+extern int global_boost(void);
+extern void global_boost_update_request(struct global_boost_request *req, u32 new_value);
 extern cpumask_var_t			cpu_isolated_map;
 extern void scheduler_tick(void);
 #define	MAX_SCHEDULE_TIMEOUT		LONG_MAX
