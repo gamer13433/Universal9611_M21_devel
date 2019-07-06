@@ -123,6 +123,17 @@ static inline u32 kvm_x2apic_id(struct kvm_lapic *apic)
 	return apic->vcpu->vcpu_id;
 }
 
+bool kvm_can_post_timer_interrupt(struct kvm_vcpu *vcpu)
+{
+	return pi_inject_timer && kvm_vcpu_apicv_active(vcpu);
+}
+EXPORT_SYMBOL_GPL(kvm_can_post_timer_interrupt);
+
+static bool kvm_use_posted_timer_interrupt(struct kvm_vcpu *vcpu)
+{
+	return kvm_can_post_timer_interrupt(vcpu) && vcpu->mode == IN_GUEST_MODE;
+}
+
 static inline bool kvm_apic_map_get_logical_dest(struct kvm_apic_map *map,
 		u32 dest_id, struct kvm_lapic ***cluster, u16 *mask) {
 	switch (map->mode) {
@@ -1339,6 +1350,7 @@ static void apic_update_lvtt(struct kvm_lapic *apic)
 	}
 }
 
+<<<<<<< HEAD
 static void apic_timer_expired(struct kvm_lapic *apic)
 {
 	struct kvm_vcpu *vcpu = apic->vcpu;
@@ -1362,6 +1374,8 @@ static void apic_timer_expired(struct kvm_lapic *apic)
 		ktimer->expired_tscdeadline = ktimer->tscdeadline;
 }
 
+=======
+>>>>>>> 0c5f81dad46c9 (KVM: LAPIC: Inject timer interrupt via posted interrupt)
 /*
  * On APICv, this test will cause a busy wait
  * during a higher-priority task.
@@ -1385,7 +1399,61 @@ static bool lapic_timer_int_injected(struct kvm_vcpu *vcpu)
 	return false;
 }
 
+<<<<<<< HEAD
 void wait_lapic_expire(struct kvm_vcpu *vcpu)
+=======
+static inline void __wait_lapic_expire(struct kvm_vcpu *vcpu, u64 guest_cycles)
+{
+	u64 timer_advance_ns = vcpu->arch.apic->lapic_timer.timer_advance_ns;
+
+	/*
+	 * If the guest TSC is running at a different ratio than the host, then
+	 * convert the delay to nanoseconds to achieve an accurate delay.  Note
+	 * that __delay() uses delay_tsc whenever the hardware has TSC, thus
+	 * always for VMX enabled hardware.
+	 */
+	if (vcpu->arch.tsc_scaling_ratio == kvm_default_tsc_scaling_ratio) {
+		__delay(min(guest_cycles,
+			nsec_to_cycles(vcpu, timer_advance_ns)));
+	} else {
+		u64 delay_ns = guest_cycles * 1000000ULL;
+		do_div(delay_ns, vcpu->arch.virtual_tsc_khz);
+		ndelay(min_t(u32, delay_ns, timer_advance_ns));
+	}
+}
+
+static inline void adjust_lapic_timer_advance(struct kvm_vcpu *vcpu,
+					      s64 advance_expire_delta)
+{
+	struct kvm_lapic *apic = vcpu->arch.apic;
+	u32 timer_advance_ns = apic->lapic_timer.timer_advance_ns;
+	u64 ns;
+
+	/* too early */
+	if (advance_expire_delta < 0) {
+		ns = -advance_expire_delta * 1000000ULL;
+		do_div(ns, vcpu->arch.virtual_tsc_khz);
+		timer_advance_ns -= min((u32)ns,
+			timer_advance_ns / LAPIC_TIMER_ADVANCE_ADJUST_STEP);
+	} else {
+	/* too late */
+		ns = advance_expire_delta * 1000000ULL;
+		do_div(ns, vcpu->arch.virtual_tsc_khz);
+		timer_advance_ns += min((u32)ns,
+			timer_advance_ns / LAPIC_TIMER_ADVANCE_ADJUST_STEP);
+	}
+
+	if (abs(advance_expire_delta) < LAPIC_TIMER_ADVANCE_ADJUST_DONE)
+		apic->lapic_timer.timer_advance_adjust_done = true;
+	if (unlikely(timer_advance_ns > 5000)) {
+		timer_advance_ns = LAPIC_TIMER_ADVANCE_ADJUST_INIT;
+		apic->lapic_timer.timer_advance_adjust_done = false;
+	}
+	apic->lapic_timer.timer_advance_ns = timer_advance_ns;
+}
+
+static void __kvm_wait_lapic_expire(struct kvm_vcpu *vcpu)
+>>>>>>> 0c5f81dad46c9 (KVM: LAPIC: Inject timer interrupt via posted interrupt)
 {
 	struct kvm_lapic *apic = vcpu->arch.apic;
 	u64 guest_tsc, tsc_deadline;
@@ -1394,9 +1462,6 @@ void wait_lapic_expire(struct kvm_vcpu *vcpu)
 		return;
 
 	if (apic->lapic_timer.expired_tscdeadline == 0)
-		return;
-
-	if (!lapic_timer_int_injected(vcpu))
 		return;
 
 	tsc_deadline = apic->lapic_timer.expired_tscdeadline;
@@ -1408,6 +1473,59 @@ void wait_lapic_expire(struct kvm_vcpu *vcpu)
 	if (guest_tsc < tsc_deadline)
 		__delay(min(tsc_deadline - guest_tsc,
 			nsec_to_cycles(vcpu, lapic_timer_advance_ns)));
+}
+<<<<<<< HEAD
+=======
+
+void kvm_wait_lapic_expire(struct kvm_vcpu *vcpu)
+{
+	if (lapic_timer_int_injected(vcpu))
+		__kvm_wait_lapic_expire(vcpu);
+}
+EXPORT_SYMBOL_GPL(kvm_wait_lapic_expire);
+>>>>>>> 0c5f81dad46c9 (KVM: LAPIC: Inject timer interrupt via posted interrupt)
+
+static void kvm_apic_inject_pending_timer_irqs(struct kvm_lapic *apic)
+{
+	struct kvm_timer *ktimer = &apic->lapic_timer;
+
+	kvm_apic_local_deliver(apic, APIC_LVTT);
+	if (apic_lvtt_tscdeadline(apic))
+		ktimer->tscdeadline = 0;
+	if (apic_lvtt_oneshot(apic)) {
+		ktimer->tscdeadline = 0;
+		ktimer->target_expiration = 0;
+	}
+}
+
+static void apic_timer_expired(struct kvm_lapic *apic)
+{
+	struct kvm_vcpu *vcpu = apic->vcpu;
+	struct swait_queue_head *q = &vcpu->wq;
+	struct kvm_timer *ktimer = &apic->lapic_timer;
+
+	if (atomic_read(&apic->lapic_timer.pending))
+		return;
+
+	if (apic_lvtt_tscdeadline(apic) || ktimer->hv_timer_in_use)
+		ktimer->expired_tscdeadline = ktimer->tscdeadline;
+
+	if (kvm_use_posted_timer_interrupt(apic->vcpu)) {
+		if (apic->lapic_timer.timer_advance_ns)
+			__kvm_wait_lapic_expire(vcpu);
+		kvm_apic_inject_pending_timer_irqs(apic);
+		return;
+	}
+
+	atomic_inc(&apic->lapic_timer.pending);
+	kvm_set_pending_timer(vcpu);
+
+	/*
+	 * For x86, the atomic_inc() is serialized, thus
+	 * using swait_active() is safe.
+	 */
+	if (swait_active(q))
+		swake_up_one(q);
 }
 
 static void start_sw_tscdeadline(struct kvm_lapic *apic)
@@ -2193,13 +2311,7 @@ void kvm_inject_apic_timer_irqs(struct kvm_vcpu *vcpu)
 	struct kvm_lapic *apic = vcpu->arch.apic;
 
 	if (atomic_read(&apic->lapic_timer.pending) > 0) {
-		kvm_apic_local_deliver(apic, APIC_LVTT);
-		if (apic_lvtt_tscdeadline(apic))
-			apic->lapic_timer.tscdeadline = 0;
-		if (apic_lvtt_oneshot(apic)) {
-			apic->lapic_timer.tscdeadline = 0;
-			apic->lapic_timer.target_expiration = 0;
-		}
+		kvm_apic_inject_pending_timer_irqs(apic);
 		atomic_set(&apic->lapic_timer.pending, 0);
 	}
 }
@@ -2321,7 +2433,8 @@ void __kvm_migrate_apic_timer(struct kvm_vcpu *vcpu)
 {
 	struct hrtimer *timer;
 
-	if (!lapic_in_kernel(vcpu))
+	if (!lapic_in_kernel(vcpu) ||
+		kvm_can_post_timer_interrupt(vcpu))
 		return;
 
 	timer = &vcpu->arch.apic->lapic_timer.timer;
