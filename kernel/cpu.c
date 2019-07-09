@@ -9,6 +9,7 @@
 #include <linux/notifier.h>
 #include <linux/sched/signal.h>
 #include <linux/sched/hotplug.h>
+
 #include <linux/sched/task.h>
 #include <linux/sched/smt.h>
 #include <linux/unistd.h>
@@ -248,6 +249,7 @@ err:
 
 #ifdef CONFIG_SMP
 
+
 static inline void wait_for_ap_thread(struct cpuhp_cpu_state *st, bool bringup)
 {
 	struct completion *done = bringup ? &st->done_up : &st->done_down;
@@ -306,6 +308,7 @@ void cpus_read_lock(void)
 EXPORT_SYMBOL_GPL(cpus_read_lock);
 
 
+
 void cpus_read_unlock(void)
 {
 	percpu_up_read(&cpu_hotplug_lock);
@@ -324,8 +327,10 @@ void cpus_write_unlock(void)
 
 void lockdep_assert_cpus_held(void)
 {
+
 	percpu_rwsem_assert_held(&cpu_hotplug_lock);
 }
+
 
 /*
  * Wait for currently running CPU hotplug operations to complete (if any) and
@@ -356,6 +361,7 @@ void cpu_hotplug_enable(void)
 	cpu_maps_update_done();
 }
 EXPORT_SYMBOL_GPL(cpu_hotplug_enable);
+
 #endif	/* CONFIG_HOTPLUG_CPU */
 
 /*
@@ -636,6 +642,7 @@ static void cpuhp_thread_fun(unsigned int cpu)
 	if (WARN_ON_ONCE(!st->should_run))
 		return;
 
+
 	cpuhp_lock_acquire(bringup);
 
 	if (st->single) {
@@ -688,6 +695,7 @@ static void cpuhp_thread_fun(unsigned int cpu)
 
 next:
 	cpuhp_lock_release(bringup);
+
 
 	if (!st->should_run)
 		complete_ap_thread(st, bringup);
@@ -901,6 +909,7 @@ static int take_cpu_down(void *_param)
 
 	/* Give up timekeeping duties */
 	tick_handover_do_timer();
+
 	/* Park the stopper thread */
 	stop_machine_park(cpu);
 	return 0;
@@ -1426,8 +1435,10 @@ int freeze_secondary_cpus(int primary)
 	int cpu, error = 0;
 
 	cpu_maps_update_begin();
+
 	if (!cpu_online(primary))
 		primary = cpumask_first(cpu_online_mask);
+
 	/*
 	 * We take down all of the non-boot CPUs in one shot to avoid races
 	 * with the userspace trying to use the CPU hotplug at the same time
@@ -1709,6 +1720,7 @@ static struct cpuhp_step cpuhp_ap_states[] = {
 		.name			= "ap:online",
 	},
 
+
 	/* Handle smpboot threads park/unpark */
 	[CPUHP_AP_SMPBOOT_THREADS] = {
 		.name			= "smpboot/threads:online",
@@ -1725,6 +1737,7 @@ static struct cpuhp_step cpuhp_ap_states[] = {
 		.startup.single		= perf_event_init_cpu,
 		.teardown.single	= perf_event_exit_cpu,
 	},
+
 
 	[CPUHP_AP_WORKQUEUE_ONLINE] = {
 		.name			= "workqueue:online",
@@ -2378,6 +2391,7 @@ int cpuhp_smt_enable(void)
 	return ret;
 }
 
+
 static ssize_t
 store_smt_control(struct device *dev, struct device_attribute *attr,
 		  const char *buf, size_t count)
@@ -2418,6 +2432,7 @@ store_smt_control(struct device *dev, struct device_attribute *attr,
 	unlock_device_hotplug();
 	return ret ? ret : count;
 }
+
 static DEVICE_ATTR(control, 0644, show_smt_control, store_smt_control);
 
 static ssize_t
@@ -2526,6 +2541,9 @@ EXPORT_SYMBOL(__cpu_active_mask);
 struct cpumask __cpu_isolated_mask __read_mostly;
 EXPORT_SYMBOL(__cpu_isolated_mask);
 
+atomic_t __num_online_cpus __read_mostly;
+EXPORT_SYMBOL(__num_online_cpus);
+
 void init_cpu_present(const struct cpumask *src)
 {
 	cpumask_copy(&__cpu_present_mask, src);
@@ -2539,6 +2557,27 @@ void init_cpu_possible(const struct cpumask *src)
 void init_cpu_online(const struct cpumask *src)
 {
 	cpumask_copy(&__cpu_online_mask, src);
+}
+
+void set_cpu_online(unsigned int cpu, bool online)
+{
+	/*
+	 * atomic_inc/dec() is required to handle the horrid abuse of this
+	 * function by the reboot and kexec code which invoke it from
+	 * IPI/NMI broadcasts when shutting down CPUs. Invocation from
+	 * regular CPU hotplug is properly serialized.
+	 *
+	 * Note, that the fact that __num_online_cpus is of type atomic_t
+	 * does not protect readers which are not serialized against
+	 * concurrent hotplug operations.
+	 */
+	if (online) {
+		if (!cpumask_test_and_set_cpu(cpu, &__cpu_online_mask))
+			atomic_inc(&__num_online_cpus);
+	} else {
+		if (cpumask_test_and_clear_cpu(cpu, &__cpu_online_mask))
+			atomic_dec(&__num_online_cpus);
+	}
 }
 
 void init_cpu_isolated(const struct cpumask *src)
