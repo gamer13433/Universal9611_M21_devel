@@ -126,6 +126,9 @@ extern struct cpumask __cpu_isolated_mask;
 
 extern struct cpumask cpu_fastoff_mask;
 extern struct cpumask cpu_faston_mask;
+extern cpumask_t cpus_booted_once_mask;
+
+
 
 /* verify cpu argument to cpumask_* operators */
 static inline unsigned int cpumask_check(unsigned int cpu)
@@ -142,6 +145,7 @@ static inline unsigned int cpumask_first(const struct cpumask *srcp)
 {
 	return 0;
 }
+
 
 /* Valid inputs for n are -1 and 0. */
 static inline unsigned int cpumask_next(int n, const struct cpumask *srcp)
@@ -160,6 +164,7 @@ static inline unsigned int cpumask_next_and(int n,
 {
 	return n+1;
 }
+
 
 /* cpu must be a valid cpu, ie 0, so there's no other choice. */
 static inline unsigned int cpumask_any_but(const struct cpumask *mask,
@@ -192,6 +197,7 @@ static inline unsigned int cpumask_first(const struct cpumask *srcp)
 {
 	return find_first_bit(cpumask_bits(srcp), nr_cpumask_bits);
 }
+
 
 unsigned int cpumask_next(int n, const struct cpumask *srcp);
 
