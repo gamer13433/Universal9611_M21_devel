@@ -465,6 +465,7 @@ KBUILD_CFLAGS   := -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs \
 
 
 
+
 KBUILD_CFLAGS    += -Werror=vla
 
 
@@ -579,6 +580,7 @@ export CLANG_FLAGS
 
 
 endif
+
 
 
 
@@ -1000,6 +1002,9 @@ lto-clang-flags	:= -flto -fvisibility=hidden
 
 
 
+
+
+
 KBUILD_LDS_MODULE += $(srctree)/scripts/module-lto.lds
 
 # allow disabling only clang LTO where needed
@@ -1139,6 +1144,10 @@ endif
 
 ifeq ($(CONFIG_STRIP_ASM_SYMS),y)
 LDFLAGS_vmlinux	+= $(call ld-option, -X,)
+endif
+
+ifeq ($(CONFIG_RELR),y)
+LDFLAGS_vmlinux	+= --pack-dyn-relocs=relr
 endif
 
 # FINGERPRINT
@@ -1400,6 +1409,7 @@ else
 	@echo "warning: Cannot use CONFIG_STACK_VALIDATION=y, please install libelf-dev, libelf-devel or elfutils-libelf-devel" >&2
 endif
 endif
+
 
 
 
