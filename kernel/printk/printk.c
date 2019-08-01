@@ -1992,10 +1992,6 @@ static bool cont_add(int facility, int level, enum log_flags flags, const char *
 		cont.owner = current;
 		cont.ts_nsec = local_clock() + get_total_sleep_time_nsec();
 		cont.flags = 0;
-		cont.cons = 0;
-		cont.flushed = false;
-		cont.cpu = smp_processor_id();
-		cont.pid = current->pid;
 	}
 
 	memcpy(cont.buf + cont.len, text, len);
