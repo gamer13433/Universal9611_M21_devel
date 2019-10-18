@@ -62,9 +62,17 @@ choice
 		bool "zsmalloc" if ZSMALLOC=y
 endchoice
 
+
 config ZRAM_COMP_WRITEBACK
 	bool
 	depends on ZRAM_WRITEBACK
 	default y
 	help
 	  This feature supports zram compressed writeback.s
+
+config ZRAM_DEFAULT_BACKEND
+	string
+	default "zbud" if DEFAULT_ZRAM_ZBUD
+	default "z3fold" if DEFAULT_ZRAM_Z3FOLD
+	default "zsmalloc"
+
