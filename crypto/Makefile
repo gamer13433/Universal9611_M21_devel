@@ -177,6 +177,7 @@ ecdh_generic-y := ecc.o
 ecdh_generic-y += ecdh.o
 ecdh_generic-y += ecdh_helper.o
 obj-$(CONFIG_CRYPTO_ECDH) += ecdh_generic.o
+obj-$(CONFIG_CRYPTO_CURVE25519) += curve25519-generic.o
 
 
 #
