@@ -931,6 +931,8 @@ static int takedown_cpu(unsigned int cpu)
 	 * Wait for the stop thread to go away.
 	 */
 	wait_for_ap_thread(st, false);
+	while (!idle_cpu_relaxed(cpu))
+		cpu_read_relax();
 	BUG_ON(st->state != CPUHP_AP_IDLE_DEAD);
 
 	/* Interrupts are moved away from the dying cpu, reenable alloc/free */
