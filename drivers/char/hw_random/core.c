@@ -396,9 +396,7 @@ static int hwrng_fillfn(void *unused)
 {
 	long rc;
 
-	set_freezable();
-
-	while (!kthread_freezable_should_stop(NULL)) {
+	while (!kthread_should_stop()) {
 		struct hwrng *rng;
 
 		rng = get_current_rng();
