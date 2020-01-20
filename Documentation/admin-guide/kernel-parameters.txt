@@ -1735,20 +1735,66 @@
 	isapnp=		[ISAPNP]
 			Format: <RDP>,<reset>,<pci_scan>,<verbosity>
 
-	isolcpus=	[KNL,SMP] Isolate CPUs from the general scheduler.
-			The argument is a cpu list, as described above.
+	isolcpus=	[KNL,SMP,ISOL] Isolate a given set of CPUs from disturbance.
+			[Deprecated - use cpusets instead]
+			Format: [flag-list,]<cpu-list>
 
-			This option can be used to specify one or more CPUs
-			to isolate from the general SMP balancing and scheduling
-			algorithms. You can move a process onto or off an
-			"isolated" CPU via the CPU affinity syscalls or cpuset.
-			<cpu number> begins at 0 and the maximum value is
-			"number of CPUs in system - 1".
+			Specify one or more CPUs to isolate from disturbances
+			specified in the flag list (default: domain):
 
-			This option is the preferred way to isolate CPUs. The
-			alternative -- manually setting the CPU mask of all
-			tasks in the system -- can cause problems and
-			suboptimal load balancer performance.
+			nohz
+			  Disable the tick when a single task runs.
+
+			  A residual 1Hz tick is offloaded to workqueues, which you
+			  need to affine to housekeeping through the global
+			  workqueue's affinity configured via the
+			  /sys/devices/virtual/workqueue/cpumask sysfs file, or
+			  by using the 'domain' flag described below.
+
+			  NOTE: by default the global workqueue runs on all CPUs,
+			  so to protect individual CPUs the 'cpumask' file has to
+			  be configured manually after bootup.
+
+			domain
+			  Isolate from the general SMP balancing and scheduling
+			  algorithms. Note that performing domain isolation this way
+			  is irreversible: it's not possible to bring back a CPU to
+			  the domains once isolated through isolcpus. It's strongly
+			  advised to use cpusets instead to disable scheduler load
+			  balancing through the "cpuset.sched_load_balance" file.
+			  It offers a much more flexible interface where CPUs can
+			  move in and out of an isolated set anytime.
+
+			  You can move a process onto or off an "isolated" CPU via
+			  the CPU affinity syscalls or cpuset.
+			  <cpu number> begins at 0 and the maximum value is
+			  "number of CPUs in system - 1".
+
+			managed_irq
+
+			  Isolate from being targeted by managed interrupts
+			  which have an interrupt mask containing isolated
+			  CPUs. The affinity of managed interrupts is
+			  handled by the kernel and cannot be changed via
+			  the /proc/irq/* interfaces.
+
+			  This isolation is best effort and only effective
+			  if the automatically assigned interrupt mask of a
+			  device queue contains isolated and housekeeping
+			  CPUs. If housekeeping CPUs are online then such
+			  interrupts are directed to the housekeeping CPU
+			  so that IO submitted on the housekeeping CPU
+			  cannot disturb the isolated CPU.
+
+			  If a queue's affinity mask contains only isolated
+			  CPUs then this parameter has no effect on the
+			  interrupt routing decision, though interrupts are
+			  only delivered when tasks running on those
+			  isolated CPUs submit IO. IO submitted on
+			  housekeeping CPUs has no influence on those
+			  queues.
+
+			The format of <cpu-list> is described above.
 
 	iucv=		[HW,NET]
 
