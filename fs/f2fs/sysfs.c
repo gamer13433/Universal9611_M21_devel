@@ -186,6 +186,7 @@ static ssize_t current_reserved_blocks_show(struct f2fs_attr *a,
 	return snprintf(buf, PAGE_SIZE, "%u\n", sbi->current_reserved_blocks);
 }
 
+#ifdef CONFIG_F2FS_STAT_FS
 /* Copy from debug.c stat_show */
 static ssize_t f2fs_sec_stats_show(struct f2fs_sb_info *sbi, char *buf)
 {
@@ -365,6 +366,7 @@ static ssize_t f2fs_sec_stats_show(struct f2fs_sb_info *sbi, char *buf)
 
 	return len;
 }
+#endif
 
 static ssize_t f2fs_sbi_show(struct f2fs_attr *a,
 			struct f2fs_sb_info *sbi, char *buf)
@@ -480,8 +482,10 @@ static ssize_t f2fs_sbi_show(struct f2fs_attr *a,
 						sec_fua_mode_names[i]);
 		}
 		return len;
+#ifdef CONFIG_F2FS_STAT_FS
 	} else if (!strcmp(a->attr.name, "sec_stats")) {
 		return f2fs_sec_stats_show(sbi, buf);
+#endif
 	}
 
 	ui = (unsigned int *)(ptr + a->offset);
@@ -794,7 +798,9 @@ F2FS_RW_ATTR(FAULT_INFO_TYPE, f2fs_fault_info, inject_type, inject_type);
 #endif
 F2FS_RW_ATTR(F2FS_SBI, f2fs_sb_info, sec_gc_stat, sec_stat);
 F2FS_RW_ATTR(F2FS_SBI, f2fs_sb_info, sec_io_stat, sec_stat);
+#ifdef CONFIG_F2FS_STAT_FS
 F2FS_RW_ATTR(F2FS_SBI, f2fs_sb_info, sec_stats, stat_info);
+#endif
 F2FS_RW_ATTR(F2FS_SBI, f2fs_sb_info, sec_fsck_stat, sec_fsck_stat);
 F2FS_RW_ATTR(F2FS_SBI, f2fs_sb_info, sec_part_best_extents, s_sec_part_best_extents);
 F2FS_RW_ATTR(F2FS_SBI, f2fs_sb_info, sec_part_current_extents, s_sec_part_current_extents);
@@ -855,7 +861,9 @@ static struct attribute *f2fs_attrs[] = {
 	ATTR_LIST(extension_list),
 	ATTR_LIST(sec_gc_stat),
 	ATTR_LIST(sec_io_stat),
+#ifdef CONFIG_F2FS_STAT_FS
 	ATTR_LIST(sec_stats),
+#endif
 	ATTR_LIST(sec_fsck_stat),
 	ATTR_LIST(sec_part_best_extents),
 	ATTR_LIST(sec_part_current_extents),
