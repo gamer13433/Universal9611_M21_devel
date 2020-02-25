@@ -1481,6 +1481,9 @@ struct f2fs_sb_info {
 	unsigned int s_sec_num_apps;
 	unsigned int s_sec_capacity_apps_kb;
 
+	struct kmem_cache *inline_xattr_slab;	/* inline xattr entry */
+	unsigned int inline_xattr_slab_size;	/* default inline xattr slab size */
+
 	struct list_head list;
 
 };
