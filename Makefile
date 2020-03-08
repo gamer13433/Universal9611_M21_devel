@@ -459,6 +459,7 @@ KBUILD_CFLAGS   := -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs \
 
 
 
+
 KBUILD_CFLAGS    += -Werror=vla
 
 
@@ -573,6 +574,7 @@ export CLANG_FLAGS
 
 
 endif
+
 
 
 
@@ -845,7 +847,7 @@ KBUILD_CFLAGS += $(call cc-disable-warning, duplicate-decl-specifier)
 
 
 
-KBUILD_CFLAGS += $(call cc-disable-warning, void-pointer-to-int-cast)
+
 
 # Quiet clang warning: comparison of unsigned expression < 0 is always false
 
@@ -857,6 +859,11 @@ ifdef CONFIG_MODULES
 # See modpost pattern 2
 KBUILD_CFLAGS += $(call cc-option, -mno-global-merge,)
 endif
+# clang's -Wpointer-to-int-cast warns when casting to enums, which does not match GCC.
+# Disable that part of the warning because it is very noisy across the kernel and does
+# not point out any real bugs.
+KBUILD_CFLAGS += $(call cc-disable-warning, pointer-to-enum-cast)
+KBUILD_CFLAGS += $(call cc-disable-warning, pointer-to-int-cast)
 else
 
 
@@ -944,6 +951,9 @@ endif
 
 ifdef CONFIG_LTO_CLANG
 lto-clang-flags	:= -flto -fvisibility=hidden
+
+
+
 
 
 
@@ -1363,6 +1373,8 @@ else
 	@echo "warning: Cannot use CONFIG_STACK_VALIDATION=y, please install libelf-dev, libelf-devel or elfutils-libelf-devel" >&2
 endif
 endif
+
+
 
 
 
