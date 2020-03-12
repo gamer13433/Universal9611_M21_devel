@@ -14,6 +14,11 @@ ccflags-y += -Ofast
 # FIPS_140_2
 obj-$(CONFIG_CRYPTO_FIPS) += fips140_first_file_asm.o
 
+KBUILD_CFLAGS += $(SIMD_CFLAGS)
+
+#Keep this at the top
+obj-$(CONFIG_CRYPTO_FIPS) += first_file_asm.o
+
 obj-$(CONFIG_CRYPTO_SHA1_ARM64_CE) += sha1-ce.o
 sha1-ce-y := sha1-ce-glue.o sha1-ce-core.o
 
@@ -35,6 +40,7 @@ sha3-ce-y := sha3-ce-glue.o sha3-ce-core.o
 obj-$(CONFIG_CRYPTO_GHASH_ARM64_CE) += ghash-ce.o
 ghash-ce-y := ghash-ce-glue.o ghash-ce-core.o
 
+<<<<<<< HEAD
 # Keep this at the bottom
 # FIPS_140_2
 obj-$(CONFIG_CRYPTO_FIPS) += fips140_last_file_asm.o
@@ -45,6 +51,10 @@ crct10dif-ce-y := crct10dif-ce-core.o crct10dif-ce-glue.o
 obj-$(CONFIG_CRYPTO_CRC32_ARM64_CE) += crc32-ce.o
 crc32-ce-y:= crc32-ce-core.o crc32-ce-glue.o
 
+=======
+obj-$(CONFIG_CRYPTO_AES_ARM64_CE) += aes-ce-cipher.o
+aes-ce-cipher-y := aes-ce-cipher-glue.o aes-ce-cipher-core.o
+>>>>>>> 2ff7d103d078 (Crypto: Optimize SIMD support)
 
 obj-$(CONFIG_CRYPTO_AES_ARM64_CE_CCM) += aes-ce-ccm.o
 aes-ce-ccm-y := aes-ce-ccm-glue.o aes-ce-ccm-core.o
@@ -56,6 +66,7 @@ aes-neon-blk-y := aes-glue-neon.o aes-neon.o
 obj-$(CONFIG_CRYPTO_SHA256_ARM64) += sha256-arm64.o
 sha256-arm64-y := sha256-glue.o sha256-core.o
 
+<<<<<<< HEAD
 obj-$(CONFIG_CRYPTO_SHA512_ARM64) += sha512-arm64.o
 sha512-arm64-y := sha512-glue.o sha512-core.o
 
@@ -65,6 +76,9 @@ chacha-neon-y := chacha-neon-core.o chacha-neon-glue.o
 obj-$(CONFIG_CRYPTO_POLY1305_NEON) += poly1305-neon.o
 poly1305-neon-y := poly1305-core.o poly1305-glue.o
 AFLAGS_poly1305-core.o += -Dpoly1305_init=poly1305_init_arm64
+=======
+obj-$(CONFIG_CRYPTO_CRC32_ARM64) += crc32-arm64.o
+>>>>>>> 2ff7d103d078 (Crypto: Optimize SIMD support)
 
 obj-$(CONFIG_CRYPTO_AES_ARM64) += aes-arm64.o
 aes-arm64-y := aes-cipher-core.o aes-cipher-glue.o

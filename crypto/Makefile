@@ -9,6 +9,8 @@ ifeq ($(CONFIG_CRYPTO_FIPS), y)
 #ccflags-y += -DCONFIG_CRYPTO_FIPS_FUNC_TEST
 endif
 
+KBUILD_CFLAGS += $(SIMD_CFLAGS)
+
 
 # ---------------------------------------
 # Keep this at the top of FIPS boundary
