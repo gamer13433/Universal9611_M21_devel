@@ -458,6 +458,7 @@ KBUILD_CFLAGS   := -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs \
 
 
 
+
 KBUILD_CFLAGS    += -Werror=vla
 
 
@@ -572,6 +573,7 @@ export CLANG_FLAGS
 
 
 endif
+
 
 
 
@@ -843,6 +845,7 @@ KBUILD_CFLAGS += $(call cc-disable-warning, duplicate-decl-specifier)
 
 
 
+KBUILD_CFLAGS += $(call cc-disable-warning, void-pointer-to-int-cast)
 
 # Quiet clang warning: comparison of unsigned expression < 0 is always false
 
@@ -941,6 +944,9 @@ endif
 
 ifdef CONFIG_LTO_CLANG
 lto-clang-flags	:= -flto -fvisibility=hidden
+
+
+
 
 
 
@@ -1357,6 +1363,8 @@ else
 	@echo "warning: Cannot use CONFIG_STACK_VALIDATION=y, please install libelf-dev, libelf-devel or elfutils-libelf-devel" >&2
 endif
 endif
+
+
 
 
 
