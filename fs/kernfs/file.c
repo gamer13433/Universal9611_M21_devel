@@ -283,6 +283,7 @@ static ssize_t kernfs_fop_write(struct file *file, const char __user *user_buf,
 	const struct kernfs_ops *ops;
 	char buf_onstack[SZ_4K + 1] __aligned(8);
 	ssize_t len;
+	char stack_buf[PATH_MAX + 1];
 	char *buf;
 
 	if (of->atomic_write_len) {
@@ -338,8 +339,10 @@ static ssize_t kernfs_fop_write(struct file *file, const char __user *user_buf,
 out_free:
 	if (buf == of->prealloc_buf)
 		mutex_unlock(&of->prealloc_mutex);
+
 	else if (buf != buf_onstack)
 		kfree(buf);
+
 	return len;
 }
 
