@@ -250,6 +250,7 @@ err:
 #ifdef CONFIG_SMP
 
 
+
 static inline void wait_for_ap_thread(struct cpuhp_cpu_state *st, bool bringup)
 {
 	struct completion *done = bringup ? &st->done_up : &st->done_down;
@@ -309,6 +310,7 @@ EXPORT_SYMBOL_GPL(cpus_read_lock);
 
 
 
+
 void cpus_read_unlock(void)
 {
 	percpu_up_read(&cpu_hotplug_lock);
@@ -328,8 +330,10 @@ void cpus_write_unlock(void)
 void lockdep_assert_cpus_held(void)
 {
 
+
 	percpu_rwsem_assert_held(&cpu_hotplug_lock);
 }
+
 
 
 /*
@@ -361,6 +365,7 @@ void cpu_hotplug_enable(void)
 	cpu_maps_update_done();
 }
 EXPORT_SYMBOL_GPL(cpu_hotplug_enable);
+
 
 #endif	/* CONFIG_HOTPLUG_CPU */
 
@@ -424,6 +429,7 @@ static inline bool cpu_smt_allowed(unsigned int cpu)
 	 */
 	return !cpumask_test_cpu(cpu, &cpus_booted_once_mask);
 }
+
 #else
 static inline bool cpu_smt_allowed(unsigned int cpu) { return true; }
 #endif
@@ -641,6 +647,7 @@ static void cpuhp_thread_fun(unsigned int cpu)
 
 	if (WARN_ON_ONCE(!st->should_run))
 		return;
+
 
 
 	cpuhp_lock_acquire(bringup);
@@ -909,6 +916,7 @@ static int take_cpu_down(void *_param)
 
 	/* Give up timekeeping duties */
 	tick_handover_do_timer();
+
 
 	/* Park the stopper thread */
 	stop_machine_park(cpu);
@@ -1235,6 +1243,18 @@ int cpu_down(unsigned int cpu)
 }
 EXPORT_SYMBOL(cpu_down);
 
+int remove_cpu(unsigned int cpu)
+{
+	int ret;
+
+	lock_device_hotplug();
+	ret = device_offline(get_cpu_device(cpu));
+	unlock_device_hotplug();
+
+	return ret;
+}
+EXPORT_SYMBOL_GPL(remove_cpu);
+
 #else
 #define takedown_cpu		NULL
 #endif /*CONFIG_HOTPLUG_CPU*/
@@ -1406,6 +1426,18 @@ int cpu_up(unsigned int cpu)
 }
 EXPORT_SYMBOL_GPL(cpu_up);
 
+int add_cpu(unsigned int cpu)
+{
+	int ret;
+
+	lock_device_hotplug();
+	ret = device_online(get_cpu_device(cpu));
+	unlock_device_hotplug();
+
+	return ret;
+}
+EXPORT_SYMBOL_GPL(add_cpu);
+
 int cpus_up(struct cpumask cpus)
 {
 	int cpu, ret;
@@ -1436,8 +1468,10 @@ int freeze_secondary_cpus(int primary)
 
 	cpu_maps_update_begin();
 
+
 	if (!cpu_online(primary))
 		primary = cpumask_first(cpu_online_mask);
+
 
 	/*
 	 * We take down all of the non-boot CPUs in one shot to avoid races
@@ -1721,6 +1755,7 @@ static struct cpuhp_step cpuhp_ap_states[] = {
 	},
 
 
+
 	/* Handle smpboot threads park/unpark */
 	[CPUHP_AP_SMPBOOT_THREADS] = {
 		.name			= "smpboot/threads:online",
@@ -1737,6 +1772,7 @@ static struct cpuhp_step cpuhp_ap_states[] = {
 		.startup.single		= perf_event_init_cpu,
 		.teardown.single	= perf_event_exit_cpu,
 	},
+
 
 
 	[CPUHP_AP_WORKQUEUE_ONLINE] = {
@@ -2152,6 +2188,7 @@ void __cpuhp_remove_state(enum cpuhp_state state, bool invoke)
 }
 EXPORT_SYMBOL(__cpuhp_remove_state);
 
+
 #if defined(CONFIG_SYSFS) && defined(CONFIG_HOTPLUG_CPU)
 static ssize_t show_cpuhp_state(struct device *dev,
 				struct device_attribute *attr, char *buf)
@@ -2432,6 +2469,7 @@ store_smt_control(struct device *dev, struct device_attribute *attr,
 	unlock_device_hotplug();
 	return ret ? ret : count;
 }
+
 
 static DEVICE_ATTR(control, 0644, show_smt_control, store_smt_control);
 
