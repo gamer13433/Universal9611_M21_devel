@@ -8,6 +8,7 @@
 #include <linux/mm_types.h>
 #include <linux/gfp.h>
 
+
 /*
  * Routines for handling mm_structs
  */
@@ -39,9 +40,12 @@ static inline void mmgrab(struct mm_struct *mm)
 extern void __mmdrop(struct mm_struct *);
 static inline void mmdrop(struct mm_struct *mm)
 {
+
 	if (unlikely(atomic_dec_and_test(&mm->mm_count)))
 		__mmdrop(mm);
 }
+
+void mmdrop(struct mm_struct *mm);
 
 static inline void mmdrop_async_fn(struct work_struct *work)
 {
@@ -140,6 +144,7 @@ static inline void mm_update_next_owner(struct mm_struct *mm)
 
 #ifdef CONFIG_MMU
 extern void arch_pick_mmap_layout(struct mm_struct *mm);
+
 extern unsigned long
 arch_get_unmapped_area(struct file *, unsigned long, unsigned long,
 		       unsigned long, unsigned long);
@@ -149,6 +154,7 @@ arch_get_unmapped_area_topdown(struct file *filp, unsigned long addr,
 			  unsigned long flags);
 #else
 static inline void arch_pick_mmap_layout(struct mm_struct *mm) {}
+
 #endif
 
 static inline bool in_vfork(struct task_struct *tsk)
@@ -182,9 +188,11 @@ static inline bool in_vfork(struct task_struct *tsk)
  * Applies per-task gfp context to the given allocation flags.
  * PF_MEMALLOC_NOIO implies GFP_NOIO
  * PF_MEMALLOC_NOFS implies GFP_NOFS
+
  */
 static inline gfp_t current_gfp_context(gfp_t flags)
 {
+
 	/*
 	 * NOIO implies both NOIO and NOFS and it is a weaker context
 	 * so always make sure it makes precendence
@@ -193,16 +201,20 @@ static inline gfp_t current_gfp_context(gfp_t flags)
 		flags &= ~(__GFP_IO | __GFP_FS);
 	else if (unlikely(current->flags & PF_MEMALLOC_NOFS))
 		flags &= ~__GFP_FS;
+
 	return flags;
 }
 
 #ifdef CONFIG_LOCKDEP
+
 extern void fs_reclaim_acquire(gfp_t gfp_mask);
 extern void fs_reclaim_release(gfp_t gfp_mask);
 #else
+
 static inline void fs_reclaim_acquire(gfp_t gfp_mask) { }
 static inline void fs_reclaim_release(gfp_t gfp_mask) { }
 #endif
+
 
 static inline unsigned int memalloc_noio_save(void)
 {
@@ -211,10 +223,12 @@ static inline unsigned int memalloc_noio_save(void)
 	return flags;
 }
 
+
 static inline void memalloc_noio_restore(unsigned int flags)
 {
 	current->flags = (current->flags & ~PF_MEMALLOC_NOIO) | flags;
 }
+
 
 static inline unsigned int memalloc_nofs_save(void)
 {
@@ -222,6 +236,7 @@ static inline unsigned int memalloc_nofs_save(void)
 	current->flags |= PF_MEMALLOC_NOFS;
 	return flags;
 }
+
 
 static inline void memalloc_nofs_restore(unsigned int flags)
 {
@@ -240,18 +255,24 @@ static inline void memalloc_noreclaim_restore(unsigned int flags)
 	current->flags = (current->flags & ~PF_MEMALLOC) | flags;
 }
 
+
 #ifdef CONFIG_MEMBARRIER
 enum {
 	MEMBARRIER_STATE_PRIVATE_EXPEDITED_READY	= (1U << 0),
 	MEMBARRIER_STATE_SWITCH_MM			= (1U << 1),
+
 };
 
 static inline void membarrier_execve(struct task_struct *t)
+
 {
 	atomic_set(&t->mm->membarrier_state, 0);
+
 }
+
 #else
 static inline void membarrier_execve(struct task_struct *t)
+
 {
 }
 #endif
