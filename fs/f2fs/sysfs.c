@@ -689,6 +689,11 @@ static ssize_t f2fs_sbi_store(struct f2fs_attr *a,
 		up_read(&sbi->sb->s_umount);
 
 	return ret;
+
+	if (!strcmp(a->attr.name, "cp_interval"))
+		return count;
+
+	return __sbi_store(a, sbi, buf, count);
 }
 
 static ssize_t f2fs_attr_show(struct kobject *kobj,
