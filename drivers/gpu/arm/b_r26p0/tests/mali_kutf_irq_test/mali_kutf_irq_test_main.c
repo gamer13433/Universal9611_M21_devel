@@ -199,9 +199,9 @@ static void mali_kutf_irq_latency(struct kutf_context *context)
 		kbase_reg_write(kbdev, GPU_CONTROL_REG(GPU_IRQ_RAWSTAT),
 				TEST_IRQ);
 
-		if (wait_event_timeout(wait, triggered, IRQ_TIMEOUT) == 0) {
+		if (wait_event_interruptible_timeout(wait, triggered, IRQ_TIMEOUT) == 0) {
 			/* Wait extra time to see if it would come */
-			wait_event_timeout(wait, triggered, 10 * IRQ_TIMEOUT);
+			wait_event_interruptible_timeout(wait, triggered, 10 * IRQ_TIMEOUT);
 			break;
 		}
 
