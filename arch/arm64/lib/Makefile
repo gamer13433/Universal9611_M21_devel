@@ -5,6 +5,8 @@ lib-y		:= bitops.o clear_user.o delay.o copy_from_user.o	\
 		   memcmp.o strcmp.o strncmp.o strlen.o strnlen.o	\
 		   strchr.o strrchr.o neon_glue.o tishift.o
 
+CFLAGS_xor-neon.o += $(DISABLE_LTO)
+CFLAGS_xor-neon.o += $(call cc-option, -fno-whole-program)
 # Tell the compiler to treat all general purpose registers (with the
 # exception of the IP registers, which are already handled by the caller
 # in case of a PLT) as callee-saved, which allows for efficient runtime
