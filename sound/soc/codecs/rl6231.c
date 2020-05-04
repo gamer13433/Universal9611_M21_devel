@@ -104,9 +104,9 @@ struct pll_calc_map {
 };
 
 static const struct pll_calc_map pll_preset_table[] = {
-	{19200000,  4096000,  23, 14, 1, false},
-	{19200000,  24576000,  3, 30, 3, false},
-	{3840000,   24576000,  3, 30, 0, true},
+	{19200000,  4096000,  23, 14, 1, false, false},
+	{19200000,  24576000,  3, 30, 3, false, false},
+	{3840000,   24576000,  3, 30, 0, true, false},
 };
 
 static unsigned int find_best_div(unsigned int in,
@@ -132,7 +132,7 @@ static unsigned int find_best_div(unsigned int in,
  * rl6231_pll_calc - Calcualte PLL M/N/K code.
  * @freq_in: external clock provided to codec.
  * @freq_out: target clock which codec works on.
- * @pll_code: Pointer to structure with M, N, K, M bypass and K bypass flag.
+ * @pll_code: Pointer to structure with M, N, K, m_bypass and k_bypass flag.
  *
  * Calcualte M/N/K code to configure PLL for codec.
  *
@@ -177,6 +177,8 @@ int rl6231_pll_calc(const unsigned int freq_in,
 	f_in = freq_in / div;
 	f_out = freq_out / div;
 	k = min_k;
+	if (min_k < -1)
+		min_k = -1;
 	for (k_t = min_k; k_t <= max_k; k_t++) {
 		for (n_t = 0; n_t <= max_n; n_t++) {
 			in_t = f_in * (n_t + 2);
@@ -216,6 +218,10 @@ int rl6231_pll_calc(const unsigned int freq_in,
 	pr_debug("Only get approximation about PLL\n");
 
 code_find:
+	if (k == -1) {
+		k_bypass = true;
+		k = 0;
+	}
 
 	pll_code->m_bp = m_bypass;
 	pll_code->k_bp = k_bypass;
