@@ -62,14 +62,14 @@ config PROC_SYSCTL
 	  building a kernel for install/rescue disks or your system is very
 	  limited in memory.
 
-config PROC_PATCH_SAFETYNET_FLAGS
+config PROC_REMOVE_SAFETYNET_FLAGS
 	bool "Hide SafetyNet flags in cmdline" if EXPERT
 	depends on PROC_FS
 	default n
 	---help---
 	  Patch "androidboot.enable_dm_verity", "androidboot.secboot",
 	  "androidboot.verifiedbootstate", "androidboot.veritymode" from
-	  cmdline. This will help to bypass SafetyNet checks. Causes random reboots in A11 witch Exynos Soc.
+	  cmdline. This will help to bypass SafetyNet checks.
 
 config PROC_PAGE_MONITOR
  	default y
