@@ -225,6 +225,8 @@ static void __exit boeffla_wl_blocker_exit(void)
 	sysfs_remove_group(&boeffla_wl_blocker_control_device.this_device->kobj,
                            &boeffla_wl_blocker_control_group);
 
+	misc_deregister(&boeffla_wl_blocker_control_device);
+
 	// Print debug info
 	printk("Boeffla WL blocker: driver stopped\n");
 }
