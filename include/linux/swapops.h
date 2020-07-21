@@ -57,6 +57,7 @@ static inline int is_swap_pte(pte_t pte)
 {
 	return !pte_none(pte) && !pte_present(pte);
 }
+
 #endif
 
 /*
