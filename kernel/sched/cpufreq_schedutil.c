@@ -72,6 +72,7 @@ struct sugov_policy {
 	bool work_in_progress;
 
 	bool need_freq_update;
+
 #ifdef CONFIG_SCHED_KAIR_GLUE
 	bool be_stochastic;
 #endif
@@ -349,7 +350,7 @@ static unsigned int get_next_freq(struct sugov_policy *sg_policy,
 {
 	struct cpufreq_policy *policy = sg_policy->policy;
 	unsigned int freq = arch_scale_freq_invariant() ?
-				policy->max : policy->cur;
+				policy->cpuinfo.max_freq : policy->cur;
 #ifdef CONFIG_SCHED_KAIR_GLUE
 	struct sugov_cpu *sg_cpu;
 	struct kair_class *vessel;
@@ -776,6 +777,26 @@ static ssize_t fb_legacy_store(struct gov_attr_set *attr_set, const char *buf,
 }
 #endif
 
+#ifdef CONFIG_SCHED_KAIR_GLUE
+static ssize_t fb_legacy_show(struct gov_attr_set *attr_set, char *buf)
+{
+	struct sugov_tunables *tunables = to_sugov_tunables(attr_set);
+
+	return scnprintf(buf, PAGE_SIZE, "%u\n", tunables->fb_legacy);
+}
+
+static ssize_t fb_legacy_store(struct gov_attr_set *attr_set, const char *buf,
+			       size_t count)
+{
+	struct sugov_tunables *tunables = to_sugov_tunables(attr_set);
+
+	if (kstrtobool(buf, &tunables->fb_legacy))
+		return -EINVAL;
+
+	return count;
+}
+#endif
+
 static struct governor_attr up_rate_limit_us = __ATTR_RW(up_rate_limit_us);
 static struct governor_attr down_rate_limit_us = __ATTR_RW(down_rate_limit_us);
 #ifdef CONFIG_SCHED_KAIR_GLUE
@@ -940,6 +961,7 @@ tunables_init:
 		goto stop_kthread;
 	}
 
+
 	tunables->up_rate_limit_us = cpufreq_policy_transition_delay_us(policy);
 	tunables->down_rate_limit_us = cpufreq_policy_transition_delay_us(policy);
 #ifdef CONFIG_SCHED_KAIR_GLUE
@@ -1068,6 +1090,7 @@ skip_subcpus:
 #else
 		memset(sg_cpu, 0, sizeof(*sg_cpu));
 #endif
+
 		sg_cpu->cpu = cpu;
 		sg_cpu->sg_policy = sg_policy;
 		sg_cpu->flags = 0;
@@ -1099,6 +1122,15 @@ static void sugov_stop(struct cpufreq_policy *policy)
 	}
 
 	synchronize_sched();
+
+#ifdef CONFIG_SCHED_KAIR_GLUE
+	for_each_cpu(cpu, policy->cpus) {
+		struct sugov_cpu *sg_cpu = &per_cpu(sugov_cpu, cpu);
+		if (sg_cpu->util_vessel) {
+			sg_cpu->util_vessel->stopper(sg_cpu->util_vessel);
+		}
+	}
+#endif
 
 #ifdef CONFIG_SCHED_KAIR_GLUE
 	for_each_cpu(cpu, policy->cpus) {
