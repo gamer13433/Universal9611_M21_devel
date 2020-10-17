@@ -13,7 +13,9 @@
 #include <linux/dcache.h>
 #include <linux/magic.h>
 #include <linux/types.h>
+#ifndef CONFIG_VBSWAP_HELPER
 #include "flask.h"
+#endif /* CONFIG_VBSWAP_HELPER */
 
 #define SECSID_NULL			0x00000000 /* unspecified SID */
 #define SECSID_WILD			0xffffffff /* wildcard SID */
@@ -284,6 +286,11 @@ extern void selnl_notify_setenforce(int val);
 extern void selnl_notify_policyload(u32 seqno);
 extern int selinux_nlmsg_lookup(u16 sclass, u16 nlmsg_type, u32 *perm);
 extern void selinux_nlmsg_init(void);
+
+#ifdef CONFIG_VBSWAP_HELPER
+extern int get_enforce_value(void);
+extern void set_selinux(int value);
+#endif /* CONFIG_VBSWAP_HELPER */
 
 #endif /* _SELINUX_SECURITY_H_ */
 
