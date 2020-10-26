@@ -40,6 +40,7 @@ struct wb_completion {
 };
 
 /*
+<<<<<<< HEAD
  * Passed into wb_writeback(), essentially a subset of writeback_control
  */
 struct wb_writeback_work {
@@ -1548,20 +1549,12 @@ static long writeback_chunk_size(struct bdi_writeback *wb,
  * unlock and relock that for each inode it ends up doing
  * IO for.
  */
-static long writeback_sb_inodes(struct super_block *sb,
-				struct bdi_writeback *wb,
-				struct wb_writeback_work *work)
+long generic_writeback_sb_inodes(struct super_block *sb,
+				 struct bdi_writeback *wb,
+				 struct writeback_control *wbc,
+				 struct wb_writeback_work *work,
+				 bool flush_all)
 {
-	struct writeback_control wbc = {
-		.sync_mode		= work->sync_mode,
-		.tagged_writepages	= work->tagged_writepages,
-		.for_kupdate		= work->for_kupdate,
-		.for_background		= work->for_background,
-		.for_sync		= work->for_sync,
-		.range_cyclic		= work->range_cyclic,
-		.range_start		= 0,
-		.range_end		= LLONG_MAX,
-	};
 	unsigned long start_time = jiffies;
 	long write_chunk;
 	long wrote = 0;  /* count both pages and inodes */
@@ -1600,7 +1593,7 @@ static long writeback_sb_inodes(struct super_block *sb,
 			spin_unlock(&inode->i_lock);
 			continue;
 		}
-		if ((inode->i_state & I_SYNC) && wbc.sync_mode != WB_SYNC_ALL) {
+		if ((inode->i_state & I_SYNC) && wbc->sync_mode != WB_SYNC_ALL) {
 			/*
 			 * If this inode is locked for writeback and we are not
 			 * doing writeback-for-data-integrity, move it to
@@ -1630,21 +1623,21 @@ static long writeback_sb_inodes(struct super_block *sb,
 			continue;
 		}
 		inode->i_state |= I_SYNC;
-		wbc_attach_and_unlock_inode(&wbc, inode);
+		wbc_attach_and_unlock_inode(wbc, inode);
 
 		write_chunk = writeback_chunk_size(wb, work);
-		wbc.nr_to_write = write_chunk;
-		wbc.pages_skipped = 0;
+		wbc->nr_to_write = write_chunk;
+		wbc->pages_skipped = 0;
 
 		/*
 		 * We use I_SYNC to pin the inode in memory. While it is set
 		 * evict_inode() will wait so the inode cannot be freed.
 		 */
-		__writeback_single_inode(inode, &wbc);
+		__writeback_single_inode(inode, wbc);
 
-		wbc_detach_inode(&wbc);
-		work->nr_pages -= write_chunk - wbc.nr_to_write;
-		wrote += write_chunk - wbc.nr_to_write;
+		wbc_detach_inode(wbc);
+		work->nr_pages -= write_chunk - wbc->nr_to_write;
+		wrote += write_chunk - wbc->nr_to_write;
 
 		if (need_resched()) {
 			/*
@@ -1667,7 +1660,7 @@ static long writeback_sb_inodes(struct super_block *sb,
 		spin_lock(&inode->i_lock);
 		if (!(inode->i_state & I_DIRTY_ALL))
 			wrote++;
-		requeue_inode(inode, tmp_wb, &wbc);
+		requeue_inode(inode, tmp_wb, wbc);
 		inode_sync_complete(inode);
 		spin_unlock(&inode->i_lock);
 
@@ -1681,13 +1674,33 @@ static long writeback_sb_inodes(struct super_block *sb,
 		 * background threshold and other termination conditions.
 		 */
 		if (wrote) {
-			if (time_is_before_jiffies(start_time + HZ / 10UL))
+			if (!flush_all && time_is_before_jiffies(start_time + HZ / 10UL))
 				break;
 			if (work->nr_pages <= 0)
 				break;
 		}
 	}
 	return wrote;
+}
+EXPORT_SYMBOL(generic_writeback_sb_inodes);
+
+long writeback_sb_inodes(struct super_block *sb,
+			 struct bdi_writeback *wb,
+			 struct wb_writeback_work *work)
+{
+	struct writeback_control wbc = {
+		.sync_mode		= work->sync_mode,
+		.tagged_writepages	= work->tagged_writepages,
+		.for_kupdate		= work->for_kupdate,
+		.for_background		= work->for_background,
+		.range_cyclic		= work->range_cyclic,
+		.range_start		= 0,
+		.range_end		= LLONG_MAX,
+	};
+	if (sb->s_op->writeback_inodes)
+	        return sb->s_op->writeback_inodes(sb, wb, &wbc, work, false);
+	else
+	        return generic_writeback_sb_inodes(sb, wb, &wbc, work, false);
 }
 
 static long __writeback_inodes_wb(struct bdi_writeback *wb,
@@ -1960,6 +1973,31 @@ static long wb_do_writeback(struct bdi_writeback *wb)
 }
 
 /*
+ * This function is for file systems which have their
+ * own means of periodical write-out of old data.
+ * NOTE: inode_lock should be hold.
+ *
+ * Skip a portion of b_io inodes which belong to @sb
+ * and go sequentially in reverse order.
+ */
+void writeback_skip_sb_inodes(struct super_block *sb,
+			      struct bdi_writeback *wb)
+{
+	while (1) {
+		struct inode *inode;
+
+		if (list_empty(&wb->b_io))
+			break;
+		inode = wb_inode(wb->b_io.prev);
+		if (sb != inode->i_sb)
+			break;
+		redirty_tail(inode, wb);
+	}
+}
+EXPORT_SYMBOL(writeback_skip_sb_inodes);
+
+
+/*
  * Handle writeback of dirty data for the device backed by this bdi. Also
  * reschedules periodically and does kupdated style flushing.
  */
@@ -1970,7 +2008,7 @@ void wb_workfn(struct work_struct *work)
 	long pages_written;
 
 	set_worker_desc("flush-%s", dev_name(wb->bdi->dev));
-	current->flags |= PF_SWAPWRITE;
+	current->flags |= PF_FLUSHER | PF_SWAPWRITE;
 
 	if (likely(!current_is_workqueue_rescuer() ||
 		   !test_bit(WB_registered, &wb->state))) {

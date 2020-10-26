@@ -3086,7 +3086,11 @@ static unsigned long do_try_to_free_pages(struct zonelist *zonelist,
 	pg_data_t *last_pgdat;
 	struct zoneref *z;
 	struct zone *zone;
+	void *saved;
 retry:
+	saved = current->journal_info; /* save journal info */
+	current->journal_info = NULL;
+
 	delayacct_freepages_start();
 
 	if (!is_kanond(sc) && global_reclaim(sc))
@@ -3123,6 +3127,8 @@ retry:
 	}
 
 	delayacct_freepages_end();
+	/* restore journal info */
+	current->journal_info = saved;
 
 	if (sc->nr_reclaimed)
 		return sc->nr_reclaimed;
