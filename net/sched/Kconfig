@@ -352,6 +352,9 @@ config NET_SCH_PLUG
 	  To compile this code as a module, choose M here: the
 	  module will be called sch_plug.
 
+
+source "net/sched/sch_cake/Kconfig"
+
 menuconfig NET_SCH_DEFAULT
 	bool "Allow override default queue discipline"
 	---help---
@@ -386,6 +389,9 @@ choice
 
 	config DEFAULT_PFIFO_FAST
 		bool "Priority FIFO Fast"
+
+	config DEFAULT_CAKE
+		bool "Common Applications Kept Enhanced" if NET_SCH_CAKE
 endchoice
 
 config DEFAULT_NET_SCH
@@ -395,6 +401,7 @@ config DEFAULT_NET_SCH
 	default "fq_codel" if DEFAULT_FQ_CODEL
 	default "sfq" if DEFAULT_SFQ
 	default "pfifo_fast"
+        default "cake" if DEFAULT_CAKE
 endif
 
 comment "Classification"
