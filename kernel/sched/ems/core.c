@@ -7,38 +7,12 @@
 
 #include <linux/ems.h>
 
-#define CREATE_TRACE_POINTS
-#include <trace/events/ems.h>
-
 #include "ems.h"
 #include "../sched.h"
 #include "../tune.h"
 
-unsigned long cpu_util(int cpu)
-{
-	struct cfs_rq *cfs_rq;
-	unsigned int util;
-
-#ifdef CONFIG_SCHED_WALT
-	if (likely(!walt_disabled && sysctl_sched_use_walt_cpu_util)) {
-		u64 walt_cpu_util = cpu_rq(cpu)->cumulative_runnable_avg;
-
-		walt_cpu_util <<= SCHED_CAPACITY_SHIFT;
-		do_div(walt_cpu_util, walt_ravg_window);
-
-		return min_t(unsigned long, walt_cpu_util,
-			     capacity_orig_of(cpu));
-	}
-#endif
-
-	cfs_rq = &cpu_rq(cpu)->cfs;
-	util = READ_ONCE(cfs_rq->avg.util_avg);
-
-	if (sched_feat(UTIL_EST))
-		util = max(util, READ_ONCE(cfs_rq->avg.util_est.enqueued));
-
-	return min_t(unsigned long, util, capacity_orig_of(cpu));
-}
+#define CREATE_TRACE_POINTS
+#include <trace/events/ems.h>
 
 unsigned long task_util(struct task_struct *p)
 {
@@ -46,101 +20,6 @@ unsigned long task_util(struct task_struct *p)
 		return p->rt.avg.util_avg;
 	else
 		return p->se.avg.util_avg;
-}
-
-int cpu_util_wake(int cpu, struct task_struct *p)
-{
-	struct cfs_rq *cfs_rq;
-	unsigned int util;
-
-	/* Task has no contribution or is new */
-	if (cpu != task_cpu(p) || !READ_ONCE(p->se.avg.last_update_time))
-		return cpu_util(cpu);
-
-	cfs_rq = &cpu_rq(cpu)->cfs;
-	util = READ_ONCE(cfs_rq->avg.util_avg);
-
-	/* Discount task's blocked util from CPU's util */
-	util -= min_t(unsigned int, util, task_util_est(p));
-
-	/*
-	 * Covered cases:
-	 *
-	 * a) if *p is the only task sleeping on this CPU, then:
-	 *      cpu_util (== task_util) > util_est (== 0)
-	 *    and thus we return:
-	 *      cpu_util_wake = (cpu_util - task_util) = 0
-	 *
-	 * b) if other tasks are SLEEPING on this CPU, which is now exiting
-	 *    IDLE, then:
-	 *      cpu_util >= task_util
-	 *      cpu_util > util_est (== 0)
-	 *    and thus we discount *p's blocked utilization to return:
-	 *      cpu_util_wake = (cpu_util - task_util) >= 0
-	 *
-	 * c) if other tasks are RUNNABLE on that CPU and
-	 *      util_est > cpu_util
-	 *    then we use util_est since it returns a more restrictive
-	 *    estimation of the spare capacity on that CPU, by just
-	 *    considering the expected utilization of tasks already
-	 *    runnable on that CPU.
-	 *
-	 * Cases a) and b) are covered by the above code, while case c) is
-	 * covered by the following code when estimated utilization is
-	 * enabled.
-	 */
-	if (sched_feat(UTIL_EST))
-		util = max(util, READ_ONCE(cfs_rq->avg.util_est.enqueued));
-
-	/*
-	 * Utilization (estimated) can exceed the CPU capacity, thus let's
-	 * clamp to the maximum CPU capacity to ensure consistency with
-	 * the cpu_util call.
-	 */
-	return min_t(unsigned long, util, capacity_orig_of(cpu));
-}
-
-static inline int
-check_cpu_capacity(struct rq *rq, struct sched_domain *sd)
-{
-	return ((rq->cpu_capacity * sd->imbalance_pct) <
-				(rq->cpu_capacity_orig * 100));
-}
-
-#define lb_sd_parent(sd) \
-	(sd->parent && sd->parent->groups != sd->parent->groups->next)
-
-int exynos_need_active_balance(enum cpu_idle_type idle, struct sched_domain *sd,
-					int src_cpu, int dst_cpu)
-{
-	unsigned int src_imb_pct = lb_sd_parent(sd) ? sd->imbalance_pct : 1;
-	unsigned int dst_imb_pct = lb_sd_parent(sd) ? 100 : 1;
-	unsigned long src_cap = capacity_of(src_cpu);
-	unsigned long dst_cap = capacity_of(dst_cpu);
-	int level = sd->level;
-
-	/* dst_cpu is idle */
-	if ((idle != CPU_NOT_IDLE) &&
-	    (cpu_rq(src_cpu)->cfs.h_nr_running == 1)) {
-		if ((check_cpu_capacity(cpu_rq(src_cpu), sd)) &&
-		    (src_cap * sd->imbalance_pct < dst_cap * 100)) {
-			return 1;
-		}
-
-		/* This domain is top and dst_cpu is bigger than src_cpu*/
-		if (!lb_sd_parent(sd) && src_cap < dst_cap)
-			if (lbt_overutilized(src_cpu, level) || global_boosted())
-				return 1;
-	}
-
-	if ((src_cap * src_imb_pct < dst_cap * dst_imb_pct) &&
-			cpu_rq(src_cpu)->cfs.h_nr_running == 1 &&
-			lbt_overutilized(src_cpu, level) &&
-			!lbt_overutilized(dst_cpu, level)) {
-		return 1;
-	}
-
-	return unlikely(sd->nr_balance_failed > sd->cache_nice_tries + 2);
 }
 
 static int select_proper_cpu(struct task_struct *p, int prev_cpu)
@@ -162,11 +41,10 @@ static int select_proper_cpu(struct task_struct *p, int prev_cpu)
 
 		for_each_cpu_and(i, tsk_cpus_allowed(p), cpu_coregroup_mask(cpu)) {
 			unsigned long capacity_orig = capacity_orig_of(i);
-			unsigned long wake_util, new_util;
+			unsigned long new_util;
 
-			wake_util = cpu_util_wake(i, p);
-			new_util = wake_util + task_util_est(p);
-			new_util = max(new_util, boosted_task_util(p));
+			new_util = ml_task_attached_cpu_util(i, p);
+			new_util = max(new_util, ml_boosted_task_util(p));
 
 			/* skip over-capacity cpu */
 			if (new_util > capacity_orig)
@@ -208,6 +86,8 @@ static int select_proper_cpu(struct task_struct *p, int prev_cpu)
 
 extern void sync_entity_load_avg(struct sched_entity *se);
 
+static int eff_mode;
+
 int exynos_wakeup_balance(struct task_struct *p, int prev_cpu, int sd_flag, int sync)
 {
 	int target_cpu = -1;
@@ -219,7 +99,7 @@ int exynos_wakeup_balance(struct task_struct *p, int prev_cpu, int sd_flag, int 
 	 * Exclude new task.
 	 */
 	if (!(sd_flag & SD_BALANCE_FORK)) {
-		unsigned long old_util = task_util(p);
+		unsigned long old_util = ml_task_util(p);
 
 		sync_entity_load_avg(&p->se);
 		/* update the band if a large amount of task util is decayed */
@@ -228,7 +108,7 @@ int exynos_wakeup_balance(struct task_struct *p, int prev_cpu, int sd_flag, int 
 
 	target_cpu = select_service_cpu(p);
 	if (cpu_selected(target_cpu)) {
-		strcpy(state, "service");
+		strcpy(state, "service cpu");
 		goto out;
 	}
 
@@ -305,6 +185,14 @@ int exynos_wakeup_balance(struct task_struct *p, int prev_cpu, int sd_flag, int 
 		goto out;
 	}
 
+	if (eff_mode) {
+		target_cpu = select_best_cpu(p, prev_cpu, sd_flag, sync);
+		if (cpu_selected(target_cpu)) {
+			strcpy(state, "best");
+			goto out;
+		}
+	}
+
 	/*
 	 * Priority 5 : prefer-idle
 	 *
@@ -349,12 +237,85 @@ out:
 	return target_cpu;
 }
 
+static ssize_t show_eff_mode(struct kobject *kobj,
+		struct kobj_attribute *attr, char *buf)
+{
+	int ret = 0;
+
+	ret += snprintf(buf + ret, 10, "%d\n", eff_mode);
+
+	return ret;
+}
+
+static ssize_t store_eff_mode(struct kobject *kobj,
+		struct kobj_attribute *attr, const char *buf,
+		size_t count)
+{
+	unsigned int input;
+
+	if (!sscanf(buf, "%d", &input))
+		return -EINVAL;
+
+	eff_mode = input;
+
+	return count;
+}
+
+static struct kobj_attribute eff_mode_attr =
+__ATTR(eff_mode, 0644, show_eff_mode, store_eff_mode);
+
+static ssize_t show_sched_topology(struct kobject *kobj,
+		struct kobj_attribute *attr, char *buf)
+{
+	int cpu;
+	struct sched_domain *sd;
+	int ret = 0;
+
+	rcu_read_lock();
+	for_each_possible_cpu(cpu) {
+		int sched_domain_level = 0;
+
+		sd = rcu_dereference_check_sched_domain(cpu_rq(cpu)->sd);
+		while (sd->parent) {
+			sched_domain_level++;
+			sd = sd->parent;
+		}
+
+		for_each_lower_domain(sd) {
+			ret += snprintf(buf + ret, 50,
+				"[lv%d] cpu%d: sd->span=%#x sg->span=%#x\n",
+				sched_domain_level, cpu,
+				*(unsigned int *)cpumask_bits(sched_domain_span(sd)),
+				*(unsigned int *)cpumask_bits(sched_group_span(sd->groups)));
+			sched_domain_level--;
+		}
+		ret += snprintf(buf + ret,
+			50, "----------------------------------------\n");
+	}
+	rcu_read_unlock();
+
+	return ret;
+}
+
+static struct kobj_attribute sched_topology_attr =
+__ATTR(sched_topology, 0444, show_sched_topology, NULL);
+
 struct kobject *ems_kobj;
 
 static int __init init_sysfs(void)
 {
 	ems_kobj = kobject_create_and_add("ems", kernel_kobj);
 
+	sysfs_create_file(ems_kobj, &sched_topology_attr.attr);
+	sysfs_create_file(ems_kobj, &eff_mode_attr.attr);
+
 	return 0;
 }
 core_initcall(init_sysfs);
+
+void __init init_ems(void)
+{
+	alloc_bands();
+
+	init_part();
+}

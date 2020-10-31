@@ -8,8 +8,9 @@
 
 #include <linux/slab.h>
 #include <linux/irq_work.h>
-#include "tune.h"
 #include <linux/ems.h>
+
+#include "tune.h"
 
 #include "walt.h"
 #include <trace/events/sched.h>
@@ -183,7 +184,7 @@ static int frt_set_active_ratio(int cpu)
 	if (!dom || !cpu_active(cpu))
 		return -1;
 
-	capacity = get_cpu_max_capacity(cpu) *
+	capacity = get_cpu_max_capacity(cpu, 0) *
 			cpumask_weight(cpu_coregroup_mask(cpu));
 	dom->active_thr = ratio_scale(capacity, dom->active_ratio);
 
@@ -198,7 +199,7 @@ static int frt_set_coverage_ratio(int cpu)
 	if (!dom || !cpu_active(cpu))
 		return -1;
 
-	capacity = get_cpu_max_capacity(cpu);
+	capacity = get_cpu_max_capacity(cpu, 0);
 	dom->coverage_thr = ratio_scale(capacity, dom->coverage_ratio);
 
 	return 0;
@@ -240,7 +241,7 @@ static void update_activated_cpus(void)
 			dom_util_sum += cpu_util(rq);
 		}
 
-		capacity = get_cpu_max_capacity(first_cpu) * cpumask_weight(&active_cpus);
+		capacity = get_cpu_max_capacity(first_cpu, 0) * cpumask_weight(&active_cpus);
 		dom_active_thr = ratio_scale(capacity, dom->active_ratio);
 
 		/* domain is idle */
@@ -365,7 +366,6 @@ static int __init init_frt(void)
 
 		frt_set_coverage_ratio(cpu);
 		frt_set_active_ratio(cpu);
-
 		list_add_tail(&dom->list, &frt_list);
 	}
 	frt_sysfs_init();
@@ -1960,6 +1960,7 @@ select_task_rq_rt(struct task_struct *p, int cpu, int sd_flag, int flags,
 	    (curr->nr_cpus_allowed < 2 ||
 	     curr->prio <= p->prio)) {
 		int target = find_lowest_rq(p);
+
 		/*
 		 * Don't bother moving it if the destination CPU is
 		 * not running a lower priority task.
@@ -2731,6 +2732,7 @@ static int find_idle_cpu(struct task_struct *task, int wake_flags)
 		for_each_cpu_and(cpu, &dom->cpus, &candidate_cpus) {
 			if (!idle_cpu(cpu))
 				continue;
+
 			cpu_prio = cpu_rq(cpu)->rt.highest_prio.curr;
 			if (cpu_prio < max_prio)
 				continue;
@@ -2740,7 +2742,7 @@ static int find_idle_cpu(struct task_struct *task, int wake_flags)
 				continue;
 
 			if ((cpu_prio > max_prio) || (cpu_load < min_load) ||
-					(cpu_load == min_load && task_cpu(task) == cpu)) {
+				(cpu_load == min_load && task_cpu(task) == cpu)) {
 				min_load = cpu_load;
 				max_prio = cpu_prio;
 				best_cpu = cpu;
@@ -2964,8 +2966,8 @@ static struct rq *find_lock_lowest_rq(struct task_struct *task, struct rq *rq)
 			break;
 
 		lowest_rq = cpu_rq(cpu);
-		if (lowest_rq->rt.highest_prio.curr <= task->prio)
-		{
+
+		if (lowest_rq->rt.highest_prio.curr <= task->prio) {
 			/*
 			 * Target rq has tasks of equal or higher priority,
 			 * retrying does not release any lock and is unlikely
