@@ -388,10 +388,10 @@ struct ecryptfs_mount_crypt_stat {
 #define ECRYPTFS_ENABLE_FILTERING              0x00000100
 #define ECRYPTFS_ENABLE_NEW_PASSTHROUGH        0x00000200
 #endif
-#ifdef CONFIG_CRYPTO_FIPS
+// #ifdef CONFIG_CRYPTO_FIPS
 #define ECRYPTFS_ENABLE_CC                     0x00000400
-#endif
-	u32 flags;
+// #endif
+    u32 flags;
 	struct list_head global_auth_tok_list;
 	struct mutex global_auth_tok_list_mutex;
 	size_t global_default_cipher_key_size;
