@@ -2374,7 +2374,6 @@ write_tag_3_packet(char *dest, size_t *remaining_bytes,
 	struct skcipher_request *req;
 	int rc = 0;
 // #ifdef CONFIG_CRYPTO_FIPS
-	char *hash_key = NULL;
 	char *iv = NULL;
 // #endif
 	(*packet_size) = 0;
