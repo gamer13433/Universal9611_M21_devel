@@ -7,10 +7,10 @@ ARCH := x86
 endif
 
 # always use the host compiler
-<<<<<<< HEAD
+HOSTAR	?= ar
 HOSTCC	?= gcc
 HOSTLD	?= ld
-=======
+AR	 = $(HOSTAR)
 ifneq ($(LLVM),)
 HOSTAR	?= llvm-ar
 HOSTCC	?= clang
@@ -24,7 +24,6 @@ AR	 = $(HOSTAR)
 >>>>>>> 05ed1a839bb3 (kbuild: support LLVM=1 to switch the default tools to Clang/LLVM)
 CC	 = $(HOSTCC)
 LD	 = $(HOSTLD)
-AR	 = ar
 
 ifeq ($(srctree),)
 srctree := $(patsubst %/,%,$(dir $(CURDIR)))

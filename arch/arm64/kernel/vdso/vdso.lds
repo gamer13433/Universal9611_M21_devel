@@ -6,7 +6,7 @@
 /*
  *
  * Automatically generated file; DO NOT EDIT.
- * Linux/arm64 4.14.113 Kernel Configuration
+ * Linux/arm64 4.14.142 Kernel Configuration
  *
  */
 /*
