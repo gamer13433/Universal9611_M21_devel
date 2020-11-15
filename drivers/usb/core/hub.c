@@ -2373,12 +2373,7 @@ static int usb_enumerate_device(struct usb_device *udev)
 	}
 #endif
 	usb_detect_interface_quirks(udev);
-#ifdef CONFIG_USB_INTERFACE_LPM_LIST
-	if (usb_detect_interface_lpm(udev)) {
-		dev_info(&udev->dev, "L1 enable");
-		hub_set_initial_usb2_lpm_policy(udev);
-	}
-#endif
+
 	return 0;
 }
 
@@ -4353,33 +4348,6 @@ static int hub_set_address(struct usb_device *udev, int devnum)
 	return retval;
 }
 
-/*
- * There are reports of USB 3.0 devices that say they support USB 2.0 Link PM
- * when they're plugged into a USB 2.0 port, but they don't work when LPM is
- * enabled.
- *
- * Only enable USB 2.0 Link PM if the port is internal (hardwired), or the
- * device says it supports the new USB 2.0 Link PM errata by setting the BESL
- * support bit in the BOS descriptor.
- */
-static void hub_set_initial_usb2_lpm_policy(struct usb_device *udev)
-{
-	struct usb_hub *hub = usb_hub_to_struct_hub(udev->parent);
-	int connect_type = USB_PORT_CONNECT_TYPE_UNKNOWN;
-
-	if (!udev->usb2_hw_lpm_capable || !udev->bos)
-		return;
-
-	if (hub)
-		connect_type = hub->ports[udev->portnum - 1]->connect_type;
-
-	if ((udev->bos->ext_cap->bmAttributes & cpu_to_le32(USB_BESL_SUPPORT)) ||
-			connect_type == USB_PORT_CONNECT_TYPE_HARD_WIRED) {
-		udev->usb2_hw_lpm_allowed = 1;
-		usb_enable_usb2_hardware_lpm(udev);
-	}
-}
-
 static int hub_enable_device(struct usb_device *udev)
 {
 	struct usb_hcd *hcd = bus_to_hcd(udev->bus);
@@ -5686,7 +5654,7 @@ re_enumerate_no_bos:
 
 /**
  * usb_reset_device - warn interface drivers and perform a USB port reset
- * @udev: device to reset (not in SUSPENDED or NOTATTACHED state)
+ * @udev: device to reset (not in NOTATTACHED state)
  *
  * Warns all drivers bound to registered interfaces (using their pre_reset
  * method), performs the port reset, and then lets the drivers know that
@@ -5714,8 +5682,7 @@ int usb_reset_device(struct usb_device *udev)
 	struct usb_host_config *config = udev->actconfig;
 	struct usb_hub *hub = usb_hub_to_struct_hub(udev->parent);
 
-	if (udev->state == USB_STATE_NOTATTACHED ||
-			udev->state == USB_STATE_SUSPENDED) {
+	if (udev->state == USB_STATE_NOTATTACHED) {
 		dev_dbg(&udev->dev, "device reset not allowed in state %d\n",
 				udev->state);
 		return -EINVAL;
