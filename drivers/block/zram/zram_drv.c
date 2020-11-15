@@ -47,7 +47,7 @@ static int zram_major;
 #if IS_ENABLED(CONFIG_CRYPTO_ZSTD)
 static const char *default_compressor = "zstd";
 #else
-static const char *default_compressor = "lz4";
+static const char *default_compressor = CONFIG_ZRAM_DEFAULT_COMP_ALGORITHM;
 #endif
 #ifdef CONFIG_ZRAM_COMP_WRITEBACK
 static int zram_wb_mode = COMP_STORE;
