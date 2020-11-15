@@ -49,7 +49,7 @@
  * identify exactly which byte has matched.
  */
 
-ENTRY(memchr_neon)
+WEAK(memchr_neon)
 	/* Do not dereference srcin if no bytes to compare.  */
 	cbz	cntin, L(zero_length)
 	/*

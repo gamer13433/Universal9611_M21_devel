@@ -53,7 +53,7 @@
 
 /* Locals and temporaries.  */
 
-ENTRY(strchr_neon)
+WEAK(strchr_neon)
 	/* Magic constant 0x40100401 to allow us to identify which lane
 	   matches the requested byte.  Magic constant 0x80200802 used
 	   similarly for NUL termination.  */

@@ -57,7 +57,7 @@
    in the original string a count_trailing_zeros() operation will
    identify exactly which byte is causing the termination, and why.  */
 
-ENTRY(strrchr_neon)
+WEAK(strrchr_neon)
 	/* Magic constant 0x40100401 to allow us to identify which lane
 	   matches the requested byte.  Magic constant 0x80200802 used
 	   similarly for NUL termination.  */

@@ -72,7 +72,7 @@
 	   whether the first fetch, which may be misaligned, crosses a page
 	   boundary.  */
 
-ENTRY(strlen)
+WEAK(strlen)
 	and	tmp1, srcin, MIN_PAGE_SIZE - 1
 	mov	zeroones, REP8_01
 	cmp	tmp1, MIN_PAGE_SIZE - 16
