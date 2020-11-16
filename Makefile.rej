@@ -1,0 +1,72 @@
+--- Makefile
++++ Makefile
+@@ -315,11 +315,12 @@ SUBARCH := $(shell uname -m | sed -e s/i.86/x86/ -e s/x86_64/x86/ \
+ #ARCH		?= $(SUBARCH)
+ #CROSS_COMPILE	?= $(CONFIG_CROSS_COMPILE:"%"=%)
+ ARCH            ?= arm64
+-CROSS_COMPILE   ?= $(srctree)/toolchain/gcc/linux-x86/aarch64/aarch64-linux-android-4.9/bin/aarch64-linux-android-
++CROSS_COMPILE=aarch64-linux-gnu-
+ 
+ # Architecture as present in compile.h
+ UTS_MACHINE 	:= $(ARCH)
+ SRCARCH 	:= $(ARCH)
++CC=clang
+ 
+ # Additional ARCH settings for x86
+ ifeq ($(ARCH),i386)
+@@ -365,8 +366,8 @@ HOST_LFS_CFLAGS := $(shell getconf LFS_CFLAGS 2>/dev/null)
+ HOST_LFS_LDFLAGS := $(shell getconf LFS_LDFLAGS 2>/dev/null)
+ HOST_LFS_LIBS := $(shell getconf LFS_LIBS 2>/dev/null)
+ 
+-HOSTCC       = ccache gcc
+-HOSTCXX      = g++
++HOSTCC       = clang
++HOSTCXX      = clang++
+ HOSTCFLAGS   := -Wall -Wmissing-prototypes -Wstrict-prototypes -O2 \
+ 		-fomit-frame-pointer -std=gnu89 $(HOST_LFS_CFLAGS)
+ HOSTCXXFLAGS := -O2 $(HOST_LFS_CFLAGS)
+@@ -374,24 +375,24 @@ HOSTLDFLAGS  := $(HOST_LFS_LDFLAGS)
+ HOST_LOADLIBES := $(HOST_LFS_LIBS)
+ 
+ # Make variables (CC, etc...)
+-AS		= $(CROSS_COMPILE)as
+-LD		= $(CROSS_COMPILE)ld
+-LDGOLD		= $(CROSS_COMPILE)ld.gold
+-#CC		= $(CROSS_COMPILE)gcc
+-#CC		= ../PLATFORM/prebuilts/clang/host/linux-x86/clang-4639204/bin/clang
+-CC              = ccache $(srctree)/toolchain/clang/host/linux-x86/clang-4639204/bin/clang
+ CPP		= $(CC) -E
+-AR		= $(CROSS_COMPILE)ar
+-NM		= $(CROSS_COMPILE)nm
+-STRIP		= $(CROSS_COMPILE)strip
+-OBJCOPY		= $(CROSS_COMPILE)objcopy
+-OBJDUMP		= $(CROSS_COMPILE)objdump
++CC		= clang
++LD		= ld.lld
++AR		= llvm-ar
++NM		= llvm-nm
++OBJCOPY		= llvm-objcopy
++OBJDUMP		= llvm-objdump
++STRIP		= llvm-strip
++LEX		= flex
++YACC		= bison
+ AWK		= awk
+ GENKSYMS	= scripts/genksyms/genksyms
+ INSTALLKERNEL  := installkernel
+ DEPMOD		= /sbin/depmod
+ PERL		= perl
+ PYTHON		= python
++PYTHON2		= python2
++PYTHON3		= python3
+ CHECK		= sparse
+ 
+ ifeq ($(CONFIG_EXYNOS_FMP_FIPS),)
+@@ -513,7 +513,7 @@ endif
+ 
+ ifeq ($(cc-name),clang)
+ ifneq ($(CROSS_COMPILE),)
+-CLANG_TRIPLE    ?= $(srctree)/toolchain/clang/host/linux-x86/clang-4639204/bin/aarch64-linux-gnu-
++CLANG_TRIPLE	?= $(CROSS_COMPILE)
+ CLANG_FLAGS	+= --target=$(notdir $(CLANG_TRIPLE:%-=%))
+ ifeq ($(shell $(srctree)/scripts/clang-android.sh $(CC) $(CLANG_FLAGS)), y)
+ $(error "Clang with Android --target detected. Did you specify CLANG_TRIPLE?")
