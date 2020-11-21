@@ -215,7 +215,7 @@ static void nlmsg_set_getlink_perm(u32 perm)
 void selinux_nlmsg_init(void)
 {
 	if (selinux_android_netlink_route)
-		nlmsg_set_getlink_perm(NETLINK_ROUTE_SOCKET__NLMSG_READPRIV);
+		nlmsg_set_getlink_perm(NETLINK_ROUTE_SOCKET__NLMSG_READ);
 	else
 		nlmsg_set_getlink_perm(NETLINK_ROUTE_SOCKET__NLMSG_READ);
 }
