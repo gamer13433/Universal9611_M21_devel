@@ -314,7 +314,7 @@ SUBARCH := $(shell uname -m | sed -e s/i.86/x86/ -e s/x86_64/x86/ \
 # Note: Some architectures assign CROSS_COMPILE in their arch/*/Makefile
 
 ARCH            ?= arm64
-CROSS_COMPILE   ?= /home/_123/KERNEL/aarch64-cruel-elf/bin/aarch64-cruel-elf-
+CROSS_COMPILE   ?= $(CONFIG_CROSS_COMPILE:"%"=%)
 
 # Architecture as present in compile.h
 UTS_MACHINE 	:= $(ARCH)
@@ -410,11 +410,6 @@ DEPMOD		= /sbin/depmod
 PERL		= perl
 PYTHON		= python
 CHECK		= sparse
-
-ifeq ($(CONFIG_EXYNOS_FMP_FIPS),)
-READELF        = $(CROSS_COMPILE)readelf
-export READELF
-endif
 
 CHECKFLAGS     := -D__linux__ -Dlinux -D__STDC__ -Dunix -D__unix__ \
 		  -Wbitwise -Wno-return-void $(CF)
