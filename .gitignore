@@ -17,6 +17,7 @@
 *.dtb
 *.dtb.S
 *.dwo
+*.rej
 *.elf
 *.gcno
 *.gz
