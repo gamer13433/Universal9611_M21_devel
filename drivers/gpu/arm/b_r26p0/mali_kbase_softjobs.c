@@ -297,8 +297,6 @@ static void kbase_fence_debug_check_atom(struct kbase_jd_atom *katom)
 					dev_warn(dev,
 						 "\tVictim trigger atom %d fence [%p] %s: %s\n",
 						 kbase_jd_atom_id(kctx, dep),
-						 info.fence,
-						 info.name,
 						 kbase_sync_status_string(info.status));
 				 }
 			}
@@ -335,10 +333,8 @@ static void kbase_fence_debug_wait_timeout(struct kbase_jd_atom *katom)
 
 	dev_warn(dev, "ctx %d_%d: Atom %d still waiting for fence [%p] after %dms\n",
 		 kctx->tgid, kctx->id,
-		 kbase_jd_atom_id(kctx, katom),
-		 info.fence, timeout_ms);
+		 kbase_jd_atom_id(kctx, katom),timeout_ms);
 	dev_warn(dev, "\tGuilty fence [%p] %s: %s\n",
-		 info.fence, info.name,
 		 kbase_sync_status_string(info.status));
 
 	/* Search for blocked trigger atoms */
