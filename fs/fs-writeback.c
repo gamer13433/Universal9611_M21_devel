@@ -40,26 +40,6 @@ struct wb_completion {
 };
 
 /*
-<<<<<<< HEAD
- * Passed into wb_writeback(), essentially a subset of writeback_control
- */
-struct wb_writeback_work {
-	long nr_pages;
-	struct super_block *sb;
-	enum writeback_sync_modes sync_mode;
-	unsigned int tagged_writepages:1;
-	unsigned int for_kupdate:1;
-	unsigned int range_cyclic:1;
-	unsigned int for_background:1;
-	unsigned int for_sync:1;	/* sync(2) WB_SYNC_ALL writeback */
-	unsigned int auto_free:1;	/* free on completion */
-	enum wb_reason reason;		/* why was writeback initiated? */
-
-	struct list_head list;		/* pending work list */
-	struct wb_completion *done;	/* set if the caller waits */
-};
-
-/*
  * If one wants to wait for one or more wb_writeback_works, each work's
  * ->done should be set to a wb_completion defined using the following
  * macro.  Once all work items are issued with wb_queue_work(), the caller
