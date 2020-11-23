@@ -572,7 +572,6 @@ struct governor_attr {
 			 size_t count);
 };
 
-
 static inline bool cpufreq_can_do_remote_dvfs(struct cpufreq_policy *policy)
 {
 	/*
@@ -582,7 +581,7 @@ static inline bool cpufreq_can_do_remote_dvfs(struct cpufreq_policy *policy)
 	 */
 	return policy->dvfs_possible_from_any_cpu ||
 		cpumask_test_cpu(smp_processor_id(), policy->cpus);
-};
+}
 
 /*********************************************************************
  *                     FREQUENCY TABLE HELPERS                       *
