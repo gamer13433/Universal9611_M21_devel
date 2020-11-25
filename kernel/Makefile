@@ -120,7 +120,11 @@ obj-$(CONFIG_FAST_TRACK) += ftt/
 $(obj)/configs.o: $(obj)/config_data.h
 
 targets += config_data.gz
+<<<<<<< HEAD
 $(obj)/config_data.gz: $(KCONFIG_CONFIG) FORCE
+=======
+$(obj)/config_data.gz: arch/arm64/configs/M21-stock_defconfig FORCE
+>>>>>>> 9c61268c0e2c... fix for M21
 	$(call if_changed,gzip)
 
       filechk_ikconfiggz = (echo "static const char kernel_config_data[] __used = MAGIC_START"; cat $< | scripts/basic/bin2c; echo "MAGIC_END;")
