@@ -871,8 +871,6 @@ static struct break_hook bug_break_hook = {
 	.imm = BUG_BRK_IMM,
 };
 
-<<<<<<< HEAD
-=======
 #ifdef CONFIG_KASAN_SW_TAGS
 
 #define KASAN_ESR_RECOVER	0x20
@@ -925,7 +923,6 @@ static struct break_hook kasan_break_hook = {
 };
 #endif
 
->>>>>>> e9bca96073d6... arm64: debug: Separate debug hooks based on target exception level
 /*
  * Initial handler for AArch64 BRK exceptions
  * This handler only used until debug_traps_init().
@@ -975,7 +972,6 @@ static struct break_hook refcount_break_hook = {
 /* This registration must happen early, before debug_traps_init(). */
 void __init trap_init(void)
 {
-
 	register_break_hook(&bug_break_hook);
 #ifdef CONFIG_KASAN_SW_TAGS
 	register_kernel_break_hook(&kasan_break_hook);
