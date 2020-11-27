@@ -84,6 +84,7 @@ static char *decon_state_names[] = {
 
 void tracing_mark_write(struct decon_device *decon, char id, char *str1, int value)
 {
+#if 0
 	char buf[DECON_TRACE_BUF_SIZE] = {0,};
 
 	if (!decon->systrace.pid)
@@ -106,7 +107,9 @@ void tracing_mark_write(struct decon_device *decon, char id, char *str1, int val
 		return;
 	}
 	trace_puts(buf);
+#endif
 
+	return;
 }
 
 static void decon_dump_using_dpp(struct decon_device *decon)
