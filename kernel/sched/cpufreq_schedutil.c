@@ -777,26 +777,6 @@ static ssize_t fb_legacy_store(struct gov_attr_set *attr_set, const char *buf,
 }
 #endif
 
-#ifdef CONFIG_SCHED_KAIR_GLUE
-static ssize_t fb_legacy_show(struct gov_attr_set *attr_set, char *buf)
-{
-	struct sugov_tunables *tunables = to_sugov_tunables(attr_set);
-
-	return scnprintf(buf, PAGE_SIZE, "%u\n", tunables->fb_legacy);
-}
-
-static ssize_t fb_legacy_store(struct gov_attr_set *attr_set, const char *buf,
-			       size_t count)
-{
-	struct sugov_tunables *tunables = to_sugov_tunables(attr_set);
-
-	if (kstrtobool(buf, &tunables->fb_legacy))
-		return -EINVAL;
-
-	return count;
-}
-#endif
-
 static struct governor_attr up_rate_limit_us = __ATTR_RW(up_rate_limit_us);
 static struct governor_attr down_rate_limit_us = __ATTR_RW(down_rate_limit_us);
 #ifdef CONFIG_SCHED_KAIR_GLUE

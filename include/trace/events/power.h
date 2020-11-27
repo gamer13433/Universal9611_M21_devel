@@ -217,30 +217,6 @@ TRACE_EVENT(cpu_frequency_limits,
 		  (unsigned long)__entry->cpu_id)
 );
 
-TRACE_EVENT(cpu_frequency_sugov,
-
-	TP_PROTO(unsigned int freq, unsigned long util, unsigned int cpu_id),
-
-	TP_ARGS(freq, util, cpu_id),
-
-	TP_STRUCT__entry(
-		__field(	u32,		freq	)
-		__field(	u32,		util	)
-		__field(	u32,		cpu_id	)
-	),
-
-	TP_fast_assign(
-		__entry->freq = freq;
-		__entry->util = util;
-		__entry->cpu_id = cpu_id;
-	),
-
-	TP_printk("freq=%lu util=%lu cpu_id=%lu",
-		  (unsigned long)__entry->freq,
-		  (unsigned long)__entry->util,
-		  (unsigned long)__entry->cpu_id)
-);
-
 TRACE_EVENT(sugov_kair_freq,
 	    TP_PROTO(unsigned int cpu, unsigned long util, unsigned long max,
 		     int l1_rand, unsigned int legacy_freq, unsigned int freq),
