@@ -25,7 +25,7 @@ static const struct file_operations cmdline_proc_fops = {
 	.llseek		= seq_lseek,
 	.release	= single_release,
 };
-
+#ifdef CONFIG_PROC_REMOVE_SAFETYNET_FLAGS
 static char *padding = "                ";
 
 static void replace_flag(char *cmd, const char *flag, const char *flag_new)
@@ -69,16 +69,17 @@ static void replace_safetynet_flags(char *cmd)
 			  "androidboot.veritymode=enforcing");
 
 }
-
+#endif
 static int __init proc_cmdline_init(void)
 {
 	strcpy(new_command_line, saved_command_line);
+#ifdef CONFIG_PROC_REMOVE_SAFETYNET_FLAGS
 	/*
 	 * Replace various flags from command line seen by userspace in order to
 	 * pass SafetyNet CTS check.
 	 */
 	replace_safetynet_flags(new_command_line);
-
+#endif
 	proc_create("cmdline", 0, NULL, &cmdline_proc_fops);
 	return 0;
 }
