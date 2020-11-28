@@ -73,7 +73,6 @@ static void replace_safetynet_flags(char *cmd)
 static int __init proc_cmdline_init(void)
 {
 	strcpy(new_command_line, saved_command_line);
-#ifdef CONFIG_PROC_PATCH_SAFETYNET_FLAGS
 	/*
 	 * Replace various flags from command line seen by userspace in order to
 	 * pass SafetyNet CTS check.
