@@ -13,11 +13,11 @@ targets := $(obj-vdso) vdso.so vdso.so.dbg
 obj-vdso := $(addprefix $(obj)/, $(obj-vdso))
 
 ldflags-y := -shared -nostdlib -soname=linux-vdso.so.1  --hash-style=sysv \
-		--build-id $(call ld-option,-n) -T
+		--build-id $(call ld-option,-n) -T 
 ccflags-y += $(DISABLE_LTO)
 ccflags-y += $(call cc-option, -fno-whole-program)
 
-CFLAGS_REMOVE_vgettimeofday.o += $(CC_FLAGS_SCS)
+CFLAGS_REMOVE_gettimeofday.o += $(CC_FLAGS_SCS)
 
 # Disable gcov profiling for VDSO code
 GCOV_PROFILE := n
