@@ -382,7 +382,11 @@ CPP		= $(CC) -E
 ifneq ($(LLVM),)
 CC		= clang
 LD		= ld.lld
+ifndef CONFIG_LTO_CLANG
+LDGOLD		= $(CROSS_COMPILE)ld.gold
+else
 LDGOLD		= ld.gold
+endif
 AR		= llvm-ar
 NM		= llvm-nm
 OBJCOPY		= llvm-objcopy

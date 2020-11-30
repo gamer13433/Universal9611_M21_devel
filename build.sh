@@ -5,6 +5,7 @@ export SUBARCH=arm64
 export ANDROID_MAJOR_VERSION=q
 export PATH="/home/_123/KERNEL/proton-clang/bin:$PATH"
 export CC=clang
+export LDGOLD=aarch64-linux-gnu-ld.gold
 export LLVM=1
 export CROSS_COMPILE=aarch64-linux-gnu-
 export CROSS_COMPILE_ARM32=arm-linux-gnueabi-
@@ -16,7 +17,6 @@ export OBJDUMP=llvm-objdump
 export READELF=llvm-readelf
 export OBJSIZE=llvm-size
 export STRIP=llvm-strip
-export LDGOLD=aarch64-linux-gnu-ld.gold
 export LLVM_AR=llvm-ar
 export LLVM_DIS=llvm-dis
 make exynos9610-m21dd_defconfig
