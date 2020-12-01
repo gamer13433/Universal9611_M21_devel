@@ -37,9 +37,6 @@ lib-y := ctype.o string.o vsprintf.o cmdline.o \
 	 earlycpio.o seq_buf.o siphash.o \
 	 nmi_backtrace.o nodemask.o win_minmax.o memcopy.o
 
-lib-$(CONFIG_DEBUG_KERNEL) += nmi_backgrace.o
->>>>>>> f91350214928... lib/memcopy: use glibc version
-
 lib-$(CONFIG_MMU) += ioremap.o
 lib-$(CONFIG_SMP) += cpumask.o
 lib-$(CONFIG_DMA_NOOP_OPS) += dma-noop.o
