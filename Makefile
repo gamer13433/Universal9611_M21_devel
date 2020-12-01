@@ -705,7 +705,7 @@ CLANG_BIN_DIR := $(dir $(CC))
 # use GNU gold with LLVMgold for LTO linking, and LD for vmlinux_link
 LDFINAL_vmlinux := $(LD)
 LD		:= $(LDGOLD)
-LDFLAGS		+= -plugin /home/_123/KERNEL/proton-clang/lib/LLVMgold.so
+LDFLAGS		+= -plugin LLVMgold.so
 export LDFLAGS
 # use llvm-ar for building symbol tables from IR files, and llvm-dis instead
 # of objdump for processing symbol versions and exports
