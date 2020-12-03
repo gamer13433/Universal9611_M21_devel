@@ -22,66 +22,83 @@ unsigned long task_util(struct task_struct *p)
 		return p->se.avg.util_avg;
 }
 
-static int select_proper_cpu(struct task_struct *p, int prev_cpu)
+extern int capacity_margin;
+static int select_proper_cpu(struct task_struct *p)
 {
-	int cpu;
-	unsigned long best_min_util = ULONG_MAX;
-	int best_cpu = -1;
+	unsigned long best_idle_util = ULONG_MAX;
+	unsigned long target_capacity = 0;
+	unsigned long max_spare_cap = 0;
+	int best_idle_cstate = INT_MAX;
+	int best_active_cpu = -1;
+	int best_idle_cpu = -1;
+	int cpu, cpu_cl;
+	int target_cpu;
+	struct task_struct *curr;
 
-	for_each_cpu(cpu, cpu_active_mask) {
-		int i;
+	for_each_cpu(cpu_cl, cpu_active_mask) {
+		struct cpumask mask;
 
-		/* visit each coregroup only once */
-		if (cpu != cpumask_first(cpu_coregroup_mask(cpu)))
+		if (cpu_cl != cpumask_first(cpu_coregroup_mask(cpu_cl)))
 			continue;
 
-		/* skip if task cannot be assigned to coregroup */
-		if (!cpumask_intersects(&p->cpus_allowed, cpu_coregroup_mask(cpu)))
-			continue;
+		cpumask_and(&mask, cpu_coregroup_mask(cpu_cl), tsk_cpus_allowed(p));
 
-		for_each_cpu_and(i, tsk_cpus_allowed(p), cpu_coregroup_mask(cpu)) {
-			unsigned long capacity_orig = capacity_orig_of(i);
-			unsigned long new_util;
+		for_each_cpu_and(cpu, &mask, cpu_active_mask) {
+			unsigned long capacity_orig = capacity_orig_of(cpu);
+			unsigned long new_util = ml_task_attached_cpu_util(cpu, p);
+			unsigned long spare_cap;
 
-			new_util = ml_task_attached_cpu_util(i, p);
 			new_util = max(new_util, ml_boosted_task_util(p));
-
-			/* skip over-capacity cpu */
-			if (new_util > capacity_orig)
+			/* Skip over-capacity cpu */
+			if (new_util * capacity_margin > capacity_orig * SCHED_CAPACITY_SCALE)
 				continue;
 
-			/*
-			 * Best target) lowest utilization among lowest-cap cpu
-			 *
-			 * If the sequence reaches this function, the wakeup task
-			 * does not require performance and the prev cpu is over-
-			 * utilized, so it should do load balancing without
-			 * considering energy side. Therefore, it selects cpu
-			 * with smallest cpapacity and the least utilization among
-			 * cpu that fits the task.
-			 */
-			if (best_min_util < new_util)
-				continue;
+			if (idle_cpu(cpu)) {
+				int idle_idx = idle_get_state_idx(cpu_rq(cpu));
 
-			best_min_util = new_util;
-			best_cpu = i;
+				/* find shallowest idle state cpu */
+				if (capacity_orig >= target_capacity &&
+				    idle_idx > best_idle_cstate)
+					continue;
+
+				if (idle_idx == best_idle_cstate &&
+				    new_util >= best_idle_util)
+					continue;
+
+				/* Keep track of best idle CPU */
+				target_capacity = capacity_orig;
+				best_idle_cstate = idle_idx;
+				best_idle_util = new_util;
+				best_idle_cpu = cpu;
+				continue;
+			}
+
+			/* Find maximum spare capacity CPU */
+			spare_cap = capacity_orig - new_util;
+			if (spare_cap > max_spare_cap) {
+			    target_capacity = capacity_orig;
+			    max_spare_cap = spare_cap;
+			    best_active_cpu = cpu;
+			}
 		}
 
 		/*
-		 * if it fails to find the best cpu in this coregroup, visit next
-		 * coregroup.
+		 * Try to pack tasks to smallest cluster as possible to save energy
 		 */
-		if (cpu_selected(best_cpu))
+		if (cpu_selected(best_active_cpu) || cpu_selected(best_idle_cpu))
 			break;
 	}
 
-	trace_ems_select_proper_cpu(p, best_cpu, best_min_util);
+	if (best_active_cpu != -1 && best_idle_cpu != -1) {
+		curr = READ_ONCE(cpu_rq(best_active_cpu)->curr);
+		if (curr && schedtune_prefer_perf(curr) > 0) {
+			return best_idle_cpu;
+		}
+	}
 
-	/*
-	 * if it fails to find the vest cpu, choosing any cpu is meaningless.
-	 * Return prev cpu.
-	 */
-	return cpu_selected(best_cpu) ? best_cpu : prev_cpu;
+	target_cpu = cpu_selected(best_active_cpu) ? best_active_cpu : best_idle_cpu;
+
+	return cpu_selected(target_cpu) ? target_cpu : task_cpu(p);
 }
 
 extern void sync_entity_load_avg(struct sched_entity *se);
@@ -228,7 +245,7 @@ int exynos_wakeup_balance(struct task_struct *p, int prev_cpu, int sd_flag, int 
 	 * it means that assigning task to any cpu does not have performance and
 	 * power benefit. In this case, select cpu for balancing cpu utilization.
 	 */
-	target_cpu = select_proper_cpu(p, prev_cpu);
+	target_cpu = select_proper_cpu(p);
 	if (cpu_selected(target_cpu))
 		strcpy(state, "proper cpu");
 
