@@ -1065,3 +1065,4 @@ config HAVE_ARCH_COMPILER_H
 	  headers generally provide.
 
 source "kernel/gcov/Kconfig"
+source "kernel/Kconfig.intelligence"
