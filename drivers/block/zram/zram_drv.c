@@ -1411,7 +1411,7 @@ static bool zram_meta_alloc(struct zram *zram, u64 disksize)
 	if (!zram->table)
 		return false;
 
-	backend = strlen(backend_par_buf) ? backend_par_buf : "zsmalloc";
+	backend = strlen(backend_par_buf) ? backend_par_buf : CONFIG_ZRAM_DEFAULT_BACKEND;
 	zram->mem_pool = zpool_create_pool(backend, zram->disk->disk_name,
 					GFP_NOIO, NULL);
 	if (!zram->mem_pool) {
@@ -1421,6 +1421,14 @@ static bool zram_meta_alloc(struct zram *zram, u64 disksize)
 
 	if (!huge_class_size)
 		huge_class_size = zpool_huge_class_size(zram->mem_pool);
+		
+	/*
+	 * If backend doesn't support reporting huge_class_size,
+	 * then default to 3/4 of page size (value we used to have)
+	 */
+	if (!huge_class_size)
+		huge_class_size = PAGE_SIZE / 4 * 3;
+
 	return true;
 }
 
