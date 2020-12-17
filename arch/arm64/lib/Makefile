@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-2.0
-lib-y		:= bitops.o clear_user.o delay.o copy_from_user.o	\
+lib-y		:= clear_user.o delay.o copy_from_user.o	\
 		   copy_to_user.o copy_in_user.o copy_page.o		\
-		   clear_page.o memchr.o csum.o memcpy.o memmove.o memset.o	\
+		   clear_page.o memchr.o checksum.o csum.o memcpy.o memmove.o memset.o	\
 		   memcmp.o strcmp.o strncmp.o strlen.o strnlen.o	\
 		   strchr.o strrchr.o tishift.o
 
@@ -29,3 +29,5 @@ CFLAGS_atomic_ll_sc.o	:= -ffixed-x1 -ffixed-x2        		\
 CFLAGS_REMOVE_atomic_ll_sc.o := -pg
 
 lib-$(CONFIG_ARCH_HAS_UACCESS_FLUSHCACHE) += uaccess_flushcache.o
+
+obj-$(CONFIG_CRC32) += crc32.o

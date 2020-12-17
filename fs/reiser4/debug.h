@@ -40,7 +40,7 @@
     in 3.x journal.c. If cassertion fails you get compiler error,
     so no "maintainer-id".
 */
-#define cassert(cond) ({ switch (-1) { case (cond): case 0: break; } })
+#define cassert(cond) ({ switch (1) { case (cond): case 0: break; } })
 
 #define noop   do {; } while (0)
 
