@@ -997,8 +997,7 @@ static int exynos9610_tmu_read(struct exynos_tmu_data *data)
 
 #ifdef CONFIG_EXYNOS_ACPM_THERMAL
 	exynos_acpm_tmu_set_read_temp(data->tzd->id, &temp, &stat);
-#endif
-
+#endif		
 	if (data->limited_frequency) {
 		/* If cpufreq_limited flag is low and temp is higher than limited_threshold,
 		 * limited max frequency.
@@ -1008,7 +1007,7 @@ static int exynos9610_tmu_read(struct exynos_tmu_data *data)
 		if ((temp > data->limited_threshold) && !cpufreq_limited) {
 			pm_qos_update_request(&thermal_cpu_limit_request,
 					data->limited_frequency);
-			cpufreq_limited = true;
+			cpufreq_limited = false;
 			dbg_snapshot_thermal(data->pdata, temp, "limited", data->limited_frequency);
 		}
 	}
@@ -1624,6 +1623,7 @@ static int exynos_tmu_parse_ect(struct exynos_tmu_data *data)
 		}
 	} else {
 		void *block;
+		int kacha = 2600000, kaca = 90, kacar = 86;
 		struct ect_pidtm_block *pidtm_block;
 		int i, temperature, value;
 		int hotplug_out_threshold = 0, hotplug_in_threshold = 0;
@@ -1698,8 +1698,8 @@ static int exynos_tmu_parse_ect(struct exynos_tmu_data *data)
 		}
 
 		if ((value = exynos_tmu_ect_get_param(pidtm_block, "limited_frequency")) != -1) {
-			pr_info("Parse from ECT limited_frequency: %d\n", value);
-			data->limited_frequency = value;
+			pr_info("Parse from ECT limited_frequency: %d\n", kacha);
+			data->limited_frequency = kacha;
 		} else {
 			data->limited_frequency = 0;
 			pr_err("Fail to parse limited_frequency parameter\n");
@@ -1709,8 +1709,8 @@ static int exynos_tmu_parse_ect(struct exynos_tmu_data *data)
 		if (data->limited_frequency) {
 			/* Check limited_threshold to ect, if limited_frequency value is existed */
 			if ((value = exynos_tmu_ect_get_param(pidtm_block, "limited_threshold")) != -1) {
-				pr_info("Parse from ECT limited_threshold: %d\n", value);
-				data->limited_threshold = value;
+				pr_info("Parse from ECT limited_threshold: %d\n", kaca);
+				data->limited_threshold = kaca;
 			} else {
 				pr_err("Fail to parse ECT limited_threshold, disable limit frequency mode\n");
 				data->limited_frequency = 0;
@@ -1718,8 +1718,8 @@ static int exynos_tmu_parse_ect(struct exynos_tmu_data *data)
 
 			/* Check limited_threshold_release to ect, if limited_frequency value is existed */
 			if ((value = exynos_tmu_ect_get_param(pidtm_block, "limited_threshold_release")) != -1) {
-				pr_info("Parse from ECT limited_threshold_release: %d\n", value);
-				data->limited_threshold_release = value;
+				pr_info("Parse from ECT limited_threshold_release: %d\n", kacar);
+				data->limited_threshold_release = kacar;
 			} else {
 				pr_err("Fail to parse ECT limited_threshold_release, disable limit frequency mode\n");
 				data->limited_frequency = 0;
