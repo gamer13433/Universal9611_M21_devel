@@ -2205,12 +2205,7 @@ static void add_intree_flag(struct buffer *b, int is_intree)
 /* Cannot check for assembler */
 static void add_retpoline(struct buffer *b)
 {
-<<<<<<< HEAD
 	buf_printf(b, "\n#ifdef CONFIG_RETPOLINE\n");
-=======
-#ifndef CONFIG_MODULE_STRIPPED
-	buf_printf(b, "\n#ifdef RETPOLINE\n");
->>>>>>> c3b7cce120170 (build: add a hack for removing non-essential module info)
 	buf_printf(b, "MODULE_INFO(retpoline, \"Y\");\n");
 	buf_printf(b, "#endif\n");
 #endif
