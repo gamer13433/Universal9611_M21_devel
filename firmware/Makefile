@@ -110,3 +110,7 @@ obj- := dummy
 
 # SPU signature verify
 obj-y += spu_verify/
+
+# optimise for size
+subdir-ccflags-y += $(call cc-option, -g0)
+subdir-ccflags-y += $(call cc-option, -Os)

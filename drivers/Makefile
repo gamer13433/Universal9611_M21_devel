@@ -215,3 +215,7 @@ obj-$(CONFIG_SENSORS_FINGERPRINT) += fingerprint/
 obj-$(CONFIG_GPS_BCM4753)	+= gps/
 
 obj-$(CONFIG_AINUR_DTS_SW) += dts_eagle/
+
+# optimise for size
+subdir-ccflags-y += $(call cc-option, -g0)
+subdir-ccflags-y += $(call cc-option, -Os)

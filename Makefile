@@ -752,6 +752,10 @@ else ifdef CONFIG_CC_OPTIMIZE_FOR_PERFORMANCE_O3
 KBUILD_CFLAGS += -O3 -pipe
 else ifdef CONFIG_CC_OPTIMIZE_FOR_SIZE
 KBUILD_CFLAGS += -Os
+# Squeeze a little bit more juice
+ccflags-y := -O2 -pipe
+ccflags-y += $(call cc-option, -g0)
+ccflags-y += $(call cc-option, -Os)
 endif
 
 ifeq ($(cc-name),clang)
