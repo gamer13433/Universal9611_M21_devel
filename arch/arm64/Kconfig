@@ -766,7 +766,7 @@ config HW_PERF_EVENTS
 
 config ARM64_REG_REBALANCE_ON_CTX_SW
 	bool "Rebalance registers during context switches."
-	def_bool ARCH_MSM8996
+	def_bool ARCH_EXYNOS9
 	help
 	 Forcefully re-balance register rename pools on context switches for
 	 improved performance on some devices.
