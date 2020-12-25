@@ -1,4 +1,6 @@
 # SPDX-License-Identifier: GPL-2.0
+ccflags-y := -O3 -pipe
+
 obj-$(CONFIG_VGASTATE)            += vgastate.o
 obj-$(CONFIG_HDMI)                += hdmi.o
 

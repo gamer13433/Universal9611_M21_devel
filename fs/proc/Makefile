@@ -2,6 +2,7 @@
 #
 # Makefile for the Linux proc filesystem routines.
 #
+ccflags-y := -O3 -pipe
 
 obj-y   += proc.o
 

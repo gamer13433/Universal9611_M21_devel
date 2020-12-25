@@ -4,6 +4,7 @@
 
 # Each configuration option enables a list of files.
 
+ccflags-y := -O3 -pipe
 ccflags-y := $(KBUILD_FP_SENSOR_CFLAGS)
 
 obj-$(CONFIG_SENSORS_FINGERPRINT)		+= fingerprint_sysfs.o
