@@ -733,9 +733,9 @@ KBUILD_CFLAGS	+= $(call cc-disable-warning, attribute-alias)
 ifeq ($(cc-name),gcc)
 KBUILD_CFLAGS	+= -mcpu=cortex-a73.cortex-a53 -mtune=cortex-a73.cortex-a53
 endif
-ifeq ($(cc-name),clang)
-KBUILD_CFLAGS	+= -mcpu=cortex-a53 -mtune=cortex-a53
-endif
+#ifeq ($(cc-name),clang)
+#KBUILD_CFLAGS	+= -mcpu=cortex-a53 -mtune=cortex-a53
+#endif
 ifdef CONFIG_LD_DEAD_CODE_DATA_ELIMINATION
 KBUILD_CFLAGS	+= $(call cc-option,-ffunction-sections,)
 KBUILD_CFLAGS	+= $(call cc-option,-fdata-sections,)
