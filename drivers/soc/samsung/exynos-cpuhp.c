@@ -49,9 +49,6 @@ static struct {
 	/* Synchronizes accesses to refcount and cpumask */
 	struct mutex		lock;
 
-	/* fast hotplug cpus */
-	struct cpumask		fast_hp_cpus;
-
 	/* user request mask */
 	struct cpumask		online_cpus;
 
@@ -64,7 +61,7 @@ static struct {
 /**********************************************************************************/
 /*				   Helper					  */
 /**********************************************************************************/
-static int cpuhp_do(int fast_hp);
+static int cpuhp_do(void);
 
 /*
  * Update pm_suspend status.
@@ -73,7 +70,9 @@ static int cpuhp_do(int fast_hp);
 static inline void cpuhp_suspend(bool enable)
 {
 	/* This lock guarantees completion of cpuhp_do() */
+	mutex_lock(&cpuhp.lock);
 	cpuhp.suspended = enable;
+	mutex_unlock(&cpuhp.lock);
 }
 
 /*
@@ -82,11 +81,13 @@ static inline void cpuhp_suspend(bool enable)
  */
 static inline void cpuhp_enable(bool enable)
 {
+	mutex_lock(&cpuhp.lock);
 	cpuhp.enabled = enable;
+	mutex_unlock(&cpuhp.lock);
 }
 
 /* find user matched name. if return NULL, there is no user matched name */
-static struct cpuhp_user* cpuhp_find_user(char *name)
+static struct cpuhp_user *cpuhp_find_user(char *name)
 {
 	struct cpuhp_user *user;
 
@@ -128,7 +129,6 @@ int exynos_cpuhp_unregister(char *name, struct cpumask mask, int type)
  */
 int exynos_cpuhp_register(char *name, struct cpumask mask, int type)
 {
-	int ret;
 	struct cpuhp_user *user;
 	char buf[10];
 
@@ -153,14 +153,12 @@ int exynos_cpuhp_register(char *name, struct cpumask mask, int type)
 	list_add(&user->list, &cpuhp.users);
 
 	scnprintf(buf, sizeof(buf), "%*pbl", cpumask_pr_args(&user->online_cpus));
-	pr_info("CPUHP: reigstered new user(name:%s, mask:%s)\n", user->name, buf);;
-
-	/* applying new user's request */
-	ret = cpuhp_do(true);
+	pr_info("CPUHP: reigstered new user(name:%s, mask:%s)\n", user->name, buf);
 
 	mutex_unlock(&cpuhp.lock);
 
-	return ret;
+	/* applying new user's request */
+	return cpuhp_do();
 }
 
 /*
@@ -170,20 +168,14 @@ int exynos_cpuhp_register(char *name, struct cpumask mask, int type)
  */
 int exynos_cpuhp_request(char *name, struct cpumask mask, int type)
 {
-	int ret;
-
-	mutex_lock(&cpuhp.lock);
-
-	if (cpuhp_update_user(name, mask, type)) {
-		mutex_unlock(&cpuhp.lock);
+	if (cpuhp_update_user(name, mask, type))
 		return 0;
-	}
 
-	ret = cpuhp_do(true);
+	/* use fast cpu hotplug sequence */
+	if (type == FAST_HP)
+		return cpuhp_do();
 
-	mutex_unlock(&cpuhp.lock);
-
-	return ret;
+	return cpuhp_do();
 }
 
 /**********************************************************************************/
@@ -251,7 +243,7 @@ static struct cpumask cpuhp_get_online_cpus(void)
 
 	if (cpumask_empty(&mask) || !cpumask_test_cpu(0, &mask)) {
 		scnprintf(buf, sizeof(buf), "%*pbl", cpumask_pr_args(&mask));
-		panic("CPUHP: Online mask(%s) is wrong \n", buf);
+		panic("CPUHP: Online mask(%s) is wrong\n", buf);
 	}
 
 	return mask;
@@ -261,72 +253,38 @@ static struct cpumask cpuhp_get_online_cpus(void)
  * Executes cpu_up
  * Run cpu_up according to the cpu control operation type.
  */
-static int cpuhp_cpu_up(struct cpumask enable_cpus, int fast_hp)
+static int cpuhp_cpu_up(struct cpumask enable_cpus)
 {
-	struct cpumask fast_cpus;
-	int ret = 0;
-
-	cpumask_clear(&fast_cpus);
-	if (fast_hp)
-		cpumask_copy(&fast_cpus, &cpuhp.fast_hp_cpus);
-
-	cpumask_and(&fast_cpus, &enable_cpus, &fast_cpus);
-	cpumask_andnot(&enable_cpus, &enable_cpus, &fast_cpus);
 	if (!cpumask_empty(&enable_cpus))
-		ret = cpuhp_in(&enable_cpus);
-	if (ret)
-		goto exit;
-
-	if (fast_hp && !cpumask_empty(&fast_cpus))
-		ret = cpus_up(fast_cpus);
-
-	return ret;
-exit:
-	pr_info("failed to cpuhp_cpu_up(%d)\n", ret);
-	return ret;
+		if (cpuhp_in(&enable_cpus))
+			pr_info("failed to cpuhp_cpu_up\n");
+	return 0;
 }
 
 /*
  * Executes cpu_down
  * Run cpu_up according to the cpu control operation type.
  */
-static int cpuhp_cpu_down(struct cpumask disable_cpus, int fast_hp)
+static int cpuhp_cpu_down(struct cpumask disable_cpus)
 {
-	struct cpumask fast_cpus;
-	int ret = 0;
-
-	cpumask_clear(&fast_cpus);
-	if (fast_hp)
-		cpumask_copy(&fast_cpus, &cpuhp.fast_hp_cpus);
-
-	cpumask_and(&fast_cpus, &disable_cpus, &fast_cpus);
-	cpumask_andnot(&disable_cpus, &disable_cpus, &fast_cpus);
-	if (fast_hp && !cpumask_empty(&fast_cpus))
-		ret = cpus_down(fast_cpus);
-	if (ret)
-		goto exit;
-
 	if (!cpumask_empty(&disable_cpus))
-		ret = cpuhp_out(&disable_cpus);
-
-	return ret;
-exit:
-	pr_info("failed to cpuhp_cpu_down(%d)\n", ret);
-	return ret;
+		if (cpuhp_out(&disable_cpus))
+			pr_info("failed to cpuhp_cpu_down\n");
+	return 0;
 }
 
 /* print cpu control informatoin for deubgging */
-static void cpuhp_print_debug_info(struct cpumask online_cpus, int fast_hp)
+static void cpuhp_print_debug_info(struct cpumask online_cpus)
 {
 	char new_buf[10], pre_buf[10];
 
 	scnprintf(pre_buf, sizeof(pre_buf), "%*pbl", cpumask_pr_args(&cpuhp.online_cpus));
 	scnprintf(new_buf, sizeof(new_buf), "%*pbl", cpumask_pr_args(&online_cpus));
-	dbg_snapshot_printk("%s: %s -> %s fast_hp=%d\n", __func__, pre_buf, new_buf, fast_hp);
+	dbg_snapshot_printk("%s: %s -> %s\n", __func__, pre_buf, new_buf);
 
 	/* print cpu control information */
 	if (cpuhp.debug)
-		pr_info("%s: %s -> %s fast_hp=%d\n", __func__, pre_buf, new_buf, fast_hp);
+		pr_info("%s: %s -> %s\n", __func__, pre_buf, new_buf);
 }
 
 /*
@@ -334,20 +292,23 @@ static void cpuhp_print_debug_info(struct cpumask online_cpus, int fast_hp)
  * enables or disables cpus, so all APIs in this driver call cpuhp_do()
  * eventually.
  */
-static int cpuhp_do(int fast_hp)
+static int cpuhp_do(void)
 {
 	int ret = 0;
 	struct cpumask online_cpus, enable_cpus, disable_cpus;
 
+	mutex_lock(&cpuhp.lock);
 	/*
 	 * If cpu hotplug is disabled or suspended,
 	 * cpuhp_do() do nothing.
 	 */
-	if (!cpuhp.enabled || cpuhp.suspended)
+	if (!cpuhp.enabled || cpuhp.suspended) {
+		mutex_unlock(&cpuhp.lock);
 		return 0;
+	}
 
 	online_cpus = cpuhp_get_online_cpus();
-	cpuhp_print_debug_info(online_cpus, fast_hp);
+	cpuhp_print_debug_info(online_cpus);
 
 	/* if there is no mask change, skip */
 	if (cpumask_equal(&cpuhp.online_cpus, &online_cpus))
@@ -359,16 +320,18 @@ static int cpuhp_do(int fast_hp)
 	cpumask_andnot(&disable_cpus, &cpuhp.online_cpus, &online_cpus);
 
 	if (!cpumask_empty(&enable_cpus))
-		ret = cpuhp_cpu_up(enable_cpus, fast_hp);
+		ret = cpuhp_cpu_up(enable_cpus);
 	if (ret)
 		goto out;
 
 	if (!cpumask_empty(&disable_cpus))
-		ret = cpuhp_cpu_down(disable_cpus, fast_hp);
+		ret = cpuhp_cpu_down(disable_cpus);
 
 	cpumask_copy(&cpuhp.online_cpus, &online_cpus);
 
 out:
+	mutex_unlock(&cpuhp.lock);
+
 	return ret;
 }
 
@@ -377,11 +340,12 @@ static int cpuhp_control(bool enable)
 	struct cpumask mask;
 	int ret = 0;
 
-	mutex_lock(&cpuhp.lock);
 	if (enable) {
 		cpuhp_enable(true);
-		cpuhp_do(true);
+		cpuhp_do();
 	} else {
+		mutex_lock(&cpuhp.lock);
+
 		cpumask_setall(&mask);
 		cpumask_andnot(&mask, &mask, cpu_online_mask);
 
@@ -399,8 +363,9 @@ static int cpuhp_control(bool enable)
 		} else {
 			pr_err("Fail to disable cpu hotplug, please try again\n");
 		}
+
+		mutex_unlock(&cpuhp.lock);
 	}
-	mutex_unlock(&cpuhp.lock);
 
 	return ret;
 }
@@ -416,11 +381,13 @@ static int cpuhp_control(bool enable)
  *
  * #echo mask > /sys/power/cpuhp/set_online_cpu
  */
+#define STR_LEN 6
 #define attr_online_cpu(name)							\
 static ssize_t show_##name##_online_cpu(struct kobject *kobj,			\
 	struct kobj_attribute *attr, char *buf)					\
 {										\
-	unsigned int online_cpus;							\
+	unsigned int online_cpus;						\
+										\
 	online_cpus = *(unsigned int *)cpumask_bits(&cpuhp.sysfs_user.online_cpus);	\
 	return snprintf(buf, 30, #name " online cpu : 0x%x\n", online_cpus);	\
 }										\
@@ -429,10 +396,31 @@ static ssize_t store_##name##_online_cpu(struct kobject *kobj,			\
 	struct kobj_attribute *attr, const char *buf,				\
 	size_t count)								\
 {										\
-	mutex_lock(&cpuhp.lock);						\
-	cpumask_parse(buf, &cpuhp.sysfs_user.online_cpus);			\
-	cpuhp_do(true);								\
-	mutex_unlock(&cpuhp.lock);						\
+	char str[STR_LEN];							\
+	int i;									\
+	struct cpumask online_cpus;						\
+										\
+	if (strlen(buf) >= STR_LEN)						\
+		return -EINVAL;							\
+										\
+	if (!sscanf(buf, "%s", str))						\
+		return -EINVAL;							\
+										\
+	if (str[0] == '0' && str[1] == 'x') {					\
+		for (i = 0; i+2 < STR_LEN; i++) {				\
+			str[i] = str[i + 2];					\
+			str[i+2] = '\n';					\
+		}								\
+	}									\
+										\
+	cpumask_parse(str, &online_cpus);					\
+	if (!cpumask_test_cpu(0, &online_cpus)) {				\
+		pr_warn("wrong format\n");					\
+		return -EINVAL;							\
+	}									\
+										\
+	cpumask_copy(&cpuhp.sysfs_user.online_cpus, &online_cpus);		\
+	cpuhp_do();								\
 										\
 	return count;								\
 }										\
@@ -452,6 +440,7 @@ static ssize_t show_online_cpu(struct kobject *kobj,
 		struct kobj_attribute *attr, char *buf)
 {
 	unsigned int online_cpus;
+
 	online_cpus = *(unsigned int *)cpumask_bits(&cpuhp.online_cpus);
 
 	return snprintf(buf, 30, "online cpu: 0x%x\n", online_cpus);
@@ -466,7 +455,7 @@ static ssize_t show_online_cpu(struct kobject *kobj,
 static ssize_t show_users(struct kobject *kobj,
 		struct kobj_attribute *attr, char *buf)
 {
-	unsigned int online_cpus;							\
+	unsigned int online_cpus;
 	struct cpuhp_user *user;
 	ssize_t ret = 0;
 
@@ -564,19 +553,15 @@ static const struct attribute_group cpuhp_group = {
 static int exynos_cpuhp_pm_notifier(struct notifier_block *notifier,
 				       unsigned long pm_event, void *v)
 {
-	mutex_lock(&cpuhp.lock);
 	switch (pm_event) {
 	case PM_SUSPEND_PREPARE:
 		cpuhp_suspend(true);
 		break;
-
 	case PM_POST_SUSPEND:
 		cpuhp_suspend(false);
-		cpuhp_do(true);
+		cpuhp_do();
 		break;
 	}
-	mutex_unlock(&cpuhp.lock);
-
 	return NOTIFY_OK;
 }
 
@@ -584,24 +569,9 @@ static struct notifier_block exynos_cpuhp_nb = {
 	.notifier_call = exynos_cpuhp_pm_notifier,
 };
 
-static void __init cpuhp_dt_init(void)
-{
-	struct device_node *np = of_find_node_by_name(NULL, "cpuhp");
-	const char *buf;
-
-	if (of_property_read_string(np, "fast_hp_cpus", &buf)) {
-		pr_info("fast_hp_cpus property is omitted!\n");
-		return;
-	}
-	cpulist_parse(buf, &cpuhp.fast_hp_cpus);
-
-	return;
-}
-
 /**********************************************************************************/
 /*				        INIT					  */
 /**********************************************************************************/
-extern struct cpumask early_cpu_mask;
 static void __init cpuhp_user_init(void)
 {
 	struct cpumask mask;
@@ -610,7 +580,6 @@ static void __init cpuhp_user_init(void)
 	INIT_LIST_HEAD(&cpuhp.users);
 
 	cpumask_copy(&mask, cpu_possible_mask);
-	cpumask_and(&mask, &mask, &early_cpu_mask);
 
 	/* register user for SYSFS */
 	cpumask_copy(&cpuhp.system_user.online_cpus, &mask);
@@ -648,9 +617,6 @@ static void __init cpuhp_sysfs_init(void)
 
 static int __init cpuhp_init(void)
 {
-	/* Parse data from device tree */
-	cpuhp_dt_init();
-
 	/* Initialize pm_qos request and handler */
 	cpuhp_user_init();
 
