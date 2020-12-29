@@ -659,7 +659,6 @@ config PELT_UTIL_HALFLIFE_16
 	  decay of utlization and load twice as fast as for the default
 	  configuration using 32ms.
 
-<<<<<<< HEAD
 config PELT_UTIL_HALFLIFE_12
 	bool "12 ms, very fast"
 	help
