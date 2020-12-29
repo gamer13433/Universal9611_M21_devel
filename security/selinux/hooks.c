@@ -1787,12 +1787,12 @@ out_unlock:
 	return rc;
 
 out_invalid:
-	spin_lock(&isec->lock);
+	mutex_lock(&isec->lock);
 	if (isec->initialized == LABEL_PENDING) {
 		isec->initialized = LABEL_INVALID;
 		isec->sid = sid;
 	}
-	spin_unlock(&isec->lock);
+	mutex_unlock(&isec->lock);
 	return 0;
 }
 
