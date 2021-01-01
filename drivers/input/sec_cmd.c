@@ -328,8 +328,6 @@ static void sec_cmd_store_function(struct sec_cmd_data *data)
 		snprintf(tbuf, sizeof(tbuf), "[r:%lu.%06lu]",
 				(unsigned long)t,
 				nanosec_rem / 1000);
-
-		sec_debug_tsp_command_history(tbuf);
 	}
 #endif
 }
@@ -378,9 +376,6 @@ static ssize_t sec_cmd_store(struct device *dev, struct device_attribute *devatt
 						nanosec_rem / 1000);
 
 				snprintf(task_info, 40, "\n[%d:%s]", current->pid, current->comm);
-				sec_debug_tsp_command_history(task_info);
-				sec_debug_tsp_command_history(cmd.cmd);
-				sec_debug_tsp_command_history(tbuf);
 
 			}
 #endif
