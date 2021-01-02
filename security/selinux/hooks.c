@@ -3470,7 +3470,6 @@ static int selinux_inode_getsecurity(struct inode *inode, const char *name, void
 	char *context = NULL;
 	const struct inode_security_struct *isec;
 	char context_onstack[SELINUX_LABEL_LENGTH];
-	const struct inode_security_struct *isec = inode->i_security;
 
 	if (strcmp(name, XATTR_SELINUX_SUFFIX))
 		return -EOPNOTSUPP;
