@@ -211,7 +211,7 @@ config SEC_DEBUG_TSP_LOG
 
 config INPUT_BOOSTER
 	bool "Samsung input boost"
-	default n
+	default y
 	help
 	  Enable the Samsung built-in input boost that acts on
 	  mouse, keyboard, touch (only on sec_ts), and more
