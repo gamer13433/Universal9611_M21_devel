@@ -5860,6 +5860,7 @@
 		gpu_max_clock = <0x101148>;
 		gpu_max_clock_limit = <0x101148>;
 		gpu_min_clock = <0x3f7a0>;
+		gpu_min_clock_limit = <0x3f7a0>;
 		gpu_dvfs_start_clock = <0x3f7a0>;
 		gpu_dvfs_bl_config_clock = <0x3f7a0>;
 		gpu_default_voltage = <0xc3500>;
@@ -5889,7 +5890,7 @@
 		gpu_mo_min_clock = <0xba860>;
 		gpu_boost_gpu_min_lock = <0x0>;
 		gpu_boost_egl_min_lock = <0x130b00>;
-		gpu_vk_boost_max_lock = <0x7d0>;
+		gpu_vk_boost_max_lock = <0x854d0>;
 		gpu_vk_boost_mif_min_lock = <0x0>;
 		gpu_asv_cali_lock_val = <0x0>;
 		gpu_set_pmu_duration_reg = <0x0>;
