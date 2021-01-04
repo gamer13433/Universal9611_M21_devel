@@ -1,0 +1,1 @@
+python tools/dtbo/mkdtboimg.py create /home/_123/KERNEL/android_kernel_samsung_universal9611/arch/arm64/boot/dts/exynos/exynos9610.img --id=0 --rev=0 --custom1=0x25500000 /home/_123/KERNEL/android_kernel_samsung_universal9611/arch/arm64/boot/dts/exynos/exynos9610.dtb
