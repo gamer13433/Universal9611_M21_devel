@@ -2815,6 +2815,7 @@
 			reg = <0x0 0x0>;
 			enable-method = "psci";
 			cpu-idle-states = <0x20>;
+			dynamic-power-coefficient = <0x50>;
 			sched-energy-data = <0x21>;
 			linux,phandle = <0x18>;
 			phandle = <0x18>;
@@ -2826,6 +2827,7 @@
 			reg = <0x0 0x1>;
 			enable-method = "psci";
 			cpu-idle-states = <0x20>;
+			dynamic-power-coefficient = <0x50>;
 			sched-energy-data = <0x21>;
 			linux,phandle = <0x19>;
 			phandle = <0x19>;
@@ -2837,6 +2839,7 @@
 			reg = <0x0 0x2>;
 			enable-method = "psci";
 			cpu-idle-states = <0x20>;
+			dynamic-power-coefficient = <0x50>;
 			sched-energy-data = <0x21>;
 			linux,phandle = <0x1a>;
 			phandle = <0x1a>;
@@ -2848,6 +2851,7 @@
 			reg = <0x0 0x3>;
 			enable-method = "psci";
 			cpu-idle-states = <0x20>;
+			dynamic-power-coefficient = <0x50>;
 			sched-energy-data = <0x21>;
 			linux,phandle = <0x1b>;
 			phandle = <0x1b>;
@@ -2859,6 +2863,7 @@
 			reg = <0x0 0x100>;
 			enable-method = "psci";
 			cpu-idle-states = <0x22>;
+			dynamic-power-coefficient = <0x366>;
 			sched-energy-data = <0x23>;
 			linux,phandle = <0x1c>;
 			phandle = <0x1c>;
@@ -2870,6 +2875,7 @@
 			reg = <0x0 0x101>;
 			enable-method = "psci";
 			cpu-idle-states = <0x22>;
+			dynamic-power-coefficient = <0x366>;
 			sched-energy-data = <0x23>;
 			linux,phandle = <0x1d>;
 			phandle = <0x1d>;
@@ -2881,6 +2887,7 @@
 			reg = <0x0 0x102>;
 			enable-method = "psci";
 			cpu-idle-states = <0x22>;
+			dynamic-power-coefficient = <0x366>;
 			sched-energy-data = <0x23>;
 			linux,phandle = <0x1e>;
 			phandle = <0x1e>;
@@ -2892,6 +2899,7 @@
 			reg = <0x0 0x103>;
 			enable-method = "psci";
 			cpu-idle-states = <0x22>;
+			dynamic-power-coefficient = <0x366>;
 			sched-energy-data = <0x23>;
 			linux,phandle = <0x1f>;
 			phandle = <0x1f>;

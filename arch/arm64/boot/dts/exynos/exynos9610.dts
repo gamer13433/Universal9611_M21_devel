@@ -238,6 +238,7 @@
 			reg = <0x0 0x0>;
 			enable-method = "psci";
 			cpu-idle-states = <&BOOTCL_CPU_SLEEP>;
+			dynamic-power-coefficient = <80>;
 			sched-energy-data = <&A53_ENERGY>;
 		};
 		cpu1: cpu@101 {
@@ -246,6 +247,7 @@
 			reg = <0x0 0x1>;
 			enable-method = "psci";
 			cpu-idle-states = <&BOOTCL_CPU_SLEEP>;
+			dynamic-power-coefficient = <80>;
 			sched-energy-data = <&A53_ENERGY>;
 		};
 		cpu2: cpu@102 {
@@ -254,6 +256,7 @@
 			reg = <0x0 0x2>;
 			enable-method = "psci";
 			cpu-idle-states = <&BOOTCL_CPU_SLEEP>;
+			dynamic-power-coefficient = <80>;
 			sched-energy-data = <&A53_ENERGY>;
 		};
 		cpu3: cpu@103 {
@@ -262,6 +265,7 @@
 			reg = <0x0 0x3>;
 			enable-method = "psci";
 			cpu-idle-states = <&BOOTCL_CPU_SLEEP>;
+			dynamic-power-coefficient = <80>;
 			sched-energy-data = <&A53_ENERGY>;
 		};
 		cpu4: cpu@0 {
@@ -270,6 +274,7 @@
 			reg = <0x0 0x100>;
 			enable-method = "psci";
 			cpu-idle-states = <&NONBOOTCL_CPU_SLEEP>;
+			dynamic-power-coefficient = <870>;
 			sched-energy-data = <&A73_ENERGY>;
 		};
 		cpu5: cpu@1 {
@@ -278,6 +283,7 @@
 			reg = <0x0 0x101>;
 			enable-method = "psci";
 			cpu-idle-states = <&NONBOOTCL_CPU_SLEEP>;
+			dynamic-power-coefficient = <870>;
 			sched-energy-data = <&A73_ENERGY>;
 		};
 		cpu6: cpu@2 {
@@ -286,6 +292,7 @@
 			reg = <0x0 0x102>;
 			enable-method = "psci";
 			cpu-idle-states = <&NONBOOTCL_CPU_SLEEP>;
+			dynamic-power-coefficient = <870>;
 			sched-energy-data = <&A73_ENERGY>;
 		};
 		cpu7: cpu@3 {
@@ -294,6 +301,7 @@
 			reg = <0x0 0x103>;
 			enable-method = "psci";
 			cpu-idle-states = <&NONBOOTCL_CPU_SLEEP>;
+			dynamic-power-coefficient = <870>;
 			sched-energy-data = <&A73_ENERGY>;
 		};
 
