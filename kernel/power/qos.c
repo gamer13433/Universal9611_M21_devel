@@ -40,7 +40,7 @@
 #include <linux/string.h>
 #include <linux/platform_device.h>
 #include <linux/init.h>
-#include <linux/kernel.h>
+#include <linux/const.h>
 #include <linux/debugfs.h>
 #include <linux/seq_file.h>
 
