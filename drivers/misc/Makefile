@@ -70,7 +70,6 @@ obj-$(CONFIG_BATTERY_SAVER)	+= battery_saver.o
 ccflags-$(CONFIG_TZDEV) += -I$(srctree)/drivers/misc/tzdev/include
 obj-$(CONFIG_TZDEV)		+= tzdev/
 obj-$(CONFIG_SAMSUNG_TUI)       += tui/
-obj-y		+= tzic64.o
 
 lkdtm-$(CONFIG_LKDTM)		+= lkdtm_core.o
 lkdtm-$(CONFIG_LKDTM)		+= lkdtm_bugs.o

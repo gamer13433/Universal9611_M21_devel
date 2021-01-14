@@ -212,7 +212,12 @@ obj-y				+= vibrator/
 obj-$(CONFIG_SENSORS_FINGERPRINT) += fingerprint/
 
 # GNSS
-obj-$(CONFIG_GPS_BCM4753)	+= gps/
+
+#TZIC
+obj-y  += security/samsung/tzic/
+
+# SPU signature verify
+obj-$(CONFIG_SPU_VERIFY) += spu_verify/
 
 obj-$(CONFIG_AINUR_DTS_SW) += dts_eagle/
 

@@ -21,6 +21,7 @@
 #include <linux/ptrace.h>
 #include <linux/uaccess.h>
 #include <linux/cgroup.h>
+#include <linux/sec_debug.h>
 #include <trace/events/sched.h>
 
 static DEFINE_SPINLOCK(kthread_create_lock);
@@ -523,7 +524,9 @@ int kthread_stop(struct task_struct *k)
 	set_bit(KTHREAD_SHOULD_STOP, &kthread->flags);
 	kthread_unpark(k);
 	wake_up_process(k);
+	sec_debug_wtsk_set_data(DTYPE_KTHREAD, k);
 	wait_for_completion(&kthread->exited);
+	sec_debug_wtsk_clear_data();
 	ret = k->exit_code;
 	put_task_struct(k);
 

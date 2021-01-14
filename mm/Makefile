@@ -111,6 +111,13 @@ obj-$(CONFIG_PERCPU_STATS) += percpu-stats.o
 obj-$(CONFIG_HMM) += hmm.o
 obj-$(CONFIG_PAGE_BOOST_RECORDING) += io_record.o
 
+# [IOPP-Wformat-v1.0.4.14.patch]
+# check calls to printf and scanf, etc.,
+# to make sure that the arguments supplied have types appropriate to the format string specified,
+# and that the conversions specified in the format string make sense.
+CFLAGS_backing-dev.o = -Wformat
+CFLAGS_page-writeback.o = -Wformat
+
 # Squeeze a little bit more juice
 ccflags-y := -O3
 ccflags-y += $(call cc-option, -g0)
