@@ -1,0 +1,6 @@
+arch/arm64/boot/dts/exynos/m21/exynos9611-m21_swa_open_06.dtbo
+	custom0 = 0x6000000
+	custom1 = 0x2550000
+arch/arm64/boot/dts/exynos/m21/exynos9611-m21_swa_open_00.dtbo
+	custom0 = 0x0000000
+	custom1 = 0x5000000

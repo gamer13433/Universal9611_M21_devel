@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: GPL-2.0
 
 dts-dirs += exynos
+dts-dirs += samsung
 
 subdir-y	:= $(dts-dirs)
 
