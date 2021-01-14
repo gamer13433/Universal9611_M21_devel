@@ -5912,65 +5912,6 @@
 		pmu_base = <0x11860000>;
 	};
 
-	exynos_mode_changer {
-		enabled = <0x1>;
-		ctrl_type = <0x0>;
-		qos_class = <0x8>;
-
-		emc_modes {
-
-			emc_mode_0 {
-				mode_name = "QUAD";
-				cpus = "0-7";
-				max_freq = <0x234f10>;
-				boost_cpus = "4-7";
-				change_latency = <0xf>;
-				enabled = <0x1>;
-			};
-
-			emc_mode_1 {
-				mode_name = "DUAL";
-				cpus = "0-3,6-7";
-				boost_cpus = "6-7";
-				max_freq = <0x261600>;
-				change_latency = <0x1e>;
-				ldsum_thr = <0x4b0>;
-				enabled = <0x1>;
-			};
-
-			emc_mode_2 {
-				mode_name = "SINGLE";
-				cpus = "0-3,6";
-				boost_cpus = [36 00];
-				cal-id = <0xb040003>;
-				max_freq = <0x27ac40>;
-				change_latency = <0x1e>;
-				enabled = <0x1>;
-			};
-		};
-
-		emc_domains {
-
-			emc_domain_0 {
-				domain_name = "LIT";
-				cpus = "0-3";
-				role = <0x0>;
-				cpu_heavy_thr = <0xff>;
-				cpu_idle_thr = <0xff>;
-				busy_ratio = <0x41>;
-			};
-
-			emc_domain_2 {
-				domain_name = "BIG";
-				cpus = "4-7";
-				role = <0x3>;
-				cpu_heavy_thr = <0x28a>;
-				cpu_idle_thr = <0xfa>;
-				busy_ratio = <0x0>;
-			};
-		};
-	};
-
 	schedutil_gov {
 
 		domain@0 {

@@ -29,8 +29,6 @@
 #include "../../cpufreq/exynos-acme.h"
 #include "../../../kernel/sched/sched.h"
 
-extern unsigned long arg_cpu_max_c2;
-
 #define DEFAULT_BOOT_ENABLE_MS (40000)		/* 40 s */
 
 #define EMC_EVENT_NUM	2
@@ -1340,7 +1338,7 @@ static int __init emc_parse_mode(struct device_node *dn)
 			goto free;
 
 	if (!of_property_read_u32(dn, "cal-id", &mode->cal_id))
-		val = arg_cpu_max_c2;
+		val = cal_dfs_get_max_freq(mode->cal_id);
 	if (of_property_read_u32(dn, "max_freq", &mode->max_freq))
 		mode->max_freq = UINT_MAX;
 	mode->max_freq = min(val, mode->max_freq);

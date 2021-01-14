@@ -25,7 +25,6 @@
 #include <dt-bindings/soc/samsung/exynos9610-dm.h>
 #include "exynos9610-pm-domains.dtsi"
 #include <dt-bindings/soc/samsung/exynos9610-devfreq.h>
-#include <dt-bindings/soc/samsung/exynos-emc.h>
 #include "exynos9610-mfc.dtsi"
 #include <dt-bindings/soc/samsung/exynos-bcm_dbg.h>
 #include "exynos9610-camera.dtsi"
@@ -3419,60 +3418,6 @@
 		pmu_base = <0x11860000>;
 	};
 
-        exynos_mode_changer {
-		enabled = <1>;
-		ctrl_type = <0>;  /* 1 is FAST HP, 0 is legacy HP */
-		qos_class = <8>;
- 
-		emc_modes {
-			emc_mode_0 {
-				mode_name = "QUAD";
-				cpus = "0-7";
-				max_freq = <2314000>;
-				boost_cpus = "4-7";
-				change_latency = <15>;
-				enabled = <1>;
-			};
-			emc_mode_1 {
-				mode_name = "DUAL";
-				cpus = "0-3,6-7";
-				boost_cpus = "6-7";
-				max_freq = <2496000>;
-				change_latency = <30>;
-				ldsum_thr = <1200>;
-				enabled = <1>;
-			};
-			emc_mode_2 {
-				mode_name = "SINGLE";
-				cpus = "0-3,6";
-				boost_cpus = "6";
-				cal-id = <ACPM_DVFS_CPUCL1>;
-				max_freq = <2600000>;
-				change_latency = <30>;
-				enabled = <1>;
-			};
-		};
- 
-		emc_domains {
-			emc_domain_0 {
-				domain_name = "LIT";
-				cpus = "0-3";
-				role = <NOTHING>;
-				cpu_heavy_thr = <255>;
-				cpu_idle_thr = <255>;
-				busy_ratio = <65>;
-			};
-			emc_domain_2 {
-				domain_name = "BIG";
-				cpus = "4-7";
-				role = <TRIGGER_AND_BOOSTER>;
-				cpu_heavy_thr = <650>;
-				cpu_idle_thr = <250>;
-				busy_ratio = <0>;
-			};
-		};
-	};
-	
 	schedutil_gov {
 		schedutil_domain0: domain@0 {
 			device_type = "schedutil-domain";
