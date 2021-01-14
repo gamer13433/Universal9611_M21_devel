@@ -6,7 +6,7 @@
 /*
  *
  * Automatically generated file; DO NOT EDIT.
- * Linux/arm64 4.14.214-OneUI Q Kernel Configuration
+ * Linux/arm64 4.14.213-OneUI Q Kernel Configuration
  *
  */
 /*
