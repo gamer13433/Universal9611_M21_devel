@@ -71,8 +71,8 @@
 				cmd_underrun_lp_ref = <2076>;	/* for underrun detect at command mode */
 				mres_en = <0>;
 				noncontinuous_clklane = <0>;	/* 0: Disable, 1: Enable */
-				hdr_num = <2>;
-				hdr_type = <2 3 0 0>; /* 1: DOLBY_VISION, 2: HDR10, 3: HLG */
+				hdr_num = <3>;
+				hdr_type = <2 3 1 0>; /* 1: DOLBY_VISION, 2: HDR10, 3: HLG */
 				hdr_max_luma = <4000000>;
 				hdr_max_avg_luma = <1200000>;
 				hdr_min_luma = <5>;

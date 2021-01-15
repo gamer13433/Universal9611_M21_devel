@@ -12,7 +12,7 @@
 #include <dt-bindings/camera/fimc_is.h>
 #include <dt-bindings/clock/exynos9610.h>
 #include "modem-s337ap-sipc-pdata.dtsi"
-#include "display-lcd_m21_common.dtsi"
+#include "display-lcd_m31_common.dtsi"
 #include "exynos9611-m21_sound.dtsi"
 #include "exynos9610-inputbooster.dtsi"
 #include "battery_data_m21_common.dtsi"
