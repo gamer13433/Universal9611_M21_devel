@@ -790,7 +790,7 @@ KBUILD_CFLAG	+= -fwhole-program-vtables
 endif
 
 ifdef CONFIG_INLINE_OPTIMIZATION
-KBUILD_CFLAGS	+= -mllvm -inline-threshold=600
+KBUILD_CFLAGS	+= -mllvm -inline-threshold=1000
 KBUILD_CFLAGS	+= -mllvm -inlinehint-threshold=750
 endif
 
