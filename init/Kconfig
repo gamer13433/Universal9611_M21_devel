@@ -2137,6 +2137,18 @@ config ASN1
 	  inform it as to what tags are to be expected in a stream and what
 	  functions to call on what tags.
 
+config ROM_OneUI
+       bool
+       default y
+       help
+       If your device running OneUI rom select this.
+
+config ROM_AOSP
+       depends on !ROM_OneUI
+       bool
+       help
+       If your device running AOSP rom select this.
+        
 source "kernel/Kconfig.locks"
 
 source "kernel/ftt/Kconfig"
