@@ -10687,13 +10687,8 @@ more_balance:
 		 */
 		if ((env.flags & LBF_DST_PINNED) && env.imbalance > 0) {
 
-<<<<<<< HEAD
-			/* Prevent to re-select dst_cpu via env's cpus */
-			cpumask_clear_cpu(env.dst_cpu, env.cpus);
-=======
 			/* Prevent to re-select dst_cpu via env's CPUs */
 			__cpumask_clear_cpu(env.dst_cpu, env.cpus);
->>>>>>> c89d92eddfad1 (sched/fair: Use non-atomic cpumask_{set,clear}_cpu())
 
 			env.dst_rq	 = cpu_rq(env.new_dst_cpu);
 			env.dst_cpu	 = env.new_dst_cpu;

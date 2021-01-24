@@ -551,7 +551,7 @@ int get_nohz_timer_target(void)
 	rcu_read_lock();
 	for_each_domain(cpu, sd) {
 		for_each_cpu_and(i, sched_domain_span(sd),
-			housekeeping_cpumask()) {
+			housekeeping_cpumask(HK_FLAG_TIMER)) {
 			if (cpu == i)
 				continue;
 
@@ -563,7 +563,7 @@ int get_nohz_timer_target(void)
 	}
 
 	if (default_cpu == -1)
-		default_cpu = housekeeping_any_cpu(HK_FLAG_TIMER));
+		default_cpu = housekeeping_any_cpu(HK_FLAG_TIMER);
 	cpu = default_cpu;
 unlock:
 	rcu_read_unlock();
