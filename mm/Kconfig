@@ -882,6 +882,13 @@ config VMPRESSURE_LEVEL_MED
 	help
 	  This supports to adjust vmpressure_level_med threshold value
 
+config ANDROID_PR_KILL
+	bool "Enable PRLMK"
+	depends on PROCESS_RECLAIM && TASK_XACCT && !PSI && !MEMCG && !ANDROID_LOW_MEMORY_KILLER && !ANDROID_SIMPLE_LMK
+	default n
+	help
+	  PRLMK is a custom low-memory-killer for Android, based on the process reclaim driver.
+
 config PAGE_BOOST
 	bool "PAGE_BOOST feature"
 	depends on MMU
