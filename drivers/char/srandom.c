@@ -4,7 +4,7 @@
 #include <linux/slab.h>             /* For kalloc */
 #include <linux/uaccess.h>          /* For copy_to_user */
 #include <linux/miscdevice.h>       /* For misc_register (the /dev/srandom) device */
-#include <linux/time.h>             /* For getnstimeofday */
+#include <linux/time.h>             /* For getnstimeofday/ktime_get_real_ts64 */
 #include <linux/proc_fs.h>          /* For /proc filesystem */
 #include <linux/seq_file.h>         /* For seq_print */
 #include <linux/mutex.h>
@@ -17,7 +17,7 @@
 #define arr_RND_SIZE 67             /* Size of Array.  Must be >= 64. (actual size used will be 64, anything greater is thrown away). Recommended prime.*/
 #define num_arr_RND  16             /* Number of 512b Array (Must be power of 2) */
 #define sDEVICE_NAME "srandom"      /* Dev name as it appears in /proc/devices */
-#define AppVERSION "1.37.1"
+#define AppVERSION "1.38.0"
 #define THREAD_SLEEP_VALUE 7        /* Amount of time worker thread should sleep between each operation. Recommended prime */
 #define PAID 0
 // #define DEBUG 0
@@ -28,6 +28,14 @@
 #else
     #define COPY_TO_USER copy_to_user
     #define COPY_FROM_USER copy_from_user
+#endif
+
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,18,0)
+    #define KTIME_GET_NS ktime_get_real_ts64
+    #define TIMESPEC timespec64
+#else
+    #define KTIME_GET_NS getnstimeofday
+    #define TIMESPEC timespec
 #endif
 
 
@@ -65,7 +73,7 @@ static int work_thread(void *data);
 /*
  * Global variables are declared as static, so are global within the file.
  */
-static struct file_operations sfops = {
+const struct file_operations sfops = {
         .owner   = THIS_MODULE,
         .open    = device_open,
         .read    = sdevice_read,
@@ -79,6 +87,15 @@ static struct miscdevice srandom_dev = {
         &sfops
 };
 
+
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5,8,0)
+static struct proc_ops proc_fops={
+      .proc_open = proc_open,
+      .proc_release = single_release,
+      .proc_read = seq_read,
+      .proc_lseek = seq_lseek
+};
+#else
 static const struct file_operations proc_fops = {
         .owner   = THIS_MODULE,
         .read    = seq_read,
@@ -86,6 +103,8 @@ static const struct file_operations proc_fops = {
         .llseek  = seq_lseek,
         .release = single_release,
 };
+#endif
+
 
 static struct mutex UpArr_mutex;
 static struct mutex Open_mutex;
@@ -104,7 +123,7 @@ uint64_t (*sarr_RND)[num_arr_RND + 1];  /* Array of Array of SECURE RND numbers 
 uint16_t CC_Busy_Flags = 0;             /* Binary Flags for Busy Arrays */
 int      CC_buffer_position = 0;        /* Array reserved to determine which buffer to use */
 uint64_t tm_seed;
-struct   timespec tspec;
+struct   TIMESPEC tsp;
 
 /*
  * Global counters
@@ -134,8 +153,8 @@ int mod_init(void)
         /*
          * Entropy Initialize #1
          */
-        getnstimeofday(&tspec);
-        x    = (uint64_t)tspec.tv_nsec;
+        KTIME_GET_NS(&tsp);
+        x    = (uint64_t)tsp.tv_nsec;
         s[0] = xorshft64();
         s[1] = xorshft64();
 
@@ -151,6 +170,7 @@ int mod_init(void)
         /*
          * Create /proc/srandom
          */
+        // if (! proc_create("srandom", 0, NULL, &proc_fops))
         if (! proc_create("srandom", 0, NULL, &proc_fops))
                 printk(KERN_INFO "[srandom] mod_init /proc/srandom registion failed..\n");
         else
@@ -174,10 +194,10 @@ int mod_init(void)
         }
 
 
-        sarr_RND = kmalloc((num_arr_RND + 1) * arr_RND_SIZE * sizeof(uint64_t), GFP_KERNEL);
+        sarr_RND = kzalloc((num_arr_RND + 1) * arr_RND_SIZE * sizeof(uint64_t), GFP_KERNEL);
         while (!sarr_RND) {
-                printk(KERN_INFO "[srandom] mod_init kmalloc failed to allocate initial memory.  retrying...\n");
-                sarr_RND = kmalloc((num_arr_RND + 1) * arr_RND_SIZE * sizeof(uint64_t), GFP_KERNEL);
+                printk(KERN_INFO "[srandom] mod_init kzalloc failed to allocate initial memory.  retrying...\n");
+                sarr_RND = kzalloc((num_arr_RND + 1) * arr_RND_SIZE * sizeof(uint64_t), GFP_KERNEL);
         }
 
         /*
@@ -328,10 +348,10 @@ ssize_t sdevice_read(struct file * file, char * buf, size_t count, loff_t *ppos)
                         printk(KERN_INFO "[srandom] count_remaining:%ld count:%ld\n", count_remaining, count);
                         #endif
 
-                        new_buf = kmalloc((count_remaining + 512) * sizeof(uint8_t), GFP_KERNEL);
+                        new_buf = kzalloc((count_remaining + 512) * sizeof(uint8_t), GFP_KERNEL);
                         while (!new_buf) {
-                                printk(KERN_INFO "[srandom] buffered kmalloc failed to allocate buffer.  retrying...\n");
-                                new_buf = kmalloc((count_remaining + 512) * sizeof(uint8_t), GFP_KERNEL);
+                                printk(KERN_INFO "[srandom] buffered kzalloc failed to allocate buffer.  retrying...\n");
+                                new_buf = kzalloc((count_remaining + 512) * sizeof(uint8_t), GFP_KERNEL);
                         }
 
                         counter = 0;
@@ -403,7 +423,8 @@ ssize_t sdevice_read(struct file * file, char * buf, size_t count, loff_t *ppos)
          */
         return count;
 }
-//EXPORT_SYMBOL(sdevice_write);
+
+EXPORT_SYMBOL(sdevice_read);
 
 /*
  * Called when someone tries to write to /dev/srandom device
@@ -421,9 +442,9 @@ ssize_t sdevice_write(struct file *file, const char __user *buf, size_t count, l
         /*
          * Allocate memory to read from device
          */
-        newdata = kmalloc(count, GFP_KERNEL);
+        newdata = kzalloc(count, GFP_KERNEL);
         while (!newdata) {
-                newdata = kmalloc(count, GFP_KERNEL);
+                newdata = kzalloc(count, GFP_KERNEL);
         }
 
         ret = COPY_FROM_USER(newdata, buf, count);
@@ -439,7 +460,9 @@ ssize_t sdevice_write(struct file *file, const char __user *buf, size_t count, l
 
         return count;
 }
-//EXPORT_SYMBOL(sdevice_write);
+
+EXPORT_SYMBOL(sdevice_write);
+
 
 /*
  * Update the sarray with new random numbers
@@ -501,24 +524,24 @@ void update_sarray(int CC)
  */
  void seed_PRND_s0(void)
  {
-         getnstimeofday(&tspec);
-         s[0] = (s[0] << 31) ^ (uint64_t)tspec.tv_nsec;
+         KTIME_GET_NS(&tsp);
+         s[0] = (s[0] << 31) ^ (uint64_t)tsp.tv_nsec;
          #ifdef DEBUG
          printk(KERN_INFO "[srandom] seed_PRNG_s0 x:%llu, s[0]:%llu, s[1]:%llu\n", x, s[0], s[1]);
          #endif
  }
 void seed_PRND_s1(void)
 {
-        getnstimeofday(&tspec);
-        s[1] = (s[1] << 24) ^ (uint64_t)tspec.tv_nsec;
+        KTIME_GET_NS(&tsp);
+        s[1] = (s[1] << 24) ^ (uint64_t)tsp.tv_nsec;
         #ifdef DEBUG
         printk(KERN_INFO "[srandom] seed_PRNG_s1 x:%llu, s[0]:%llu, s[1]:%llu\n", x, s[0], s[1]);
         #endif
 }
 void seed_PRND_x(void)
 {
-        getnstimeofday(&tspec);
-        x = (x << 32) ^ (uint64_t)tspec.tv_nsec;
+        KTIME_GET_NS(&tsp);
+        x = (x << 32) ^ (uint64_t)tsp.tv_nsec;
         #ifdef DEBUG
         printk(KERN_INFO "[srandom] seed_PRNG_x x:%llu, s[0]:%llu, s[1]:%llu\n", x, s[0], s[1]);
         #endif
@@ -637,10 +660,13 @@ int proc_read(struct seq_file *m, void *v)
         return 0;
 }
 
+
 int proc_open(struct inode *inode, struct  file *file)
 {
         return single_open(file, proc_read, NULL);
 }
+
+
 
 module_init(mod_init);
 module_exit(mod_exit);
