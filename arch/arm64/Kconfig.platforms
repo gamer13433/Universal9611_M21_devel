@@ -293,6 +293,10 @@ config ARCH_EXYNOS9
 	select HAVE_SMP
 	help
 	  Samsung EXYNOS9 (Meercat/Ananke) SoC based systems
+	  
+if SOC_EXYNOS9610
+source "drivers/cpufreq/Kconfig.overclock"
+endif
 
 endmenu
 endmenu

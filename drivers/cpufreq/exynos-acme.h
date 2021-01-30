@@ -56,6 +56,10 @@ struct exynos_cpufreq_domain {
 	unsigned int			table_size;
 	struct cpufreq_frequency_table	*freq_table;
 
+#ifdef CONFIG_EXYNOS_OVERCLOCK
+	unsigned int			max_usable_freq;
+	unsigned int			min_usable_freq;
+#endif
 	unsigned int			max_freq;
 	unsigned int			min_freq;
 	unsigned int			boot_freq;

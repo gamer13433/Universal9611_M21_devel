@@ -1,0 +1,44 @@
+menu "Exynos cpu overclock"
+
+config EXYNOS_OVERCLOCK
+	bool "Exynos cpu overclock"
+	depends on ARCH_EXYNOS
+	default y
+	---help---
+	  Enable overclock of exynos cpu.
+	  
+config LITTLE_MINFREQ
+	int "LITTLE cluster min cpu frequency"
+	depends on EXYNOS_OVERCLOCK
+	default 403000
+	help
+	  This sets minimal cpu frequency for little cluster.
+
+config LITTLE_MAXFREQ
+	int "LITTLE cluster max cpu frequency"
+	depends on EXYNOS_OVERCLOCK
+	default 1742000
+	help
+	  This sets maximal cpu frequency for little cluster
+	  possible increased frequencies for Exynos961(0,1)
+	  1846000 and 1950000.
+	  
+config BIG_MINFREQ
+	int "BIG cluster min cpu frequency"
+	depends on EXYNOS_OVERCLOCK
+	default 936000
+	help
+	  This sets minimal cpu frequency for big cluster
+	  possible decreased frequencies for Exynos961(0,1)
+	  728000 and possibly less.
+	  
+config BIG_MAXFREQ
+	int "BIG cluster max cpu frequency"
+	depends on EXYNOS_OVERCLOCK
+	default 2314000
+	help
+	  This sets maximal cpu frequency for big cluster
+	  possible increased frequencies for Exynos961(0,1)
+	  2496000 and 2600000.
+endmenu
+
