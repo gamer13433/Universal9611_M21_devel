@@ -413,6 +413,8 @@ struct fimc_is_device_sensor {
 	struct fimc_is_flash				*flash;
 	struct v4l2_subdev				*subdev_ois;
 	struct fimc_is_ois				*ois;
+	struct v4l2_subdev				*subdev_companion;
+	struct fimc_is_companion			*companion;
 	struct v4l2_subdev				*subdev_mcu;
 	struct fimc_is_mcu				*mcu;
 	struct v4l2_subdev				*subdev_aperture;

@@ -2101,6 +2101,29 @@ int fimc_is_sensor_s_input(struct fimc_is_device_sensor *device,
 		sensor_peri->ois = NULL;
 	}
 
+#ifdef SUPPORT_COMPANION_CHIP
+	/* set companion data */
+	if (device->companion && module->ext.companion_con.product_name == device->companion->id) {
+		u32 i2c_channel = module->ext.companion_con.peri_setting.i2c.channel;
+		sensor_peri->subdev_companion = device->subdev_companion;
+		sensor_peri->companion = device->companion;
+		sensor_peri->companion->sensor_peri = sensor_peri;
+		if (i2c_channel < SENSOR_CONTROL_I2C_MAX)
+			sensor_peri->companion->i2c_lock = &core->i2c_lock[i2c_channel];
+		else
+			mwarn("wrong companion i2c_channel(%d)", device, i2c_channel);
+
+		if (sensor_peri->companion) {
+			set_bit(FIMC_IS_SENSOR_COMPANION_AVAILABLE, &sensor_peri->peri_state);
+		}
+		info("%s[%d] enable companion i2c client. position = %d\n",
+				__func__, __LINE__, core->current_position);
+	} else {
+		sensor_peri->subdev_companion = NULL;
+		sensor_peri->companion = NULL;
+	}
+#endif
+
 	/* set mcu data */
 	if (device->mcu && module->ext.mcu_con.product_name == device->mcu->id) {
 		u32 i2c_channel = module->ext.mcu_con.peri_setting.i2c.channel;
