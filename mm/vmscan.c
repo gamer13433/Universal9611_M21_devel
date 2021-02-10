@@ -2385,7 +2385,7 @@ static inline bool mem_boost_pgdat_wmark(struct pglist_data *pgdat)
 	return false;
 }
 
-#define MEM_BOOST_THRESHOLD ((300 * 1024 * 1024) / (PAGE_SIZE))
+#define MEM_BOOST_THRESHOLD ((600 * 1024 * 1024) / (PAGE_SIZE))
 inline bool need_memory_boosting(struct pglist_data *pgdat)
 {
 	bool ret;
