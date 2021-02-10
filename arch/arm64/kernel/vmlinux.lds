@@ -179,10 +179,6 @@ SECTIONS
  . += ((((((48)) - 4) / (12 - 3)) - 1) * (1 << 12));
  swapper_pg_dir = .;
  . += ((3 - 1) * (1 << 12));
-
-
- reserved_ttbr0 = .;
- . += ((1 << 12));
  __pecoff_data_size = ABSOLUTE(. - __initdata_begin);
  _end = .;
 
