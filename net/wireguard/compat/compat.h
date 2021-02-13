@@ -824,6 +824,7 @@ static __always_inline void old_rcu_barrier(void)
 #endif
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(4, 19, 10) && !defined(ISRHEL8)
+#elif LINUX_VERSION_CODE < KERNEL_VERSION(4, 14, 217) && !defined(ISRHEL8)
 static inline void skb_mark_not_on_list(struct sk_buff *skb)
 {
 	skb->next = NULL;
