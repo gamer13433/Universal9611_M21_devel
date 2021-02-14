@@ -465,6 +465,9 @@ struct mms_ts_info {
 	u8 item_cmdata;
 	bool check_version;
 	u8 hover_event; /* keystring for protos */
+#ifdef CONFIG_FB
+	struct notifier_block fb_notif;
+#endif
 };
 
 enum IC_STATUS {
