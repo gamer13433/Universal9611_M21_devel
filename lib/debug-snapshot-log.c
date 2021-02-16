@@ -1179,7 +1179,7 @@ void dbg_snapshot_dm(int type, unsigned long min, unsigned long max, s32 wait_t,
 }
 #endif
 
-#ifdef CONFIG_DEBUG_SNAPSHOT_HRTIMER
+#if 0
 void dbg_snapshot_hrtimer(void *timer, s64 *now, void *fn, int en)
 {
 	struct dbg_snapshot_item *item = &dss_items[dss_desc.kevents_num];
