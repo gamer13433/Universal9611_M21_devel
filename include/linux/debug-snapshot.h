@@ -97,9 +97,8 @@ extern void dbg_snapshot_irqs_disabled(unsigned long flags);
 #define dbg_snapshot_irqs_disabled(a)	do { } while(0)
 #endif
 
-#ifdef CONFIG_DEBUG_SNAPSHOT_HRTIMER
+#if 0
 extern void dbg_snapshot_hrtimer(void *timer, s64 *now, void *fn, int en);
-#else
 #define dbg_snapshot_hrtimer(a,b,c,d)	do { } while(0)
 #endif
 
