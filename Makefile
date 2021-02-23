@@ -731,7 +731,7 @@ KBUILD_CFLAGS	+= $(call cc-option, -mno-fix-cortex-a53-843419)
 ifeq ($(cc-name),gcc)
 KBUILD_CFLAGS	+= -mcpu=cortex-a73.cortex-a53 -mtune=cortex-a73.cortex-a53
 endif
-
+ifeq ($(cc-name),clang)
 ifdef CONFIG_LLVM_POLLY
 KBUILD_CFLAGS	+= -mllvm -polly \
 		   -mllvm -polly-run-inliner \
@@ -741,9 +741,11 @@ KBUILD_CFLAGS	+= -mllvm -polly \
 		   -mllvm -polly-vectorizer=stripmine \
 		   -mllvm -polly-invariant-load-hoisting
 endif
-else ifeq ($(cc-name),gcc)
+endif
+ifeq ($(cc-name),gcc)
 ifdef CONFIG_GCC_GRAPHITE
 KBUILD_CFLAGS   += -fgraphite-identity
+endif
 endif
 # Tell gcc to never replace conditional load with a non-conditional one
 KBUILD_CFLAGS	+= $(call cc-option,--param=allow-store-data-races=0)
