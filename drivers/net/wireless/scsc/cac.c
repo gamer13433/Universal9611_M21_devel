@@ -688,11 +688,12 @@ static int cac_delete_tspec_by_state(struct slsi_dev *sdev, int id, int accepted
 	prev = NULL;
 	while (itr != NULL) {
 		if ((itr->id == id) && (itr->accepted == accepted)) {
-			if (prev)
+			if (prev) {
 				prev->next = itr->next;
-			else
+                               }
+			else {
 				tspec_list = itr->next;
-
+                               }
 				SLSI_DBG3(sdev, SLSI_MLME, "CAC: Deleting TSPEC 0x%p with ID %d (accepted =%d)\n", itr, id, accepted);
 				kfree(itr);
 				return 0;
