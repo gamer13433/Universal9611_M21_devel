@@ -310,7 +310,7 @@ static unsigned int lpm_brightness_table[EXTEND_BRIGHTNESS + 1] = {
 	[94 ... EXTEND_BRIGHTNESS]	= AOD_HLPM_60_NIT,
 };
 
-static unsigned char SEQ_HLPM_VLOUT3_SET[] = {
+static unsigned char __maybe_unused SEQ_HLPM_VLOUT3_SET[] = {
 	0xD4,
 	0x8B
 };
