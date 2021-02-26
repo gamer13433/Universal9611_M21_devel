@@ -670,7 +670,7 @@ static ssize_t acc_read(struct file *fp, char __user *buf,
 {
 	struct acc_dev *dev = fp->private_data;
 	struct usb_request *req;
-	ssize_t r = count, xfer, len;
+	ssize_t r = count, xfer;
 	ssize_t data_length;
 	int ret = 0;
 
