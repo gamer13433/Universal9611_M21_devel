@@ -755,6 +755,7 @@ KBUILD_CFLAGS += $(call cc-ifversion, -gt, 0900, \
 			$(call cc-disable-warning,maybe-uninitialized,) \
 			$(call cc-disable-warning,format,) \
 			$(call cc-disable-warning,array-bounds,) \
+			$(call cc-disable-warning,unknown-pragmas,) \
 			$(call cc-disable-warning,stringop-overflow,))
 
 # Tell gcc to never replace conditional load with a non-conditional one
