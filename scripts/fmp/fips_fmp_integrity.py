@@ -10,7 +10,6 @@ import os
 import sys
 from IntegrityRoutine import IntegrityRoutine
 from Utils import Utils
-from shutil import which
 
 
 __author__ = "Vadym Stupakov"
@@ -35,7 +34,7 @@ if __name__ == "__main__":
         sys.exit(-1)
 
     elf_file = os.path.abspath(sys.argv[1])
-    readelf_path = which(sys.argv[2]) or os.path.abspath(sys.argv[2])
+    readelf_path = os.path.abspath(sys.argv[2])
     modules = sys.argv[3:]
 
     utils = Utils()
