@@ -73,7 +73,6 @@ enum hrtimer_restart {
  */
 #define HRTIMER_STATE_INACTIVE	0x00
 #define HRTIMER_STATE_ENQUEUED	0x01
-#define HRTIMER_STATE_CALLBACK       0x02
 
 /**
  * struct hrtimer - the basic hrtimer structure
@@ -437,7 +436,7 @@ static inline int hrtimer_callback_running(struct hrtimer *timer)
 
 static inline int hrtimer_callback_running_relaxed(struct hrtimer *timer)
 {
-	return cpu_relaxed_read_long(&timer->state) & HRTIMER_STATE_CALLBACK;
+	return cpu_relaxed_read_long(&timer->state) & HRTIMER_STATE_INACTIVE;
 }
 
 /* Forward a hrtimer so it expires after now: */
