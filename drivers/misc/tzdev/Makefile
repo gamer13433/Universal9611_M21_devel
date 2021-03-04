@@ -1,6 +1,7 @@
 subdir-ccflags-y += -I$(srctree)/$(src)/include
 subdir-ccflags-y += -I$(srctree)/$(src)
 ccflags-$(CONFIG_TZDEV_DEPLOY_TZAR) += -Wa,-I$(srctree)/$(src)
+CFLAGS_tz_deploy_tzar.o += $(DISABLE_LTO)
 
 obj-$(CONFIG_TZDEV)			+= lib/
 obj-$(CONFIG_TZDEV)			+= teec/
