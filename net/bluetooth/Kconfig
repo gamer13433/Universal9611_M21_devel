@@ -125,5 +125,3 @@ config BT_DEBUGFS
 	help
 	  Provide extensive information about internal Bluetooth states
 	  in debugfs.
-
-source "drivers/bluetooth/Kconfig"

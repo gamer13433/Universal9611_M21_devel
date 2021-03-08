@@ -370,8 +370,6 @@ config SUNGEM_PHY
 
 source "drivers/net/arcnet/Kconfig"
 
-source "drivers/atm/Kconfig"
-
 source "drivers/net/caif/Kconfig"
 
 source "drivers/net/dsa/Kconfig"
@@ -413,8 +411,6 @@ source "drivers/net/plip/Kconfig"
 source "drivers/net/ppp/Kconfig"
 
 source "drivers/net/slip/Kconfig"
-
-source "drivers/s390/net/Kconfig"
 
 source "drivers/net/usb/Kconfig"
 

@@ -54,6 +54,4 @@ config KVM_ARM_PMU
 	  Adds support for a virtual Performance Monitoring Unit (PMU) in
 	  virtual machines.
 
-source drivers/vhost/Kconfig
-
 endif # VIRTUALIZATION

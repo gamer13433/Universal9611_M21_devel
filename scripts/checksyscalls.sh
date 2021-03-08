@@ -211,5 +211,5 @@ syscall_list() {
 	done
 }
 
-(ignore_list && syscall_list $(dirname $0)/../arch/x86/entry/syscalls/syscall_32.tbl) | \
+(ignore_list && syscall_list $(dirname $0)/../usr/x86/syscall_32.tbl) | \
 $* -E -x c - > /dev/null
