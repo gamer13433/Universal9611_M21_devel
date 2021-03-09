@@ -111,6 +111,10 @@ module_param_cb(zpool, &zswap_zpool_param_ops, &zswap_zpool_type, 0644);
 /* zpool is shared by all of zswap backend  */
 static struct zpool *zswap_pool;
 
+/* The maximum percentage of memory that the compressed pool can occupy */
+static unsigned int zswap_max_pool_percent = 20;
+module_param_named(max_pool_percent, zswap_max_pool_percent, uint, 0644);
+
 /* Enable/disable handling same-value filled pages (enabled by default) */
 static bool zswap_same_filled_pages_enabled = true;
 module_param_named(same_filled_pages_enabled, zswap_same_filled_pages_enabled,
@@ -258,6 +262,12 @@ static struct zswap_entry *zswap_search(struct btree_head *head, pgoff_t offset)
 static void zswap_erase(struct btree_head *head, struct zswap_entry *entry)
 {
 	btree_remove(head, btree_pgofft_geo, &entry->offset);
+}
+
+static bool zswap_is_full(void)
+{
+	return totalram_pages * zswap_max_pool_percent / 100 <
+		DIV_ROUND_UP(zswap_pool_total_size_kb, PAGE_SIZE);
 }
 
 /*
@@ -785,9 +795,6 @@ static int zswap_frontswap_store(unsigned type, pgoff_t offset,
 		goto reject;
 	}
 
-		goto reject;
-	}
-
 	if (!zswap_enabled || !tree) {
 		ret = -ENODEV;
 		goto reject;
@@ -1092,10 +1099,10 @@ static int zswap_size_notifier(struct notifier_block *nb,
 	s = (struct seq_file *)data;
 	if (s)
 		seq_printf(s, "ZSwapDevice:    %8lu kB\n",
-			(unsigned long)zswap_pool_total_size >> 10);
+			(unsigned long)zswap_pool_total_size_kb >> 10);
 	else
 		pr_cont("ZSwapDevice:%lukB ",
-			(unsigned long)zswap_pool_total_size >> 10);
+			(unsigned long)zswap_pool_total_size_kb >> 10);
 	return 0;
 }
 
