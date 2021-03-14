@@ -1916,6 +1916,7 @@ static int cred_has_capability(const struct cred *cred,
 	}
 
 	rc = avc_has_perm_noaudit(&selinux_state,
+	sid, sid, sclass, av, 0, &avd);
 #ifdef CONFIG_AUDIT
 	if (audit == SECURITY_CAP_AUDIT) {
 		int rc2 = avc_audit(&selinux_state,
