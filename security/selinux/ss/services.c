@@ -1903,7 +1903,7 @@ static inline int convert_context_handle_invalid_context(struct context *context
 	if (selinux_enforcing)
 		return -EINVAL;
 
-	if (!context_struct_to_string(context, &s, &len, false)) {
+	if (!context_struct_to_string(context, &s, &len)) {
 		printk(KERN_WARNING "SELinux:  Context %s would be invalid if enforcing\n", s);
 		kfree(s);
 	}
@@ -2049,7 +2049,7 @@ out:
 	return rc;
 bad:
 	/* Map old representation to string and save it. */
-	rc = context_struct_to_string(&oldc, &s, &len, false);
+	rc = context_struct_to_string(&oldc, &s, &len);
 	if (rc)
 		return rc;
 	context_destroy(&oldc);
