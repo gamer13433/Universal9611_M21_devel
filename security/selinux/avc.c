@@ -701,19 +701,18 @@ static struct avc_node *avc_insert(struct selinux_avc *avc,
 	struct avc_node *pos, *node = NULL;
 	int hvalue;
 	unsigned long flag;
+	spinlock_t *lock;
+	struct hlist_head *head;
 
 	if (avc_latest_notif_update(avc, avd->seqno, 1))
-		goto out;
+		return NULL;
 
 	node = avc_alloc_node(avc);
-	if (node) {
-		struct hlist_head *head;
-		spinlock_t *lock;
-		int rc = 0;
+	if (!node)
+		return NULL;
 
-		hvalue = avc_hash(ssid, tsid, tclass);
-		avc_node_populate(node, ssid, tsid, tclass, avd);
-		rc = avc_xperms_populate(node, xp_node);
+	avc_node_populate(node, ssid, tsid, tclass, avd);
+	if (avc_xperms_populate(node, xp_node)) {
 		avc_node_kill(avc, node);
 		return NULL;
 	}
@@ -733,9 +732,7 @@ static struct avc_node *avc_insert(struct selinux_avc *avc,
 		}
 		hlist_add_head_rcu(&node->list, head);
 found:
-		spin_unlock_irqrestore(lock, flag);
-	}
-out:
+	spin_unlock_irqrestore(lock, flag);
 	return node;
 }
 

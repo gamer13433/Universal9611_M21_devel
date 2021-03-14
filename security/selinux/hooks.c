@@ -102,7 +102,7 @@
 #include "audit.h"
 #include "avc_ss.h"
 
-struct selinux_state selinux_state
+struct selinux_state selinux_state;
 
 #ifdef CONFIG_VBSWAP_HELPER
 #include "security.h"
@@ -196,7 +196,7 @@ static DEFINE_MUTEX(selinux_sdcardfs_lock);
 // ] SEC_SELINUX_PORTING_COMMON
 
 #ifdef CONFIG_SECURITY_SELINUX_DEVELOP
-// [ SEC_SELINUX_PORTING_COMMON
+static int selinux_enforcing_boot;
 
 static int __init enforcing_setup(char *str)
 {

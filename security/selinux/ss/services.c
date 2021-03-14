@@ -88,12 +88,6 @@ char *selinux_policycap_names[__POLICYDB_CAPABILITY_MAX] = {
 
 static struct selinux_ss selinux_ss;
 int selinux_android_netlink_route;
-int selinux_policycap_netpeer;
-int selinux_policycap_openperm;
-int selinux_policycap_extsockclass;
-int selinux_policycap_alwaysnetwork;
-int selinux_policycap_cgroupseclabel;
-int selinux_policycap_nnp_nosuid_transition;
 
 static DEFINE_RWLOCK(policy_rwlock);
 
@@ -760,7 +754,6 @@ static inline int security_validtrans_handle_fail(struct selinux_state *state,
 					   struct context *tcontext,
 					   u16 tclass)
 {
-#ifdef CONFIG_AUDIT
 	struct policydb *p = &state->ss->policydb;
 	char *o = NULL, *n = NULL, *t = NULL;
 	u32 olen, nlen, tlen;
