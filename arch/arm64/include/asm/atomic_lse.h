@@ -475,7 +475,7 @@ static inline long atomic64_dec_if_positive(atomic64_t *v)
 
 #define __CMPXCHG_CASE(w, sfx, name, sz, mb, cl...)			\
 static inline u##sz __cmpxchg_case_##name##sz(volatile void *ptr,	\
-					      u##sz old,		\
+					      unsigned long old,	\
 					      u##sz new)		\
 {									\
 	register unsigned long x0 asm ("x0") = (unsigned long)ptr;	\
