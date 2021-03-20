@@ -896,9 +896,6 @@ void handle_IPI(int ipinr, struct pt_regs *regs)
 		__inc_irq_stat(cpu, ipi_irqs[ipinr]);
 	}
 
-	dbg_snapshot_irq_var(start_time);
-	dbg_snapshot_irq(ipinr, handle_IPI, NULL, 0, DSS_FLAG_IN);
-
 	switch (ipinr) {
 	case IPI_RESCHEDULE:
 		scheduler_ipi();
@@ -906,11 +903,6 @@ void handle_IPI(int ipinr, struct pt_regs *regs)
 
 	case IPI_CALL_FUNC:
 		irq_enter();
-		/*
-		 * dbg_snapshot_irq function is into
-		 * generic_smp_call_function_interrupt()
-		 *
-		 */
 		generic_smp_call_function_interrupt();
 		irq_exit();
 		break;
@@ -956,8 +948,6 @@ void handle_IPI(int ipinr, struct pt_regs *regs)
 
 	if ((unsigned)ipinr < NR_IPI)
 		trace_ipi_exit_rcuidle(ipi_types[ipinr]);
-
-	dbg_snapshot_irq(ipinr, handle_IPI, NULL, start_time, DSS_FLAG_OUT);
 
 	set_irq_regs(old_regs);
 }

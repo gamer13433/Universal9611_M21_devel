@@ -621,20 +621,12 @@ int generic_handle_irq(unsigned int irq)
 	if (!desc)
 		return -EINVAL;
 
-	dbg_snapshot_irq_var(start_time);
-
 	if (likely(desc->action))
 		handler = desc->action->handler;
 	else
 		handler = NULL;
 
-	dbg_snapshot_irq(irq, (void *)handler, (void *)desc,
-				0, DSS_FLAG_IN);
-
 	generic_handle_irq_desc(desc);
-
-	dbg_snapshot_irq(irq, (void *)handler, (void *)desc,
-				start_time, DSS_FLAG_OUT);
 
 	return 0;
 }

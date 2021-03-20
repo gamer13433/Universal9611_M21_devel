@@ -24,7 +24,6 @@ extern void dbg_snapshot_task(int cpu, void *v_task);
 extern void dbg_snapshot_work(void *worker, void *v_task, void *fn, int en);
 extern void dbg_snapshot_cpuidle(char *modes, unsigned state, int diff, int en);
 extern void dbg_snapshot_suspend(char *log, void *fn, void *dev, int state, int en);
-extern void dbg_snapshot_irq(int irq, void *fn, void *val, unsigned long long time, int en);
 extern void dbg_snapshot_print_notifier_call(void **nl, unsigned long func, int en);
 extern int dbg_snapshot_try_enable(const char *name, unsigned long long duration);
 extern int dbg_snapshot_set_enable(const char *name, int en);
@@ -60,8 +59,7 @@ extern void dbg_snapshot_hook_hardlockup_exit(void);
 extern void dbg_snapshot_dump_sfr(void);
 extern int dbg_snapshot_hook_pmsg(char *buffer, size_t count);
 extern void dbg_snapshot_save_log(int cpu, unsigned long where);
-#define dbg_snapshot_irq_var(v)   do {    v = cpu_clock(raw_smp_processor_id());  \
-				  } while(0)
+
 /* option */
 #ifdef CONFIG_DEBUG_SNAPSHOT_ACPM
 extern void dbg_snapshot_acpm(unsigned long long timestamp, const char *log, unsigned int data);

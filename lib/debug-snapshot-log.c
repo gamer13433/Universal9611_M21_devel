@@ -870,40 +870,6 @@ void dbg_snapshot_thermal(void *data, unsigned int temp, char *name, unsigned in
 }
 #endif
 
-void dbg_snapshot_irq(int irq, void *fn, void *val, unsigned long long start_time, int en)
-{
-	struct dbg_snapshot_item *item = &dss_items[dss_desc.kevents_num];
-	unsigned long flags;
-
-	if (unlikely(!dss_base.enabled || !item->entry.enabled))
-		return;
-
-	flags = pure_arch_local_irq_save();
-	{
-		int cpu = raw_smp_processor_id();
-		unsigned long long time, latency;
-		unsigned long i;
-
-		time = cpu_clock(cpu);
-
-		if (start_time == 0)
-			start_time = time;
-
-		latency = time - start_time;
-		i = atomic_inc_return(&dss_idx.irq_log_idx[cpu]) &
-				(ARRAY_SIZE(dss_log->irq[0]) - 1);
-
-		dss_log->irq[cpu][i].time = time;
-		dss_log->irq[cpu][i].sp = (unsigned long) current_stack_pointer;
-		dss_log->irq[cpu][i].irq = irq;
-		dss_log->irq[cpu][i].fn = (void *)fn;
-		dss_log->irq[cpu][i].desc = (struct irq_desc *)val;
-		dss_log->irq[cpu][i].latency = latency;
-		dss_log->irq[cpu][i].en = en;
-	}
-	pure_arch_local_irq_restore(flags);
-}
-
 #ifdef CONFIG_DEBUG_SNAPSHOT_SPINLOCK
 void dbg_snapshot_spinlock(void *v_lock, int en)
 {
