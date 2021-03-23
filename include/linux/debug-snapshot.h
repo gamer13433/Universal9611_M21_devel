@@ -22,7 +22,7 @@
 /* mandatory */
 extern void dbg_snapshot_task(int cpu, void *v_task);
 extern void dbg_snapshot_work(void *worker, void *v_task, void *fn, int en);
-extern void dbg_snapshot_cpuidle(char *modes, unsigned state, int diff, int en);
+#define dbg_snapshot_cpuidle(a,b,c,d)	do { } while(0)
 extern void dbg_snapshot_suspend(char *log, void *fn, void *dev, int state, int en);
 extern void dbg_snapshot_print_notifier_call(void **nl, unsigned long func, int en);
 extern int dbg_snapshot_try_enable(const char *name, unsigned long long duration);

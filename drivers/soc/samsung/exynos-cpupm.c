@@ -630,7 +630,6 @@ static int try_to_enter_power_mode(int cpu, struct power_mode *mode)
 		break;
 	}
 
-	dbg_snapshot_cpuidle(mode->name, 0, 0, DSS_FLAG_IN);
 	set_state_powerdown(mode);
 
 #ifdef CONFIG_ARM64_EXYNOS_CPUIDLE
@@ -651,7 +650,6 @@ static void exit_mode(int cpu, struct power_mode *mode, int cancel)
 	 * first cpu exiting from power mode.
 	 */
 	set_state_run(mode);
-	dbg_snapshot_cpuidle(mode->name, 0, 0, DSS_FLAG_OUT);
 
 	switch (mode->type) {
 	case POWERMODE_TYPE_CLUSTER:

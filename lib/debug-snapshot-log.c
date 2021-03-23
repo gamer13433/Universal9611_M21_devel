@@ -659,27 +659,6 @@ void dbg_snapshot_work(void *worker, void *v_task, void *fn, int en)
 	}
 }
 
-void dbg_snapshot_cpuidle(char *modes, unsigned state, int diff, int en)
-{
-	struct dbg_snapshot_item *item = &dss_items[dss_desc.kevents_num];
-
-	if (unlikely(!dss_base.enabled || !item->entry.enabled))
-		return;
-	{
-		int cpu = raw_smp_processor_id();
-		unsigned long i = atomic_inc_return(&dss_idx.cpuidle_log_idx[cpu]) &
-				(ARRAY_SIZE(dss_log->cpuidle[0]) - 1);
-
-		dss_log->cpuidle[cpu][i].time = cpu_clock(cpu);
-		dss_log->cpuidle[cpu][i].modes = modes;
-		dss_log->cpuidle[cpu][i].state = state;
-		dss_log->cpuidle[cpu][i].sp = (unsigned long) current_stack_pointer;
-		dss_log->cpuidle[cpu][i].num_online_cpus = num_online_cpus();
-		dss_log->cpuidle[cpu][i].delta = diff;
-		dss_log->cpuidle[cpu][i].en = en;
-	}
-}
-
 void dbg_snapshot_suspend(char *log, void *fn, void *dev, int state, int en)
 {
 	struct dbg_snapshot_item *item = &dss_items[dss_desc.kevents_num];
