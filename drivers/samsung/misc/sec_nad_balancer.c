@@ -23,7 +23,6 @@
 #define NAD_PRINT(format, ...) pr_info("[NAD_BALANCER] " format, ##__VA_ARGS__)
 #define DEBUG_NAD_BALANCER
 
-#if defined(CONFIG_SEC_FACTORY)
 #ifdef CONFIG_OF
 static int parse_qos_data(struct device *dev,
 			  struct nad_balancer_platform_data *pdata,
@@ -491,7 +490,6 @@ static struct platform_driver sec_nad_balancer_driver = {
 #endif
 #if CONFIG_OF
 		.of_match_table = of_match_ptr(sec_nad_balancer_dt_match),
-#endif
 	},
 };
 
@@ -597,21 +595,14 @@ out:
 
 static int __init sec_nad_balancer_init(void)
 {
-#if defined(CONFIG_SEC_FACTORY)
 	NAD_PRINT("%s\n", __func__);
 	return platform_driver_register(&sec_nad_balancer_driver);
-#else
-	NAD_PRINT("Not support NAD balancer.\n");
-	return 0;
-#endif
 }
 
 static void __exit sec_nad_balancer_exit(void)
 {
-#if defined(CONFIG_SEC_FACTORY)
 	NAD_PRINT("%s\n", __func__);
 	return platform_driver_unregister(&sec_nad_balancer_driver);
-#endif
 }
 
 module_init(sec_nad_balancer_init);

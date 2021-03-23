@@ -35,7 +35,6 @@
 #include <linux/io.h>
 #include <linux/alarmtimer.h>
 
-#if defined(CONFIG_SEC_FACTORY)
 #define BALANCER_CMD	5
 #define NAD_BUFF_SIZE	256
 #define MAX_TMU_COUNT	4
@@ -114,5 +113,4 @@ if (arg) { \
 if (pm_qos_request_active(req)) \
 	pm_qos_remove_request(req); \
 })
-#endif
 #endif
