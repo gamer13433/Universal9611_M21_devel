@@ -92,12 +92,6 @@ config FREQVAR_TUNE
 
 comment "CPU frequency scaling drivers"
 
-config FINGERPRINT_BOOST
-	bool "Fingerprint Boost"
-	default y
-	help
-	  Boosts available CPUs to max frequency on fingerprint sensor input.
-
 if ARM || ARM64
 source "drivers/cpufreq/Kconfig.arm"
 endif

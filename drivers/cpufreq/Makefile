@@ -12,8 +12,6 @@ obj-$(CONFIG_CPU_FREQ_TIMES)		+= cpufreq_times.o
 obj-$(CONFIG_CPU_FREQ_GOV_COMMON)		+= cpufreq_governor.o
 obj-$(CONFIG_CPU_FREQ_GOV_ATTR_SET)	+= cpufreq_governor_attr_set.o
 
-obj-$(CONFIG_FINGERPRINT_BOOST)		+= fp-boost.o
-
 ##################################################################################
 # ARM SoC drivers
 obj-$(CONFIG_ARM_EXYNOS_ACME)		+= exynos-acme.o
