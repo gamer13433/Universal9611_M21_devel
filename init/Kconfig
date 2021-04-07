@@ -1198,13 +1198,13 @@ config CC_OPTIMIZE_FOR_PERFORMANCE
 	  This is the default optimization level for the kernel, building
 	  with the "-O2" compiler flag for best performance and most
 	  helpful compile-time warnings.
-
-config CC_OPTIMIZE_FOR_PERFORMANCE_O3
-	bool "Optimize more for performance (-O3)"
+  
+config CC_OPTIMIZE_FOR_PERFORMANCE_O3_OFAST_SUB_OPTIONS
+	bool "Optimize more for performance with O3 and Ofast sub-options"
 	imply CC_DISABLE_WARN_MAYBE_UNINITIALIZED  # avoid false positives
 	help
-	  Choosing this option will pass "-O3" to your compiler to optimize
-	  the kernel yet more for performance.
+	  Choosing this option will pass "-O3" and Ofast sub-options to your compiler
+	  to optimize the kernel yet more for performance.config 
 
 config CC_OPTIMIZE_FOR_SIZE
 	bool "Optimize for size (-Os)"
