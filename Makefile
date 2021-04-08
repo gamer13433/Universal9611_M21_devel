@@ -461,6 +461,7 @@ KBUILD_CFLAGS   := -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs \
 
 
 
+
 KBUILD_CFLAGS    += -Werror=vla
 
 
@@ -575,6 +576,7 @@ export CLANG_FLAGS
 
 
 endif
+
 
 
 
@@ -738,11 +740,12 @@ export CFLAGS_GCOV CFLAGS_KCOV
 
 # Make toolchain changes before including arch/$(SRCARCH)/Makefile to ensure
 # ar/cc/ld-* macros return correct values.
-ifdef CONFIG_LD_GOLD
+
 
 
 
 LDFINAL_vmlinux := $(LD)
+ifdef CONFIG_LD_GOLD
 LD		:= $(LDGOLD)
 endif
 ifdef CONFIG_LD_LLD
@@ -783,6 +786,7 @@ KBUILD_CFLAGS	+= -Os $(call cc-disable-warning,maybe-uninitialized,)
 else
 ifeq ($(cc-name),clang)
 KBUILD_CFLAGS   += -O3
+
 
 else
 KBUILD_CFLAGS   += -O2
@@ -953,6 +957,9 @@ endif
 
 ifdef CONFIG_LTO_CLANG
 lto-clang-flags	:= -flto -fvisibility=hidden
+
+
+
 
 
 
@@ -1380,6 +1387,7 @@ else
 	@echo "warning: Cannot use CONFIG_STACK_VALIDATION=y, please install libelf-dev, libelf-devel or elfutils-libelf-devel" >&2
 endif
 endif
+
 
 
 
