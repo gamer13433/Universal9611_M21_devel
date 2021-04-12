@@ -69,6 +69,11 @@
 #include <asm/tlb.h>
 
 #include <trace/events/task.h>
+
+#ifdef CONFIG_RKP_NS_PROT
+#include "mount.h"
+#endif
+
 #include "internal.h"
 
 #include <trace/events/sched.h>
@@ -1256,16 +1261,14 @@ void __set_task_comm(struct task_struct *tsk, const char *buf, bool exec)
 }
 
 #ifdef CONFIG_RKP_NS_PROT
-extern struct super_block *sys_sb;	/* pointer to superblock */
-extern struct super_block *odm_sb;	/* pointer to superblock */
-extern struct super_block *vendor_sb;	/* pointer to superblock */
-extern struct super_block *rootfs_sb;	/* pointer to superblock */
-extern struct super_block *art_sb;	/* pointer to superblock */
-#ifdef CONFIG_RKP_NS_PROT_ROS
+extern struct super_block *rootfs_sb;
+extern struct super_block *sys_sb;
+extern struct super_block *vendor_sb;
+extern struct super_block *product_sb;
+extern struct super_block *art_sb;
 extern struct super_block *crypt_sb;
-extern struct super_block *dex2oat_sb;
 extern struct super_block *adbd_sb;
-#endif
+extern struct super_block *runtime_sb;
 extern int is_recovery;
 extern int __check_verifiedboot;
 
@@ -1274,15 +1277,49 @@ static int kdp_check_sb_mismatch(struct super_block *sb)
 	if (is_recovery || __check_verifiedboot)
 		return 0;
 
-	if ((sb != rootfs_sb) && (sb != sys_sb) && (sb != odm_sb) && (sb != vendor_sb) && (sb != art_sb)
-#ifdef CONFIG_RKP_NS_PROT_ROS
-		&& (sb != crypt_sb) && (sb != dex2oat_sb) && (sb != adbd_sb)) {
-#else
-		) {
-#endif
+	if ((sb != rootfs_sb) && (sb != sys_sb) && (sb != vendor_sb) && (sb != product_sb)
+		&& (sb != art_sb) && (sb != crypt_sb) && (sb != adbd_sb) && (sb != runtime_sb)) {
 		return 1;
 	}
 	return 0;
+}
+
+static int kdp_check_path_mismatch(struct vfsmount *vfsmnt)
+{
+	int i = 0;
+	int ret = -1;
+	char *buf = NULL;
+	char *path_name = NULL;
+	const char* skip_path[] = {
+		"/com.android.runtime",
+		"/com.android.conscrypt",
+		"/com.android.art",
+		"/com.android.adbd",
+	};
+
+	if (!vfsmnt->bp_mount) {
+		printk(KERN_ERR "vfsmnt->bp_mount is NULL");
+		return -ENOMEM;
+	}
+
+	buf = kzalloc(PATH_MAX, GFP_KERNEL);
+	if (!buf)
+		return -ENOMEM;
+
+	path_name = dentry_path_raw(vfsmnt->bp_mount->mnt_mountpoint, buf, PATH_MAX);
+	if (IS_ERR(path_name))
+		goto out;
+
+	for (; i < ARRAY_SIZE(skip_path); ++i) {
+		if (!strncmp(path_name, skip_path[i], strlen(skip_path[i]))) {
+			ret = 0;
+			break;
+		}
+	}
+out:
+	kfree(buf);
+
+	return ret;
 }
 
 static int invalid_drive(struct linux_binprm * bprm) 
@@ -1298,19 +1335,17 @@ static int invalid_drive(struct linux_binprm * bprm)
 	}
 	sb = vfsmnt->mnt_sb;
 
+	if (!kdp_check_path_mismatch(vfsmnt)) {
+		return 0;
+	}
+
 	if (kdp_check_sb_mismatch(sb)) {
 		pr_err("[KDP] Superblock Mismatch -> %s vfsmnt: 0x%lx, mnt_sb: 0x%lx",
 				bprm->filename, (unsigned long)vfsmnt, (unsigned long)sb);
-#ifdef CONFIG_RKP_NS_PROT_ROS
 		pr_err("[KDP] Superblock list : 0x%lx, 0x%lx, 0x%lx, 0x%lx, 0x%lx, 0x%lx, 0x%lx, 0x%lx\n",
-				(unsigned long)rootfs_sb, (unsigned long)sys_sb, (unsigned long)odm_sb,
-				(unsigned long)vendor_sb, (unsigned long)art_sb, (unsigned long)crypt_sb,
-				(unsigned long)dex2oat_sb, (unsigned long)adbd_sb);
-#else
-		pr_err("[KDP] Superblock list : 0x%lx, 0x%lx, 0x%lx, 0x%lx, 0x%lx\n",
-				(unsigned long)rootfs_sb, (unsigned long)sys_sb, (unsigned long)odm_sb,
-				(unsigned long)vendor_sb, (unsigned long)art_sb);
-#endif
+				(unsigned long)rootfs_sb, (unsigned long)sys_sb, (unsigned long)vendor_sb,
+				(unsigned long)product_sb, (unsigned long)art_sb, (unsigned long)crypt_sb,
+				(unsigned long)adbd_sb, (unsigned long)runtime_sb);
 		return 1;
 	}
 
