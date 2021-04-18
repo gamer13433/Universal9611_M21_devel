@@ -16,22 +16,19 @@ obj-vdso-c := $(addprefix $(obj)/, $(obj-vdso-c))
 obj-vdso   := $(obj-vdso-c) $(obj-vdso-s)
 
 ldflags-y := -shared -nostdlib -soname=linux-vdso.so.1  --hash-style=sysv \
-		--build-id $(call ld-option,-n) -T
+		--build-id -n -T
 ccflags-y := -fno-stack-protector
 ccflags-y += -DDISABLE_BRANCH_PROFILING -ffixed-x18
-ccflags-y += $(DISABLE_LTO) 
+
 
 # Force -O2 to avoid libgcc dependencies
 CFLAGS_REMOVE_vgettimeofday.o = -pg -Os
-CFLAGS_vgettimeofday.o = -fPIC
-ifeq ($(cc-name),clang)
-CFLAGS_vgettimeofday.o = -O3
-else
-CFLAGS_vgettimeofday.o = -O2
+CFLAGS_vgettimeofday.o = -O2 -fPIC
+ifneq ($(cc-name),clang)
 CFLAGS_vgettimeofday.o += -mcmodel=tiny
 endif
 
-
+CFLAGS_REMOVE_vgettimeofday.o += $(CC_FLAGS_SCS)
 
 # Disable gcov profiling for VDSO code
 GCOV_PROFILE := n
@@ -76,7 +73,7 @@ $(obj-vdso-c): %.o: %.c FORCE
 quiet_cmd_vdsocc = VDSOC   $@
       cmd_vdsocc = ${CC} $(c_flags) -c -o $@ $<
 quiet_cmd_vdsoas = VDSOA   $@
-      cmd_vdsoas = $(CC) $(a_flags) -no-integrated-as -c -o $@ $<
+      cmd_vdsoas = $(CC) $(a_flags) -c -o $@ $<
 
 # Install commands for the unstripped file
 quiet_cmd_vdso_install = INSTALL $@
