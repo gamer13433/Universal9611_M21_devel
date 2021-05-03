@@ -386,8 +386,10 @@ CC		= clang
 LD		= ld.lld
 LDGOLD		= $(CROSS_COMPILE)ld.gold
 LDLLD		= ld.lld
+
 AR		= llvm-ar
 NM		= llvm-nm
+
 OBJCOPY		= llvm-objcopy
 OBJDUMP		= llvm-objdump
 READELF		= llvm-readelf
@@ -451,6 +453,7 @@ KBUILD_CFLAGS   := -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs \
 		   -Werror-implicit-function-declaration \
 		   -Wno-format-security \
 		   -std=gnu89
+
 
 
 
@@ -576,6 +579,7 @@ export CLANG_FLAGS
 
 
 endif
+
 
 
 
@@ -752,6 +756,7 @@ ifdef CONFIG_LD_LLD
 LD		:= $(LDLLD)
 endif
 
+
 ifdef CONFIG_LTO_CLANG
 # use GNU gold with LLVMgold or LLD for LTO linking, and LD for vmlinux_link
 ifeq ($(ld-name),gold)
@@ -762,8 +767,10 @@ LDFLAGS		+= -plugin LLVMgold.so
 LLVM_AR		:= llvm-ar
 LLVM_DIS	:= llvm-dis
 export LLVM_AR LLVM_DIS
-# Set O3 optimization level for LTO
+# Set O3 optimization level for LTO with most linkers
+LDFLAGS		+= -O3
 LDFLAGS		+= --plugin-opt=O3
+LDFLAGS		+= --plugin-opt=-import-instr-limit=40
 endif
 
 # The arch Makefile can set ARCH_{CPP,A,C}FLAGS to override the default
@@ -787,6 +794,9 @@ else
 ifeq ($(cc-name),clang)
 KBUILD_CFLAGS   += -O3
 
+ifdef CONFIG_LTO_CLANG
+KBUILD_CFLAG	+= -fwhole-program-vtables
+endif
 
 else
 KBUILD_CFLAGS   += -O2
@@ -957,6 +967,9 @@ endif
 
 ifdef CONFIG_LTO_CLANG
 lto-clang-flags	:= -flto -fvisibility=hidden
+
+
+
 
 
 
@@ -1387,6 +1400,7 @@ else
 	@echo "warning: Cannot use CONFIG_STACK_VALIDATION=y, please install libelf-dev, libelf-devel or elfutils-libelf-devel" >&2
 endif
 endif
+
 
 
 
