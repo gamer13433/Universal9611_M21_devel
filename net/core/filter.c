@@ -2231,6 +2231,8 @@ static u32 bpf_skb_net_base_len(const struct sk_buff *skb)
 	}
 }
 
+#define BPF_SKB_MAX_LEN SKB_MAX_ALLOC
+
 static int bpf_skb_net_grow(struct sk_buff *skb, u32 len_diff)
 {
 	u32 off = skb_mac_header_len(skb) + bpf_skb_net_base_len(skb);
@@ -2278,10 +2280,6 @@ static int bpf_skb_net_shrink(struct sk_buff *skb, u32 len_diff)
 
 	return 0;
 }
-
-#define BPF_SKB_MAX_LEN SKB_MAX_ALLOC
-	if (skb_at_tc_ingress(skb) || !skb->dev)
-		return SKB_MAX_ALLOC;
 
 static int bpf_skb_adjust_net(struct sk_buff *skb, s32 len_diff)
 {

@@ -46,6 +46,10 @@ static DEFINE_MUTEX(zram_index_mutex);
 static int zram_major;
 static const char *default_compressor = CONFIG_ZRAM_DEF_COMP;
 
+#ifdef CONFIG_ZRAM_COMP_WRITEBACK
+static int zram_wb_mode = COMP_STORE;
+#endif
+
 /* Module params (documentation at end) */
 static unsigned int num_devices = 1;
 /*
@@ -1318,7 +1322,6 @@ static ssize_t mm_stat_show(struct device *dev,
 			zram->limit_pages << PAGE_SHIFT,
 			max_used << PAGE_SHIFT,
 			(u64)atomic64_read(&zram->stats.same_pages),
-			atomic_long_read(&pool_stats.pages_compacted));
 			(u64)atomic64_read(&zram->stats.huge_pages), idle);
 
 	up_read(&zram->init_lock);
