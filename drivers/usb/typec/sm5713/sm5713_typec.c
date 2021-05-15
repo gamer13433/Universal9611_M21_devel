@@ -1313,6 +1313,11 @@ static void sm5713_process_dr_swap(struct sm5713_phydrv_data *usbpd_data, int va
 				CCIC_NOTIFY_ATTACH/*attach*/,
 				USB_STATUS_NOTIFY_ATTACH_UFP/*drp*/, 0);
 	} else if (val == USBPD_DFP) {
+		/* muic */
+		sm5713_ccic_event_work(usbpd_data,
+			CCIC_NOTIFY_DEV_MUIC, CCIC_NOTIFY_ID_ATTACH,
+			CCIC_NOTIFY_ATTACH/*attach*/,
+			USB_STATUS_NOTIFY_ATTACH_DFP/*rprd*/, 0);
 		sm5713_ccic_event_work(usbpd_data,
 				CCIC_NOTIFY_DEV_USB, CCIC_NOTIFY_ID_USB,
 				CCIC_NOTIFY_DETACH/*attach*/,
@@ -2724,6 +2729,8 @@ static int sm5713_usbpd_notify_attach(void *data)
 		}
 #endif
 		sm5713_set_vconn_source(pd_data, USBPD_VCONN_OFF);
+		if (pdic_data->reset_done == 0)
+			sm5713_set_enable_pd_function(pd_data, PD_ENABLE);
 	/* cc_SOURCE */
 	} else if (((reg_data & SM5713_ATTACH_TYPE) == SM5713_ATTACH_SINK) &&
 			check_usb_killer(pdic_data) == 0) {
@@ -3634,6 +3641,7 @@ static void sm5713_usbpd_shutdown(struct i2c_client *i2c)
 
 	cancel_delayed_work_sync(&_data->debug_work);
 	sm5713_usbpd_write_reg(i2c, SM5713_REG_SYS_CNTL, 0x15);
+	sm5713_set_enable_pd_function(pd_data, PD_DISABLE);
 	sm5713_usbpd_set_vbus_dischg_gpio(_data, 0);
 }
 

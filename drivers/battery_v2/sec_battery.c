@@ -2138,6 +2138,12 @@ void sec_bat_aging_check(struct sec_battery_info *battery)
 }
 #endif
 
+#if defined(CONFIG_BATTERY_AGE_FORECAST_DETACHABLE)
+void sec_bat_check_battery_health(struct sec_battery_info *battery)
+{
+	/* no need to check in detachable battery model */
+}
+#else
 void sec_bat_check_battery_health(struct sec_battery_info *battery)
 {
 	union power_supply_propval value;
@@ -2174,6 +2180,7 @@ void sec_bat_check_battery_health(struct sec_battery_info *battery)
 	sec_bat_set_misc_event(battery,
 		(battery_health << BATTERY_HEALTH_SHIFT), BATT_MISC_EVENT_BATTERY_HEALTH);
 }
+#endif
 
 static bool sec_bat_temperature(
 				struct sec_battery_info *battery)
@@ -5690,28 +5697,24 @@ static int sec_bat_set_property(struct power_supply *psy,
 			break;
 		case POWER_SUPPLY_EXT_PROP_HV_DISABLE:
 			pr_info("HV wired charging mode is %s\n", (val->intval == CH_MODE_AFC_DISABLE_VAL ? "Disabled" : "Enabled"));
-			if (val->intval == CH_MODE_AFC_DISABLE_VAL) {
+			if (val->intval == CH_MODE_AFC_DISABLE_VAL)
 				sec_bat_set_current_event(battery,
 					SEC_BAT_CURRENT_EVENT_HV_DISABLE, SEC_BAT_CURRENT_EVENT_HV_DISABLE);
-
-				if (is_pd_wire_type(battery->cable_type)) {
-					battery->update_pd_list = true;
-					pr_info("%s: update pd list\n", __func__);
-					select_pdo(1);
-				}
-			} else {
+			else
 				sec_bat_set_current_event(battery,
 					0, SEC_BAT_CURRENT_EVENT_HV_DISABLE);
 
-				if (is_pd_wire_type(battery->cable_type)) {
+			/* For lsi, sm pd, if pdo is the same, pd noti is not transmitted. 
+	 			so, it requests a different pdo than current one. */
+			if (is_pd_wire_type(battery->cable_type)) {
+					int target_pd_index = battery->pd_list.max_pd_count - 1;
+
 					battery->update_pd_list = true;
 					pr_info("%s: update pd list\n", __func__);
-#if defined(CONFIG_PDIC_PD30)
-					select_pdo(battery->pd_list.pd_info[battery->pd_list.num_fpdo - 1].pdo_index);
-#else
-					select_pdo(battery->pd_list.pd_info[battery->pd_list.max_pd_count - 1].pdo_index);
-#endif
-				}
+					if (battery->pdic_info.sink_status.current_pdo_num != 1)
+						target_pd_index = 0;
+					if (target_pd_index >= 0 && target_pd_index < MAX_PDO_NUM)
+						select_pdo(battery->pd_list.pd_info[target_pd_index].pdo_index);
 			}
 			break;
 		case POWER_SUPPLY_EXT_PROP_WC_CONTROL:
