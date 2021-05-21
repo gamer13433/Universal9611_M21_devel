@@ -338,8 +338,7 @@ static int mark_idle(struct zram *zram, unsigned long long threshold)
 				!zram_test_flag(zram, index, ZRAM_WB) &&
 				!zram_test_flag(zram, index, ZRAM_IDLE) &&
 				!zram_test_flag(zram, index, ZRAM_SAME) &&
-				!zram_test_flag(zram, index, ZRAM_DEDUPED) &&
-				threshold >= zram->table[index].ac_time) {
+				!zram_test_flag(zram, index, ZRAM_DEDUPED)) {
 			zram_set_flag(zram, index, ZRAM_IDLE);
 			ret++;
 		}
