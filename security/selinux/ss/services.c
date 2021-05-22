@@ -76,8 +76,6 @@
 #include "ebitmap.h"
 #include "audit.h"
 
-extern struct policydb policydb;
-
 /* Policy capability names */
 char *selinux_policycap_names[__POLICYDB_CAPABILITY_MAX] = {
 	"network_peer_controls",
@@ -2100,7 +2098,7 @@ static void security_load_policycaps(struct selinux_state *state)
 				i);
 	}
 
-	selinux_android_netlink_route = policydb.android_netlink_route;
+	selinux_android_netlink_route = p->android_netlink_route;
 	selinux_nlmsg_init();
 }
 
