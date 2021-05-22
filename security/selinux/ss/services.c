@@ -76,6 +76,8 @@
 #include "ebitmap.h"
 #include "audit.h"
 
+extern struct policydb policydb;
+
 /* Policy capability names */
 char *selinux_policycap_names[__POLICYDB_CAPABILITY_MAX] = {
 	"network_peer_controls",
@@ -88,10 +90,6 @@ char *selinux_policycap_names[__POLICYDB_CAPABILITY_MAX] = {
 
 int selinux_android_netlink_route;
 static struct selinux_ss selinux_ss;
-#if (defined CONFIG_RKP_KDP && defined CONFIG_SAMSUNG_PRODUCT_SHIP)
-int ss_initialized __kdp_ro;
-#else
-#endif
 
 void selinux_ss_init(struct selinux_ss **ss)
 {
