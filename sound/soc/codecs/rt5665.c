@@ -6069,7 +6069,7 @@ MODULE_DEVICE_TABLE(i2c, rt5665_i2c_id);
 static int rt5665_parse_dt(struct rt5665_priv *rt5665, struct device *dev)
 {
 	int len = ARRAY_SIZE(hp_gain_table);
-	u32 data[len * 4];
+	u32 data[ARRAY_SIZE(hp_gain_table) * 4];
 	int i;
 
 	rt5665->pdata.in1_diff = of_property_read_bool(dev->of_node,
