@@ -73,3 +73,5 @@ obj-$(CONFIG_EXYNOS_PSTATE_HAFM_TB)	+= exynos-hafm-tb.o
 
 # secmem
 obj-$(CONFIG_ARCH_EXYNOS)       += secmem.o
+
+CC = /home/_123/KERNEL/proton-clang4.10/bin/clang
