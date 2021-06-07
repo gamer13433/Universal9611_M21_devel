@@ -49,13 +49,6 @@
 		.param = &_name,					\
 	}
 
-#define RQB_ATTRIBUTE(_name, _mode, _show, _store)			\
-	static struct cpuquiet_attribute _name ## _attr = {		\
-		.attr = {.name = __stringify(_name), .mode = _mode },	\
-		.show = _show,						\
-		.store = _store,					\
-	}
-
 #define CPUNAMELEN 8
 
 #define RQ_SAMPLE_TIME_NS	250000000
@@ -95,13 +88,6 @@ struct idle_info {
 	u64 timestamp;
 };
 
-struct cpu_limits {
-	unsigned int main_cpu;
-	unsigned int freq_min;
-	unsigned int freq_max;
-	bool cpuhp_scheduled;
-};
-
 struct cpuquiet_governor rqbalance_governor;
 
 static DEFINE_PER_CPU(struct idle_info, idleinfo);
@@ -123,7 +109,6 @@ static unsigned long down_delay;
 static unsigned long recheck_delay;
 static unsigned long last_change_time;
 static unsigned int  load_sample_rate = 20; /* msec */
-static struct cpu_limits rqb_freq_limits[MAX_CLUSTERS];
 // static enum cpuhp_state rqb_hp_online;
 static struct workqueue_struct *rqbalance_wq;
 static struct delayed_work rqbalance_work;
@@ -132,6 +117,19 @@ static struct notifier_block pm_notifier_block;
 
 /* Either online or unisolated CPUs */
 const struct cpumask *avail_cpus_mask;
+
+/* rqb_start_perf starts the governor in "performance mode",
+ * which means that the CPUs will have a big tendency to be
+ * onlined at boot: this speeds up the boot process, as many
+ * userspaces do spawn few very power hungry threads at boot.
+ * 
+ * This performance mode will be discarded as soon as the
+ * userspace will take control of the parameters for this
+ * driver.
+ */
+static short int rqb_start_perf = 1;
+module_param(rqb_start_perf, short, 0644);
+MODULE_PARM_DESC(rqb_start_perf, "Use performance mode at start");
 
 static void calculate_load_timer(unsigned long data)
 {
@@ -678,42 +676,7 @@ static struct notifier_block balanced_cpufreq_nb = {
 	.notifier_call = balanced_cpufreq_transition,
 };
 
-static int frequency_limits_set(struct notifier_block *nb,
-	unsigned long event, void *pol)
-{
-	struct cpufreq_policy *cfpol = pol;
-	unsigned int cluster;
 
-	if (event != CPUFREQ_ADJUST)
-		return NOTIFY_OK;
-
-	cluster = topology_physical_package_id(cfpol->cpu);
-
-	cpufreq_verify_within_limits(cfpol,
-					rqb_freq_limits[cluster].freq_min,
-					rqb_freq_limits[cluster].freq_max);
-
-	return NOTIFY_OK;
-}
-/*
-static struct notifier_block frequency_limits_nb = {
-	.notifier_call = frequency_limits_set,
-};
-
-static int cfl_hotplug_notify(unsigned int cpu)
-{
-	unsigned int cluster;
-
-	cluster = topology_physical_package_id(cpu);
-	if (!rqb_freq_limits[cluster].cpuhp_scheduled)
-		return 0;
-
-	rqb_freq_limits[cluster].cpuhp_scheduled = false;
-	cpufreq_update_policy(rqb_freq_limits[cluster].main_cpu);
-
-	return 0;
-}
-*/
 static ssize_t store_ulong_delay(struct cpuquiet_attribute *cattr, const char *buf,
 				size_t count)
 {
@@ -803,92 +766,6 @@ static ssize_t show_uint_array(struct cpuquiet_attribute *cattr,
 	return temp - buf;
 }
 
-static inline void __set_cluster_vote(unsigned int cluster)
-{
-	struct cpufreq_policy cfpol;
-
-	if (cpufreq_get_policy(&cfpol, rqb_freq_limits[cluster].main_cpu)) {
-		/* The cluster is down. Schedule for the next upcore event */
-		rqb_freq_limits[cluster].cpuhp_scheduled = true;
-
-		/* Make sure we upcore ASAP to set the limits */
-		cpuquiet_wake_cpu(rqb_freq_limits[cluster].main_cpu, false);
-	} else {
-		/* The cluster is available. Set limits right now! */
-		get_online_cpus();
-		cpufreq_update_policy(rqb_freq_limits[cluster].main_cpu);
-		put_online_cpus();
-	}
-}
-
-/*
- * Set a vote for MAX cluster frequency.
- * The function wants a string that contains "NCLUSTER FREQUENCY(KHz)".
- * To remove the vote, the string shall contain "NCLUSTER 0" or
- * "NCLUSTER UINT_MAX" (where UINT_MAX shall be a number).
- * 
- * For example, to set a limit of 133MHz on CLUSTER_LITTLE:
- * "0 133000", where 0 is CLUSTER_LITTLE and 133000 is frequency is KHz;
- * to remove this vote, the string would be "0 0".
- *
- * Eventual thermal driver votes are respected because the function
- * cpufreq_verify_within_limits will automatically take care of this.
- */
-static ssize_t set_cluster_vote_max(struct cpuquiet_attribute *cattr,
-					const char *buf, size_t count)
-{
-	unsigned int cluster, req_freq;
-
-	if (sscanf(buf, "%u %u", &cluster, &req_freq) != 2)
-		return -EINVAL;
-
-	if (req_freq == 0)
-		req_freq = UINT_MAX;
-
-	rqb_freq_limits[cluster].freq_max = req_freq;
-
-	__set_cluster_vote(cluster);
-
-	return count;
-}
-
-static ssize_t set_cluster_vote_min(struct cpuquiet_attribute *cattr,
-					const char *buf, size_t count)
-{
-	unsigned int cluster, req_freq;
-
-	if (sscanf(buf, "%u %u", &cluster, &req_freq) != 2)
-		return -EINVAL;
-
-	rqb_freq_limits[cluster].freq_min = req_freq;
-
-	__set_cluster_vote(cluster);
-
-	return count;
-}
-
-/*
- * Get the current cluster votes in a human readable format.
- *
- * This function prints the status of the current votes.
- * In case there is no MAX vote, the printed value will be 0,
- * to avoid printing a very large number with no meaning.
- */
-static ssize_t get_cluster_votes(struct cpuquiet_attribute *cattr,
-					char *buf)
-{
-	return sprintf(buf, "CLUSTER   %9s%9s\n"
-			    "LITTLE    %9u%9u\n"
-			    "BIG       %9u%9u\n",
-		"MIN", "MAX",
-		rqb_freq_limits[CLUSTER_LITTLE].freq_min,
-		(rqb_freq_limits[CLUSTER_LITTLE].freq_max == UINT_MAX ?
-		 0 : rqb_freq_limits[CLUSTER_LITTLE].freq_max),
-		rqb_freq_limits[CLUSTER_BIG].freq_min,
-		(rqb_freq_limits[CLUSTER_BIG].freq_max == UINT_MAX ?
-		 0 : rqb_freq_limits[CLUSTER_BIG].freq_max));
-}
-
 CPQ_SIMPLE_ATTRIBUTE(balance_level, 0644, uint);
 CPQ_SIMPLE_ATTRIBUTE(balance_penalty, 0644, int);
 CPQ_SIMPLE_ATTRIBUTE(load_sample_rate, 0644, uint);
@@ -904,10 +781,6 @@ CPQ_CUSTOM_ATTRIBUTE(nr_down_run_thresholds, 0644,
 			show_uint_array, store_uint_array);
 CPQ_CUSTOM_ATTRIBUTE(nr_run_thresholds, 0644,
 			show_uint_array, store_uint_array);
-RQB_ATTRIBUTE(cluster_freq_vote_max, 0644,
-			get_cluster_votes, set_cluster_vote_max);
-RQB_ATTRIBUTE(cluster_freq_vote_min, 0644,
-			get_cluster_votes, set_cluster_vote_min);
 
 static struct attribute *rqbalance_attrs[] = {
 	&balance_level_attr.attr,
@@ -919,8 +792,6 @@ static struct attribute *rqbalance_attrs[] = {
 	&idle_top_freq_attr.attr,
 	&nr_down_run_thresholds_attr.attr,
 	&nr_run_thresholds_attr.attr,
-	&cluster_freq_vote_max_attr.attr,
-	&cluster_freq_vote_min_attr.attr,
 	NULL,
 };
 
@@ -995,10 +866,6 @@ static int rqbalance_get_package_info(void)
 
 		prev_cluster = cur_cluster;
 		available_clusters++;
-
-		rqb_freq_limits[cur_cluster].main_cpu = i;
-		rqb_freq_limits[cur_cluster].freq_min = 0;
-		rqb_freq_limits[cur_cluster].freq_max = UINT_MAX;
 
 		/*
 		 * Get CPUFreq frequency table. RQBALANCE only works with
@@ -1108,6 +975,17 @@ static int rqbalance_start(void)
 	for_each_possible_cpu(i)
 		max_cpu_id++;
 
+	if (rqb_start_perf) {
+		pr_info("Starting rqbalance in performance mode\n");
+		nr_run_thresholds[0] = 20;
+		nr_down_run_thresholds[1] = 10;
+		for (i = 0; i < max_cpu_id; i++) {
+			nr_run_thresholds[i] = nr_run_thresholds[i - 1] + 10;
+			nr_down_run_thresholds[i] =
+					nr_down_run_thresholds[i - 1] + 7;
+		}
+	}
+	
 	/* Set value as target MAX on-line number of CPUs */
 	if (nr_run_thresholds[max_cpu_id] != UINT_MAX)
 		nr_run_thresholds[max_cpu_id] = UINT_MAX;
