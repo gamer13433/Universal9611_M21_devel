@@ -1254,6 +1254,9 @@ int remove_cpu(unsigned int cpu)
 {
 	int ret;
 
+	if (cpu == 4)
+		return 0;
+		
 	lock_device_hotplug();
 	ret = device_offline(get_cpu_device(cpu));
 	unlock_device_hotplug();
@@ -1507,7 +1510,7 @@ int cpus_up(struct cpumask cpus)
 	cpumask_copy(&cpu_faston_mask, &cpus);
 
 	for_each_cpu(cpu, &cpus)
-		ret = do_cpu_up((unsigned int)cpu, CPUHP_ONLINE);
+		ret = cpu_up((unsigned int)cpu, CPUHP_ONLINE);
 
 	cpumask_clear(&cpu_faston_mask);
 

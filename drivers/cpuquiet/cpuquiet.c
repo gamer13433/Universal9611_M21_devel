@@ -154,19 +154,6 @@ int cpuquiet_wake_quiesce_cpu(unsigned int cpunumber, bool sync, bool up)
 	return err;
 }
 
-static int cpuquiet_cpu_set_online(unsigned int cpu)
-{
-	return device_online(get_cpu_device(cpu));
-}
-
-static int cpuquiet_cpu_set_offline(unsigned int cpu)
-{
-	if (cpu == 4)
-		return 0;
-
-	return device_offline(get_cpu_device(cpu));
-}
-
 /**
  * cpuquiet_work_func - does work of bringing CPUs up/down
  *
@@ -309,8 +296,8 @@ void cpuquiet_switch_funcs(void)
 			cpu_funcs->set_online(cpu);
 	}
 
-	cpu_funcs->set_online = cpuquiet_cpu_set_online;
-	cpu_funcs->set_offline = cpuquiet_cpu_set_offline;
+	cpu_funcs->set_online = add_cpu;
+	cpu_funcs->set_offline = remove_cpu;
 	cpu_funcs->cpu_in_wanted_state = hotplug_cpu_in_wanted_state;
 
 	curr_avail_cpus_mask = cpu_online_mask;
