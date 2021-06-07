@@ -273,6 +273,11 @@ static void update_siblings_masks(unsigned int cpuid)
 	}
 }
 
+void remove_cpu_topology(unsigned int cpu)
+{
+
+}
+
 void store_cpu_topology(unsigned int cpuid)
 {
 	struct cpu_topology *cpuid_topo = &cpu_topology[cpuid];
