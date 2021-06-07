@@ -21,6 +21,8 @@
 #include <linux/sched/cputime.h>
 #include <linux/sched/init.h>
 #include <linux/sched/smt.h>
+#include <linux/sched/smt.h>
+#include <linux/sched/loadavg.h>
 
 #include <linux/u64_stats_sync.h>
 #include <linux/kernel_stat.h>
