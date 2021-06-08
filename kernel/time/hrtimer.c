@@ -866,122 +866,13 @@ static inline void
 hrtimer_force_reprogram(struct hrtimer_cpu_base *base, int skip_equal) { }
 static inline int hrtimer_reprogram(struct hrtimer *timer,
 				    struct hrtimer_clock_base *base)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 {
 	return 0;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 }
 static inline void hrtimer_init_hres(struct hrtimer_cpu_base *base) { }
 static inline void retrigger_next_event(void *arg) { }
 
 #endif /* CONFIG_HIGH_RES_TIMERS */
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 /*
  * Clock realtime was set
@@ -1119,16 +1010,12 @@ static void __remove_hrtimer(struct hrtimer *timer,
 {
 	struct hrtimer_cpu_base *cpu_base = base->cpu_base;
 
-
-	/* Pairs with the lockless read in hrtimer_is_queued() */
-	WRITE_ONCE(timer->state, newstate);
-	if (!(state & HRTIMER_STATE_ENQUEUED))
-		return;
+	if (!(timer->state & HRTIMER_STATE_ENQUEUED))
+		goto out;
 
 	if (!timerqueue_del(&base->active, &timer->node))
 		cpu_base->active_bases &= ~(1 << base->index);
 
-#ifdef CONFIG_HIGH_RES_TIMERS
 	/*
 	 * Note: If reprogram is false we do not update
 	 * cpu_base->next_timer. This happens when we remove the first
@@ -1145,9 +1032,9 @@ out:
 	* We need to preserve PINNED state here, otherwise we may end up
 	* migrating pinned hrtimers as well.
 	*/
-	timer->state = newstate | (timer->state & HRTIMER_STATE_PINNED);
+	WRITE_ONCE(timer->state, newstate | (timer->state & HRTIMER_STATE_PINNED));
 }
-#endif
+
 /*
  * remove hrtimer, called with base lock held
  */
@@ -1207,30 +1094,6 @@ static inline ktime_t hrtimer_update_lowres(struct hrtimer *timer, ktime_t tim,
  */
 void hrtimer_start_range_ns(struct hrtimer *timer, ktime_t tim,
 			    u64 delta_ns, const enum hrtimer_mode mode)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 {
 	struct hrtimer_clock_base *base, *new_base;
 	unsigned long flags;
@@ -1254,45 +1117,9 @@ void hrtimer_start_range_ns(struct hrtimer *timer, ktime_t tim,
 	/* Update pinned state */
 	timer->state &= ~HRTIMER_STATE_PINNED;
 	timer->state |= (!!(mode & HRTIMER_MODE_PINNED)) << HRTIMER_PINNED_SHIFT;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 	leftmost = enqueue_hrtimer(timer, new_base);
 	if (!leftmost)
 		goto unlock;
-
-
-
 
 	if (!hrtimer_is_hres_active(timer)) {
 		/*
@@ -2113,7 +1940,7 @@ static void migrate_hrtimer_list(struct hrtimer_clock_base *old_base,
 		timer = container_of(node, struct hrtimer, node);
 
 		timerqueue_del(&pinned, &timer->node);
-		enqueue_hrtimer(timer, old_base, HRTIMER_MODE_ABS);
+		enqueue_hrtimer(timer, old_base);
 	}
 }
 

@@ -1751,24 +1751,16 @@ static __latent_entropy void run_timer_softirq(struct softirq_action *h)
 {
 	struct timer_base *base = this_cpu_ptr(&timer_bases[BASE_STD]);
 
-
-
-
-
-
-
 	__run_timers(base);
 	if (IS_ENABLED(CONFIG_NO_HZ_COMMON)) {
-		__run_timers(&timer_base_deferrable);
 		__run_timers(this_cpu_ptr(&timer_bases[BASE_DEF]));
 	}
-}
 
 	if ((atomic_cmpxchg(&deferrable_pending, 1, 0) &&
 		tick_do_timer_cpu == TICK_DO_TIMER_NONE) ||
 		tick_do_timer_cpu == smp_processor_id())
 		__run_timers(&timer_base_deferrable);
-
+}
 
 /*
  * Called by the local, per-CPU timer interrupt on SMP.
@@ -1791,25 +1783,8 @@ void run_local_timers(void)
 }
 
 static void process_timeout(unsigned long __data)
-
-
-
-
-
-
-
-
-
-
-
 {
 	wake_up_process((struct task_struct *)__data);
-
-
-
-
-
-
 
 }
 
