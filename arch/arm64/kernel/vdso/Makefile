@@ -14,7 +14,7 @@ obj-vdso := $(addprefix $(obj)/, $(obj-vdso))
 
 ldflags-y := -shared -nostdlib -soname=linux-vdso.so.1  --hash-style=sysv \
 		--build-id $(call ld-option,-n) -T
-ccflags-y += $(DISABLE_LTO)
+ccflags-y += $(DISABLE_LTO) 
 
 # Disable gcov profiling for VDSO code
 GCOV_PROFILE := n
@@ -51,7 +51,7 @@ $(obj-vdso): %.o: %.S FORCE
 
 # Actual build commands
 quiet_cmd_vdsoas = VDSOA   $@
-      cmd_vdsoas = $(CC) $(a_flags) -c -o $@ $<
+      cmd_vdsoas = $(CC) $(a_flags) -no-integrated-as -c -o $@ $<
 
 # Install commands for the unstripped file
 quiet_cmd_vdso_install = INSTALL $@
