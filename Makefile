@@ -563,32 +563,19 @@ endif
 ifneq ($(GCC_TOOLCHAIN),)
 CLANG_FLAGS	+= --gcc-toolchain=$(GCC_TOOLCHAIN)
 endif
-ifneq ($(LLVM_IAS),1)
-
-
+ifeq ($(LLVM_IAS),1)
+CLANG_FLAGS	+= -integrated-as
+else
+CLANG_FLAGS	+= -no-integrated-as
 endif
 CLANG_FLAGS	+= -Werror=unknown-warning-option
-
-
-
 ifeq ($(ld-name),lld)
 CLANG_FLAGS	+= -fuse-ld=$(shell which $(LD))
 endif
 KBUILD_CFLAGS	+= $(CLANG_FLAGS)
-KBUILD_AFLAGS	+= $(CLANG_FLAGS) -no-integrated-as
+KBUILD_AFLAGS	+= $(CLANG_FLAGS)
 export CLANG_FLAGS
-
-
 endif
-
-
-
-
-
-
-
-
-
 
 
 RETPOLINE_CFLAGS_GCC := -mindirect-branch=thunk-extern -mindirect-branch-register
@@ -908,10 +895,9 @@ KBUILD_CFLAGS	+= -fomit-frame-pointer
 endif
 endif
 
-
-
-
-
+ifneq ($(LLVM_IAS),1)
+KBUILD_AFLAGS	+= -Wa,-gdwarf-2
+endif
 
 KBUILD_CFLAGS   += $(call cc-option, -fno-var-tracking-assignments)
 
