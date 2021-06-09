@@ -50,9 +50,6 @@ struct reclaim_state;
 struct robust_list_head;
 struct sched_attr;
 struct sched_param;
-#ifdef CONFIG_CPU_QUIET_GOVERNOR_RUNNABLE
-extern u64 nr_running_integral(unsigned int cpu);
-#endif
 struct seq_file;
 struct sighand_struct;
 struct signal_struct;
