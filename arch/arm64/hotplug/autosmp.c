@@ -67,7 +67,7 @@ static struct asmp_param_struct {
 	unsigned int cycle_down;
 } asmp_param = {
 	.delay = 70,
-	.scroff_single_core = true,
+	.scroff_single_core = false,
 	.max_cpus_bc = 4, /* Max cpu Big cluster ! */
 	.max_cpus_lc = 4, /* Max cpu Little cluster ! */
 	.min_cpus_bc = 2, /* Minimum Big cluster online */
