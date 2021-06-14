@@ -16,9 +16,6 @@
 #ifndef __ASM_SPINLOCK_H
 #define __ASM_SPINLOCK_H
 
-
-	"	prfm	pstl1strm, %2\n"
-
 #include <asm/qrwlock.h>
 #include <asm/qspinlock.h>
 

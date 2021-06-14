@@ -976,7 +976,7 @@ __mutex_lock_common(struct mutex *lock, long state, unsigned int subclass,
 		/* add waiting tasks to the end of the waitqueue (FIFO): */
 		__mutex_add_waiter(lock, &waiter, &lock->wait_list);
 
-
+#endif
 #ifdef CONFIG_DEBUG_MUTEXES
 		waiter.ww_ctx = MUTEX_POISON_WW_CTX;
 #endif
