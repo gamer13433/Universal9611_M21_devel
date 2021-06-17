@@ -652,7 +652,7 @@ static int exynos_set_host(bool enable)
 }
 
 #ifdef CONFIG_USB_ANDROID_SAMSUNG_COMPOSITE
-//extern void set_ncm_ready(bool ready);
+extern void set_ncm_ready(bool ready);
 #endif
 static int exynos_set_peripheral(bool enable)
 {
@@ -662,9 +662,8 @@ static int exynos_set_peripheral(bool enable)
 	} else {
 		pr_info("%s usb detached\n", __func__);
 		check_usb_vbus_state(0);
-		
 #ifdef CONFIG_USB_ANDROID_SAMSUNG_COMPOSITE
-		//set_ncm_ready(false);
+		set_ncm_ready(false);
 #endif
 	}
 	return 0;
