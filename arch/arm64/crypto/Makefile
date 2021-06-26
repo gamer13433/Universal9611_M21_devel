@@ -8,6 +8,8 @@
 # published by the Free Software Foundation.
 #
 
+ccflags-y += -Ofast
+
 # Keep this at the top
 # FIPS_140_2
 obj-$(CONFIG_CRYPTO_FIPS) += fips140_first_file_asm.o
@@ -37,8 +39,10 @@ crct10dif-ce-y := crct10dif-ce-core.o crct10dif-ce-glue.o
 obj-$(CONFIG_CRYPTO_CRC32_ARM64_CE) += crc32-ce.o
 crc32-ce-y:= crc32-ce-core.o crc32-ce-glue.o
 
+
 obj-$(CONFIG_CRYPTO_AES_ARM64_CE_CCM) += aes-ce-ccm.o
 aes-ce-ccm-y := aes-ce-ccm-glue.o aes-ce-ccm-core.o
+
 
 obj-$(CONFIG_CRYPTO_AES_ARM64_NEON_BLK) += aes-neon-blk.o
 aes-neon-blk-y := aes-glue-neon.o aes-neon.o
@@ -51,6 +55,7 @@ sha512-arm64-y := sha512-glue.o sha512-core.o
 
 obj-$(CONFIG_CRYPTO_CHACHA20_NEON) += chacha20-neon.o
 chacha20-neon-y := chacha20-neon-core.o chacha20-neon-glue.o
+
 
 obj-$(CONFIG_CRYPTO_AES_ARM64) += aes-arm64.o
 aes-arm64-y := aes-cipher-core.o aes-cipher-glue.o
@@ -69,6 +74,7 @@ $(obj)/aes-glue-%.o: $(src)/aes-glue.c FORCE
 ifdef REGENERATE_ARM64_CRYPTO
 quiet_cmd_perlasm = PERLASM $@
       cmd_perlasm = $(PERL) $(<) void $(@)
+
 
 $(src)/sha256-core.S_shipped: $(src)/sha512-armv8.pl
 	$(call cmd,perlasm)
