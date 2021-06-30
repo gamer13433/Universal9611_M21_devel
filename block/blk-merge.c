@@ -301,6 +301,8 @@ void blk_recount_segments(struct request_queue *q, struct bio *bio)
 {
 	unsigned short seg_cnt = bio_segments(bio);
 
+
+
 	if (test_bit(QUEUE_FLAG_NO_SG_MERGE, &q->queue_flags) &&
 			(seg_cnt < queue_max_segments(q)))
 		bio->bi_phys_segments = seg_cnt;
@@ -699,6 +701,8 @@ static struct request *attempt_merge(struct request_queue *q,
 	if (req_op(req) != req_op(next))
 		return NULL;
 
+
+
 	if (rq_data_dir(req) != rq_data_dir(next)
 	    || req->rq_disk != next->rq_disk
 	    || req_no_special_merge(next))
@@ -733,6 +737,7 @@ static struct request *attempt_merge(struct request_queue *q,
 		break;
 	case ELEVATOR_BACK_MERGE:
 		if (!ll_merge_requests_fn(q, req, next))
+
 			return NULL;
 		break;
 	default:
@@ -863,6 +868,7 @@ bool blk_rq_merge_ok(struct request *rq, struct bio *bio)
 enum elv_merge blk_try_merge(struct request *rq, struct bio *bio)
 {
 	if (blk_discard_mergable(rq)){
+
 		return ELEVATOR_DISCARD_MERGE;
 	} else if (blk_rq_pos(rq) + blk_rq_sectors(rq) ==
 						bio->bi_iter.bi_sector) {

@@ -162,6 +162,7 @@ static inline bool __fscrypt_inline_encrypted(const struct inode *inode)
 /* crypto.c */
 extern struct kmem_cache *fscrypt_info_cachep;
 extern int fscrypt_initialize(unsigned int cop_flags);
+
 extern int fscrypt_do_page_crypto(const struct inode *inode,
 				  fscrypt_direction_t rw, u64 lblk_num,
 				  struct page *src_page,

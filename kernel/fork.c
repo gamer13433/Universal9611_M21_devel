@@ -168,6 +168,8 @@ static inline void free_task_struct(struct task_struct *tsk)
 }
 #endif
 
+
+
 #ifndef CONFIG_ARCH_THREAD_STACK_ALLOCATOR
 
 /*
@@ -350,6 +352,7 @@ static void release_task_stack(struct task_struct *tsk)
 		return;  /* Better to leak the stack than to free prematurely */
 
 	account_kernel_stack(tsk, -1);
+
 	free_thread_stack(tsk);
 	tsk->stack = NULL;
 #ifdef CONFIG_VMAP_STACK
@@ -1142,6 +1145,8 @@ static int wait_for_vfork_done(struct task_struct *child,
  */
 static void mm_release(struct task_struct *tsk, struct mm_struct *mm)
 {
+
+
 	uprobe_free_utask(tsk);
 
 	/* Get rid of any cached register state */
@@ -1592,8 +1597,10 @@ static inline void rcu_copy_process(struct task_struct *p)
 }
 
 static void __delayed_free_task(struct rcu_head *rhp)
+
 {
 	struct task_struct *tsk = container_of(rhp, struct task_struct, rcu);
+
 
 	free_task(tsk);
 }
@@ -1886,6 +1893,8 @@ static __latent_entropy struct task_struct *copy_process(
 #endif
 	futex_init_task(p);
 
+
+
 	/*
 	 * sigaltstack should be cleared when sharing the same VM
 	 */
@@ -1906,9 +1915,12 @@ static __latent_entropy struct task_struct *copy_process(
 	/* ok, now we should be set up.. */
 	p->pid = pid_nr(pid);
 	if (clone_flags & CLONE_THREAD) {
+
 		p->group_leader = current->group_leader;
 		p->tgid = current->tgid;
 	} else {
+
+
 		p->group_leader = p;
 		p->tgid = p->pid;
 	}
@@ -2050,6 +2062,7 @@ static __latent_entropy struct task_struct *copy_process(
 
 	copy_oom_score_adj(clone_flags, p);
 
+
 	return p;
 
 bad_fork_cancel_cgroup:
@@ -2175,6 +2188,8 @@ long _do_fork(unsigned long clone_flags,
 	if (!IS_ERR(p)) {
 		struct completion vfork;
 		struct pid *pid;
+
+		cpufreq_task_times_alloc(p);
 
 		cpufreq_task_times_alloc(p);
 

@@ -204,6 +204,7 @@ struct timer_base {
 	unsigned long		next_expiry;
 	unsigned int		cpu;
 
+
 	bool			is_idle;
 	bool			must_forward_clk;
 	DECLARE_BITMAP(pending_map, WHEEL_SIZE);
@@ -245,6 +246,7 @@ static void timer_update_keys(struct work_struct *work)
 	timers_update_migration();
 	static_branch_enable(&timers_nohz_active);
 	mutex_unlock(&timer_keys_mutex);
+
 
 }
 
@@ -897,6 +899,7 @@ get_target_base(struct timer_base *base, unsigned tflags)
 	    !(tflags & TIMER_PINNED))
 		return get_timer_cpu_base(tflags, get_nohz_timer_target());
 
+
 #endif
 	return get_timer_this_cpu_base(tflags);
 }
@@ -927,6 +930,7 @@ static inline void forward_timer_base(struct timer_base *base)
 		base->clk = jnow;
 	else
 		base->clk = base->next_expiry;
+
 
 
 #endif

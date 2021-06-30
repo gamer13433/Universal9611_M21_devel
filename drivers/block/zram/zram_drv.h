@@ -23,6 +23,8 @@
 #include "zcomp.h"
 #include "zram_dedup.h"
 
+
+
 #define SECTORS_PER_PAGE_SHIFT	(PAGE_SHIFT - SECTOR_SHIFT)
 #define SECTORS_PER_PAGE	(1 << SECTORS_PER_PAGE_SHIFT)
 #define ZRAM_LOGICAL_BLOCK_SHIFT 12
@@ -50,6 +52,7 @@ enum zram_pageflags {
 	ZRAM_SAME,	/* Page consists the same element */
 	ZRAM_WB,	/* page is stored on backing_device */
 	ZRAM_UNDER_WB,	/* page is under writeback */
+
 	ZRAM_IDLE,	/* not accessed page since last idle marking */
 	ZRAM_DEDUPED,	/* Deduplicated with existing entry */
 
@@ -87,6 +90,7 @@ struct zram_stats {
 	atomic64_t invalid_io;	/* non-page-aligned I/O requests */
 	atomic64_t notify_free;	/* no. of swap slot free notifications */
 	atomic64_t same_pages;		/* no. of same element filled pages */
+
 	atomic64_t pages_stored;	/* no. of pages currently stored */
 	atomic_long_t max_used_pages;	/* no. of maximum pages stored */
 	atomic64_t writestall;		/* no. of write slow paths */
@@ -95,6 +99,7 @@ struct zram_stats {
 	atomic64_t bd_count;		/* no. of pages in backing device */
 	atomic64_t bd_reads;		/* no. of reads from backing device */
 	atomic64_t bd_writes;		/* no. of writes from backing device */
+
 #endif
 	atomic64_t dup_data_size;	/*
 					 * compressed size of pages
@@ -107,6 +112,7 @@ struct zram_hash {
 	spinlock_t lock;
 	struct rb_root rb_root;
 };
+
 
 struct zram {
 	struct zram_table_entry *table;
@@ -136,13 +142,16 @@ struct zram {
 	bool use_dedup;
 	struct file *backing_dev;
 #ifdef CONFIG_ZRAM_WRITEBACK
+
 	struct block_device *bdev;
+
 	unsigned long *bitmap;
 	unsigned long nr_pages;
 #endif
 #ifdef CONFIG_ZRAM_MEMORY_TRACKING
 	struct dentry *debugfs_dir;
 #endif
+
 };
 
 static inline bool zram_dedup_enabled(struct zram *zram)

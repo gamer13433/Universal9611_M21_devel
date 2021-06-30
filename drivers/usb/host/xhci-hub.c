@@ -750,6 +750,8 @@ static void xhci_hub_report_usb3_link_state(struct xhci_hcd *xhci,
 {
 	u32 pls = status_reg & PORT_PLS_MASK;
 
+
+
 	/* When the CAS bit is set then warm reset
 	 * should be performed on port
 	 */
@@ -1596,8 +1598,10 @@ int xhci_bus_suspend(struct usb_hcd *hcd)
 				t2 &= ~PORT_WKDISC_E;
 			}
 		} else {
+
 			t2 &= ~PORT_WAKE_BITS;
 		}
+
 
 		t1 = xhci_port_state_to_neutral(t1);
 		if (t1 != t2)

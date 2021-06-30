@@ -8,6 +8,7 @@
  * published by the Free Software Foundation.
  */
 
+
 #include <linux/clk.h>
 #include <linux/dma-mapping.h>
 #include <linux/debugfs.h>
@@ -533,6 +534,7 @@ static int __init exynos_sysmmu_probe(struct platform_device *pdev)
 		}
 	}
 
+
 	data->sysmmu = dev;
 	spin_lock_init(&data->lock);
 	ATOMIC_INIT_NOTIFIER_HEAD(&data->fault_notifiers);
@@ -804,12 +806,15 @@ static struct platform_driver exynos_sysmmu_driver __refdata = {
 		.name		= "exynos-sysmmu",
 		.of_match_table	= sysmmu_of_match,
 		.pm		= &sysmmu_pm_ops,
+
 	}
 };
+
 
 static struct iommu_domain *exynos_iommu_domain_alloc(unsigned type)
 {
 	struct exynos_iommu_domain *domain;
+
 
 	if (type != IOMMU_DOMAIN_UNMANAGED)
 		return NULL;
@@ -846,6 +851,7 @@ err_init_event_log:
 	free_pages((unsigned long)domain->lv2entcnt, 2);
 err_counter:
 	free_pages((unsigned long)domain->pgtable, 2);
+
 err_pgtable:
 	kfree(domain);
 	return NULL;
@@ -883,9 +889,11 @@ static void exynos_iommu_domain_free(struct iommu_domain *iommu_domain)
 static int exynos_iommu_attach_device(struct iommu_domain *iommu_domain,
 				   struct device *master)
 {
+
 	struct exynos_iommu_domain *domain = to_exynos_domain(iommu_domain);
 	struct exynos_iommu_owner *owner;
 	phys_addr_t pagetable = virt_to_phys(domain->pgtable);
+
 	unsigned long flags;
 	int ret = -ENODEV;
 
@@ -924,7 +932,9 @@ static int exynos_iommu_attach_device(struct iommu_domain *iommu_domain,
 static void exynos_iommu_detach_device(struct iommu_domain *iommu_domain,
 				    struct device *master)
 {
+
 	struct exynos_iommu_domain *domain = to_exynos_domain(iommu_domain);
+
 	phys_addr_t pagetable = virt_to_phys(domain->pgtable);
 	struct exynos_iommu_owner *owner, *tmp_owner;
 	unsigned long flags;
@@ -942,6 +952,7 @@ static void exynos_iommu_detach_device(struct iommu_domain *iommu_domain,
 			found = true;
 		}
 	}
+
 	spin_unlock_irqrestore(&domain->lock, flags);
 
 	if (found) {
@@ -951,6 +962,7 @@ static void exynos_iommu_detach_device(struct iommu_domain *iommu_domain,
 	} else {
 		dev_err(master, "%s: No IOMMU is attached\n", __func__);
 	}
+
 }
 
 static sysmmu_pte_t *alloc_lv2entry(struct exynos_iommu_domain *domain,
@@ -1050,6 +1062,8 @@ static int lv2set_page(sysmmu_pte_t *pent, phys_addr_t paddr, size_t size,
 	} else { /* size == LPAGE_SIZE */
 		int i;
 
+
+
 		for (i = 0; i < SPAGES_PER_LPAGE; i++, pent++) {
 			if (WARN_ON(!lv2ent_fault(pent))) {
 				clear_lv2_page_table(pent - i, i);
@@ -1066,6 +1080,7 @@ static int lv2set_page(sysmmu_pte_t *pent, phys_addr_t paddr, size_t size,
 
 	return 0;
 }
+
 static int exynos_iommu_map(struct iommu_domain *iommu_domain,
 			    unsigned long l_iova, phys_addr_t paddr, size_t size,
 			    int prot)
@@ -1073,9 +1088,11 @@ static int exynos_iommu_map(struct iommu_domain *iommu_domain,
 	struct exynos_iommu_domain *domain = to_exynos_domain(iommu_domain);
 	sysmmu_pte_t *entry;
 	sysmmu_iova_t iova = (sysmmu_iova_t)l_iova;
+
 	int ret = -ENOMEM;
 
 	BUG_ON(domain->pgtable == NULL);
+
 
 	entry = section_entry(domain->pgtable, iova);
 
@@ -1099,8 +1116,10 @@ static int exynos_iommu_map(struct iommu_domain *iommu_domain,
 		pr_err("%s: Failed(%d) to map %#zx bytes @ %#x\n",
 			__func__, ret, size, iova);
 
+
 	return ret;
 }
+
 
 static size_t exynos_iommu_unmap(struct iommu_domain *iommu_domain,
 				 unsigned long l_iova, size_t size)
@@ -1185,6 +1204,7 @@ done:
 
 	return size;
 err:
+
 	pr_err("%s: Failed: size(%#zx) @ %#x is smaller than page size %#zx\n",
 		__func__, size, iova, err_pgsize);
 
@@ -1197,7 +1217,9 @@ static phys_addr_t exynos_iommu_iova_to_phys(struct iommu_domain *iommu_domain,
 	struct exynos_iommu_domain *domain = to_exynos_domain(iommu_domain);
 	sysmmu_iova_t iova = (sysmmu_iova_t)d_iova;
 	sysmmu_pte_t *entry;
+
 	phys_addr_t phys = 0;
+
 
 	entry = section_entry(domain->pgtable, iova);
 
@@ -1211,6 +1233,7 @@ static phys_addr_t exynos_iommu_iova_to_phys(struct iommu_domain *iommu_domain,
 		else if (lv2ent_small(entry))
 			phys = spage_phys(entry) + spage_offs(iova);
 	}
+
 
 	return phys;
 }
@@ -1338,6 +1361,7 @@ void exynos_sysmmu_show_status(struct device *master)
 
 		spin_unlock_irqrestore(&drvdata->lock, flags);
 	}
+
 }
 
 static int sysmmu_fault_notifier(struct notifier_block *nb,
@@ -1504,6 +1528,7 @@ static int __init exynos_iommu_init(void)
 		goto err_reg_driver;
 	}
 
+
 	ret = bus_set_iommu(&platform_bus_type, &exynos_iommu_ops);
 	if (ret) {
 		pr_err("%s: Failed to register exynos-iommu driver.\n",
@@ -1521,6 +1546,7 @@ static int __init exynos_iommu_init(void)
 err_create_domain:
 	bus_set_iommu(&platform_bus_type, NULL);
 err_set_iommu:
+
 	platform_driver_unregister(&exynos_sysmmu_driver);
 err_reg_driver:
 	kmem_cache_destroy(lv2table_kmem_cache);

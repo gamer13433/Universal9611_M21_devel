@@ -160,6 +160,8 @@ static inline void vga_set_mem_top(struct vc_data *c)
 	write_vga(12, (c->vc_visible_origin - vga_vram_base) / 2);
 }
 
+
+
 static void vgacon_restore_screen(struct vc_data *c)
 {
 	if (c->vc_origin != c->vc_visible_origin)
@@ -172,6 +174,8 @@ static void vgacon_scrolldelta(struct vc_data *c, int lines)
 			vga_vram_size);
 	vga_set_mem_top(c);
 }
+
+
 
 static const char *vgacon_startup(void)
 {
@@ -355,7 +359,9 @@ static const char *vgacon_startup(void)
 	vgacon_xres = screen_info.orig_video_cols * VGA_FONTWIDTH;
 	vgacon_yres = vga_scan_lines;
 
+
 	vga_init_done = true;
+
 
 	return display_desc;
 }
@@ -645,6 +651,7 @@ static int vgacon_switch(struct vc_data *c)
 		     vga_video_num_lines <= rows))
 			vgacon_doresize(c, c->vc_cols, c->vc_rows);
 	}
+
 
 	return 0;		/* Redrawing not needed */
 }
@@ -1116,6 +1123,8 @@ static int vgacon_resize(struct vc_data *c, unsigned int width,
 	    c->vc_cell_height)
 		return -EINVAL;
 
+
+
 	if (con_is_visible(c) && !vga_is_gfx) /* who knows */
 		vgacon_doresize(c, width, height);
 	return 0;
@@ -1170,6 +1179,7 @@ static bool vgacon_scroll(struct vc_data *c, unsigned int t, unsigned int b,
 	oldo = c->vc_origin;
 	delta = lines * c->vc_size_row;
 	if (dir == SM_UP) {
+
 		if (c->vc_scr_end + delta >= vga_vram_end) {
 			scr_memcpyw((u16 *) vga_vram_base,
 				    (u16 *) (oldo + delta),
@@ -1233,6 +1243,7 @@ const struct consw vga_con = {
 	.con_save_screen = vgacon_save_screen,
 	.con_build_attr = vgacon_build_attr,
 	.con_invert_region = vgacon_invert_region,
+
 };
 EXPORT_SYMBOL(vga_con);
 

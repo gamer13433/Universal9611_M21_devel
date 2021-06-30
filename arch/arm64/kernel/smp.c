@@ -86,6 +86,8 @@ enum ipi_msg_type {
 	IPI_WAKEUP
 };
 
+
+
 #ifdef CONFIG_HOTPLUG_CPU
 static int op_cpu_kill(unsigned int cpu);
 #else
@@ -424,6 +426,8 @@ void __init smp_prepare_boot_cpu(void)
 	 */
 	jump_label_init();
 	cpuinfo_store_boot_cpu();
+
+
 }
 
 static u64 __init of_get_cpu_mpidr(struct device_node *dn)
@@ -629,6 +633,7 @@ static void __init of_parse_and_init_cpus(void)
 		}
 
 		if (hwid == cpu_logical_map(logical_bootcpu_id)) {
+
 			if (bootcpu_valid) {
 				pr_err("%pOF: duplicate boot cpu reg property in DT\n",
 					dn);

@@ -4,6 +4,7 @@
  *
  * Copyright (c) 2012 Samsung Electronics Co., Ltd.
  *             http://www.samsung.com/
+
  */
 #include <linux/module.h>
 #include <linux/init.h>
@@ -68,6 +69,7 @@ void f2fs_build_fault_attr(struct f2fs_sb_info *sbi, unsigned int rate,
 	if (rate) {
 		atomic_set(&ffi->inject_ops, 0);
 		ffi->inject_rate = rate;
+
 	}
 
 	if (type)
@@ -468,6 +470,7 @@ static int f2fs_check_quota_options(struct f2fs_sb_info *sbi)
 static int parse_options(struct super_block *sb, char *options)
 {
 	struct f2fs_sb_info *sbi = F2FS_SB(sb);
+
 	substring_t args[MAX_OPT_ARGS];
 	char *p, *name;
 	int arg = 0;
@@ -718,6 +721,8 @@ static int parse_options(struct super_block *sb, char *options)
 			if (args->from && match_int(args, &arg))
 				return -EINVAL;
 			f2fs_build_fault_attr(sbi, arg, F2FS_ALL_FAULT_TYPE);
+
+
 			set_opt(sbi, FAULT_INJECTION);
 			break;
 
@@ -738,6 +743,7 @@ static int parse_options(struct super_block *sb, char *options)
 				"fault_type options not supported");
 			break;
 #endif
+
 		case Opt_lazytime:
 			sb->s_flags |= MS_LAZYTIME;
 			break;
@@ -1005,6 +1011,7 @@ static struct inode *f2fs_alloc_inode(struct super_block *sb)
 	   it will be reinitialize after a reboot.*/
 	fi->vfs_inode.i_version = 1;
 	atomic_set(&fi->dirty_pages, 0);
+
 	init_rwsem(&fi->i_sem);
 	INIT_LIST_HEAD(&fi->dirty_list);
 	INIT_LIST_HEAD(&fi->gdirty_list);
@@ -1015,6 +1022,7 @@ static struct inode *f2fs_alloc_inode(struct super_block *sb)
 	init_rwsem(&fi->i_gc_rwsem[WRITE]);
 	init_rwsem(&fi->i_mmap_sem);
 	init_rwsem(&fi->i_xattr_sem);
+
 
 	/* Will be used by directory only */
 	fi->i_dir_level = F2FS_SB(sb)->dir_level;
@@ -1056,6 +1064,7 @@ static int f2fs_drop_inode(struct inode *inode)
 				f2fs_truncate(inode);
 
 			sb_end_intwrite(inode->i_sb);
+
 
 			spin_lock(&inode->i_lock);
 			atomic_dec(&inode->i_count);
@@ -1222,6 +1231,7 @@ static void f2fs_put_super(struct super_block *sb)
 		f2fs_write_checkpoint(sbi, &cpc);
 	}
 
+
 	/*
 	 * normally superblock is clean, so we need to release this.
 	 * In addition, EIO will skip do checkpoint, we need this as well.
@@ -1255,6 +1265,8 @@ static void f2fs_put_super(struct super_block *sb)
 	f2fs_destroy_segment_manager(sbi);
 
 	kvfree(sbi->ckpt);
+
+
 
 	sb->s_fs_info = NULL;
 	if (sbi->s_chksum_driver)
@@ -1378,12 +1390,15 @@ static int f2fs_statfs(struct dentry *dentry, struct kstatfs *buf)
 	total_count = le64_to_cpu(sbi->raw_super->block_count);
 	user_block_count = sbi->user_block_count;
 	start_count = le32_to_cpu(sbi->raw_super->segment0_blkaddr);
+
 	buf->f_type = F2FS_SUPER_MAGIC;
 	buf->f_bsize = sbi->blocksize;
 
 	buf->f_blocks = total_count - start_count;
 	buf->f_bfree = user_block_count - valid_user_blocks(sbi) -
 						sbi->current_reserved_blocks;
+
+
 
 	spin_lock(&sbi->stat_lock);
 	if (unlikely(buf->f_bfree <= sbi->unusable_block_count))
@@ -1586,6 +1601,7 @@ static int f2fs_show_options(struct seq_file *seq, struct dentry *root)
 		seq_printf(seq, ",flush_group=%u",
 				from_kgid_munged(&init_user_ns,
 					F2FS_OPTION(sbi).flush_group));
+
 	return 0;
 }
 
@@ -1618,6 +1634,7 @@ static void default_options(struct f2fs_sb_info *sbi)
 		set_opt_mode(sbi, F2FS_MOUNT_LFS);
 	else
 		set_opt_mode(sbi, F2FS_MOUNT_ADAPTIVE);
+
 
 #ifdef CONFIG_F2FS_FS_XATTR
 	set_opt(sbi, XATTR_USER);
@@ -1661,6 +1678,7 @@ static int f2fs_disable_checkpoint(struct f2fs_sb_info *sbi)
 		f2fs_msg(sbi->sb, KERN_ERR,
 				"checkpoint=disable on readonly fs");
 		return -EINVAL;
+
 	}
 	sbi->sb->s_flags |= SB_ACTIVE;
 
@@ -1743,6 +1761,7 @@ static int f2fs_remount(struct vfsmount *mnt, struct super_block *sb,
 	bool disable_checkpoint = test_opt(sbi, DISABLE_CHECKPOINT);
 	bool checkpoint_changed;
 #ifdef CONFIG_QUOTA
+
 	int i, j;
 #endif
 
@@ -1752,6 +1771,7 @@ static int f2fs_remount(struct vfsmount *mnt, struct super_block *sb,
 	 */
 	org_mount_opt = sbi->mount_opt;
 	old_sb_flags = sb->s_flags;
+
 
 #ifdef CONFIG_QUOTA
 	org_mount_opt.s_jquota_fmt = F2FS_OPTION(sbi).s_jquota_fmt;
@@ -1913,7 +1933,9 @@ restore_opts:
 	}
 #endif
 	sbi->mount_opt = org_mount_opt;
+
 	sb->s_flags = old_sb_flags;
+
 	return err;
 }
 
@@ -2079,6 +2101,7 @@ int f2fs_enable_quota_files(struct f2fs_sb_info *sbi, bool rdonly)
 
 static int f2fs_quota_enable(struct super_block *sb, int type, int format_id,
 			     unsigned int flags)
+
 {
 	struct inode *qf_inode;
 	unsigned long qf_inum;
@@ -2538,6 +2561,7 @@ static int __f2fs_commit_super(struct buffer_head *bh,
 	lock_buffer(bh);
 	if (super)
 		memcpy(bh->b_data + F2FS_SUPER_OFFSET, super, sizeof(*super));
+
 	set_buffer_dirty(bh);
 	unlock_buffer(bh);
 
@@ -2659,6 +2683,13 @@ static int sanity_check_raw_super(struct f2fs_sb_info *sbi,
 	size_t crc_offset = 0;
 	__u32 crc = 0;
 
+	if (le32_to_cpu(raw_super->magic) != F2FS_SUPER_MAGIC) {
+		f2fs_msg(sb, KERN_INFO,
+			"Magic Mismatch, valid(0x%x) - read(0x%x)",
+			F2FS_SUPER_MAGIC, le32_to_cpu(raw_super->magic));
+		return -EINVAL;
+	}
+
 	/* Check checksum_offset and crc in superblock */
 	if (__F2FS_HAS_FEATURE(raw_super, F2FS_FEATURE_SB_CHKSUM)) {
 		crc_offset = le32_to_cpu(raw_super->checksum_offset);
@@ -2667,22 +2698,20 @@ static int sanity_check_raw_super(struct f2fs_sb_info *sbi,
 			f2fs_msg(sb, KERN_INFO,
 				"Invalid SB checksum offset: %zu",
 				crc_offset);
-			return 1;
+			return -EFSCORRUPTED;
 		}
 		crc = le32_to_cpu(raw_super->crc);
 		if (!f2fs_crc_valid(sbi, crc, raw_super, crc_offset)) {
 			f2fs_msg(sb, KERN_INFO,
 				"Invalid SB checksum value: %u", crc);
-			return 1;
+			return -EFSCORRUPTED;
 		}
 	}
 
-	if (le32_to_cpu(raw_super->magic) != F2FS_SUPER_MAGIC) {
-		f2fs_msg(sb, KERN_INFO,
-			"Magic Mismatch, valid(0x%x) - read(0x%x)",
-			F2FS_SUPER_MAGIC, le32_to_cpu(raw_super->magic));
-		return -EINVAL;
-	}
+
+
+
+
 
 	/* Currently, support only 4KB page cache size */
 	if (F2FS_BLKSIZE != PAGE_SIZE) {
@@ -3110,6 +3139,7 @@ static int read_raw_super_block(struct f2fs_sb_info *sbi,
 			f2fs_msg(sb, KERN_ERR,
 				"Can't find valid F2FS filesystem in %dth superblock",
 				block + 1);
+
 			if (verbose)
 				print_bh(sb, bh, 0, sb->s_blocksize);
 			brelse(bh);
@@ -3371,8 +3401,10 @@ try_onemore:
 				le32_to_cpu(raw_super->log_blocksize);
 	sb->s_max_links = F2FS_LINK_MAX;
 
+
 #ifdef CONFIG_QUOTA
 	sb->dq_op = &f2fs_quota_operations;
+
 	sb->s_qcop = &f2fs_quotactl_ops;
 	sb->s_quota_types = QTYPE_MASK_USR | QTYPE_MASK_GRP | QTYPE_MASK_PRJ;
 
@@ -3547,6 +3579,7 @@ try_onemore:
 		goto free_stats;
 	}
 
+
 	/* read root inode and dentry */
 	root = f2fs_iget(sb, F2FS_ROOT_INO(sbi));
 	if (IS_ERR(root)) {
@@ -3697,6 +3730,7 @@ free_root_inode:
 free_node_inode:
 	f2fs_release_ino_entry(sbi, true);
 	truncate_inode_pages_final(NODE_MAPPING(sbi));
+
 	iput(sbi->node_inode);
 	sbi->node_inode = NULL;
 free_stats:
@@ -3884,4 +3918,3 @@ module_exit(exit_f2fs_fs)
 MODULE_AUTHOR("Samsung Electronics's Praesto Team");
 MODULE_DESCRIPTION("Flash Friendly File System");
 MODULE_LICENSE("GPL");
-

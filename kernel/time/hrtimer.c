@@ -52,7 +52,7 @@
 #include <linux/timer.h>
 #include <linux/freezer.h>
 #include <linux/compat.h>
-#include <linux/delay.h>
+
 #include <linux/debug-snapshot.h>
 
 
@@ -63,15 +63,6 @@
 #include "tick-internal.h"
 
 /*
-
-
-
-
-
-
-
-
-
 
  * The timer bases:
  *
@@ -106,14 +97,6 @@ DEFINE_PER_CPU(struct hrtimer_cpu_base, hrtimer_bases) =
 			.clockid = CLOCK_TAI,
 			.get_time = &ktime_get_clocktai,
 		},
-
-
-
-
-
-
-
-
 
 	}
 };
@@ -174,7 +157,7 @@ struct hrtimer_clock_base *lock_hrtimer_base(const struct hrtimer *timer,
 			raw_spin_unlock_irqrestore(&base->cpu_base->lock, *flags);
 		}
 		cpu_relax();
-		ndelay(TIMER_LOCK_TIGHT_LOOP_DELAY_NS);
+
 	}
 }
 
@@ -182,7 +165,6 @@ struct hrtimer_clock_base *lock_hrtimer_base(const struct hrtimer *timer,
  * With HIGHRES=y we do not migrate the timer when it is expiring
  * before the next event on the target cpu because we cannot reprogram
  * the target cpu hardware and we would cause it to fire late.
-
 
  *
  * Called with cpu_base->lock of target cpu held.
@@ -203,16 +185,23 @@ hrtimer_check_target(struct hrtimer *timer, struct hrtimer_clock_base *new_base)
 #endif
 }
 
+#ifdef CONFIG_NO_HZ_COMMON
 static inline
 struct hrtimer_cpu_base *get_target_base(struct hrtimer_cpu_base *base,
 					 int pinned)
 {
-#if defined(CONFIG_SMP) && defined(CONFIG_NO_HZ_COMMON)
-	if (static_branch_likely(&timers_migration_enabled) && !pinned)
-		return &per_cpu(hrtimer_bases, get_nohz_timer_target());
-#endif
+	if (pinned || !base->migration_enabled)
+		return base;
+	return &per_cpu(hrtimer_bases, get_nohz_timer_target());
+}
+#else
+static inline
+struct hrtimer_cpu_base *get_target_base(struct hrtimer_cpu_base *base,
+					 int pinned)
+{
 	return base;
 }
+#endif
 
 /*
  * We switch the timer base to a power-optimized selected CPU target,
@@ -484,41 +473,10 @@ static inline void hrtimer_update_next_timer(struct hrtimer_cpu_base *cpu_base,
 	cpu_base->next_timer = timer;
 #endif
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 }
 
 static ktime_t __hrtimer_get_next_event(struct hrtimer_cpu_base *cpu_base,
 					const struct hrtimer *exclude)
-
-
-
-
-
-
-
-
 
 {
 	struct hrtimer_clock_base *base = cpu_base->clock_base;
@@ -556,8 +514,6 @@ static ktime_t __hrtimer_get_next_event(struct hrtimer_cpu_base *cpu_base,
 
 			hrtimer_update_next_timer(cpu_base, timer);
 
-
-
 		}
 	}
 	/*
@@ -572,38 +528,6 @@ static ktime_t __hrtimer_get_next_event(struct hrtimer_cpu_base *cpu_base,
 #endif
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 static inline ktime_t hrtimer_update_base(struct hrtimer_cpu_base *base)
 {
 	ktime_t *offs_real = &base->clock_base[HRTIMER_BASE_REALTIME].offset;
@@ -616,14 +540,6 @@ static inline ktime_t hrtimer_update_base(struct hrtimer_cpu_base *base)
 
 /* High resolution timer related functions */
 #ifdef CONFIG_HIGH_RES_TIMERS
-
-
-
-
-
-
-
-
 
 
 /*
@@ -682,22 +598,12 @@ hrtimer_force_reprogram(struct hrtimer_cpu_base *cpu_base, int skip_equal)
 	expires_next = __hrtimer_get_next_event(cpu_base, NULL);
 
 
-
-
-
-
-
-
-
-
 	if (skip_equal && expires_next == cpu_base->expires_next)
 		return;
 
 	cpu_base->expires_next = expires_next;
 
 	/*
-
-
 
 	 * If a hang was detected in the last timer interrupt then we
 	 * leave the hang delay active in the hardware. We want the
@@ -750,15 +656,6 @@ static void hrtimer_reprogram(struct hrtimer *timer,
 	 */
 	if (cpu_base->in_hrtirq)
 		return;
-
-
-
-
-
-
-
-
-
 
 
 	/*
@@ -1009,13 +906,17 @@ static void __remove_hrtimer(struct hrtimer *timer,
 			     u8 newstate, int reprogram)
 {
 	struct hrtimer_cpu_base *cpu_base = base->cpu_base;
+	u8 state = timer->state;
 
-	if (!(timer->state & HRTIMER_STATE_ENQUEUED))
-		goto out;
+	/* Pairs with the lockless read in hrtimer_is_queued() */
+	WRITE_ONCE(timer->state, newstate);
+	if (!(state & HRTIMER_STATE_ENQUEUED))
+		return;
 
 	if (!timerqueue_del(&base->active, &timer->node))
 		cpu_base->active_bases &= ~(1 << base->index);
 
+#ifdef CONFIG_HIGH_RES_TIMERS
 	/*
 	 * Note: If reprogram is false we do not update
 	 * cpu_base->next_timer. This happens when we remove the first
@@ -1026,13 +927,7 @@ static void __remove_hrtimer(struct hrtimer *timer,
 	 */
 	if (reprogram && timer == cpu_base->next_timer)
 		hrtimer_force_reprogram(cpu_base, 1);
-
-out:
-	/*
-	* We need to preserve PINNED state here, otherwise we may end up
-	* migrating pinned hrtimers as well.
-	*/
-	WRITE_ONCE(timer->state, newstate | (timer->state & HRTIMER_STATE_PINNED));
+#endif
 }
 
 /*
@@ -1062,7 +957,7 @@ remove_hrtimer(struct hrtimer *timer, struct hrtimer_clock_base *base, bool rest
 			state = HRTIMER_STATE_INACTIVE;
 
 		__remove_hrtimer(timer, base, state, reprogram);
-		timer->state &= ~HRTIMER_STATE_PINNED;
+
 		return 1;
 	}
 	return 0;
@@ -1114,9 +1009,7 @@ void hrtimer_start_range_ns(struct hrtimer *timer, ktime_t tim,
 	/* Switch the timer base, if necessary: */
 	new_base = switch_hrtimer_base(timer, base, mode & HRTIMER_MODE_PINNED);
 
-	/* Update pinned state */
-	timer->state &= ~HRTIMER_STATE_PINNED;
-	timer->state |= (!!(mode & HRTIMER_MODE_PINNED)) << HRTIMER_PINNED_SHIFT;
+
 	leftmost = enqueue_hrtimer(timer, new_base);
 	if (!leftmost)
 		goto unlock;
@@ -1126,7 +1019,7 @@ void hrtimer_start_range_ns(struct hrtimer *timer, ktime_t tim,
 		 * Kick to reschedule the next tick to handle the new timer
 		 * on dynticks target.
 		 */
-		if (is_timers_nohz_active())
+		if (new_base->cpu_base->nohz_active)
 			wake_up_nohz_cpu(new_base->cpu_base->cpu);
 	} else {
 		hrtimer_reprogram(timer, new_base);
@@ -1190,7 +1083,7 @@ int hrtimer_cancel(struct hrtimer *timer)
 		if (ret >= 0)
 			return ret;
 		cpu_relax();
-		ndelay(TIMER_LOCK_TIGHT_LOOP_DELAY_NS);
+
 	}
 }
 EXPORT_SYMBOL_GPL(hrtimer_cancel);
@@ -1257,14 +1150,6 @@ u64 hrtimer_next_event_without(const struct hrtimer *exclude)
 		expires = __hrtimer_get_next_event(cpu_base, exclude);
 
 
-
-
-
-
-
-
-
-
 	raw_spin_unlock_irqrestore(&cpu_base->lock, flags);
 
 	return expires;
@@ -1286,7 +1171,6 @@ static inline int hrtimer_clockid_to_base(clockid_t clock_id)
 static void __hrtimer_init(struct hrtimer *timer, clockid_t clock_id,
 			   enum hrtimer_mode mode)
 {
-
 
 	struct hrtimer_cpu_base *cpu_base;
 	int base;
@@ -1315,11 +1199,6 @@ static void __hrtimer_init(struct hrtimer *timer, clockid_t clock_id,
  * @clock_id:	the clock to be used
  * @mode:	timer mode abs/rel
 
-
-
-
-
-
  */
 void hrtimer_init(struct hrtimer *timer, clockid_t clock_id,
 		  enum hrtimer_mode mode)
@@ -1345,8 +1224,8 @@ bool hrtimer_active(const struct hrtimer *timer)
 		cpu_base = READ_ONCE(timer->base->cpu_base);
 		seq = raw_read_seqcount_begin(&cpu_base->seq);
 
-		if (((timer->state & ~HRTIMER_STATE_PINNED) !=
-		      HRTIMER_STATE_INACTIVE) || cpu_base->running == timer)
+		if (timer->state != HRTIMER_STATE_INACTIVE ||
+		    cpu_base->running == timer)
 			return true;
 
 	} while (read_seqcount_retry(&cpu_base->seq, seq) ||
@@ -1487,33 +1366,6 @@ static void __hrtimer_run_queues(struct hrtimer_cpu_base *cpu_base, ktime_t now)
 }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 #ifdef CONFIG_HIGH_RES_TIMERS
 
 /*
@@ -1545,16 +1397,6 @@ retry:
 	cpu_base->expires_next = KTIME_MAX;
 
 	__hrtimer_run_queues(cpu_base, now);
-
-
-
-
-
-
-
-
-
-
 
 
 	/* Reevaluate the clock bases for the next expiry */
@@ -1664,21 +1506,6 @@ void hrtimer_run_queues(void)
 	now = hrtimer_update_base(cpu_base);
 	__hrtimer_run_queues(cpu_base, now);
 	raw_spin_unlock(&cpu_base->lock);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 }
 
@@ -1812,14 +1639,6 @@ out:
 SYSCALL_DEFINE2(nanosleep, struct timespec __user *, rqtp,
 		struct timespec __user *, rmtp)
 
-
-
-
-
-
-
-
-
 {
 	struct timespec64 tu;
 
@@ -1835,14 +1654,6 @@ SYSCALL_DEFINE2(nanosleep, struct timespec __user *, rqtp,
 }
 
 #ifdef CONFIG_COMPAT
-
-
-
-
-
-
-
-
 
 
 COMPAT_SYSCALL_DEFINE2(nanosleep, struct compat_timespec __user *, rqtp,
@@ -1887,27 +1698,18 @@ int hrtimers_prepare_cpu(unsigned int cpu)
 }
 
 #ifdef CONFIG_HOTPLUG_CPU
-static void migrate_hrtimer_list(struct hrtimer_clock_base *old_base,
-				 struct hrtimer_clock_base *new_base,
 
-				 bool remove_pinned)
+static void migrate_hrtimer_list(struct hrtimer_clock_base *old_base,
+				struct hrtimer_clock_base *new_base)
 {
 	struct hrtimer *timer;
 	struct timerqueue_node *node;
-	struct timerqueue_head pinned;
-	int is_pinned;
-	bool is_hotplug = !cpu_online(old_base->cpu_base->cpu);
 
-
-	timerqueue_init_head(&pinned);
 
 	while ((node = timerqueue_getnext(&old_base->active))) {
 
 		timer = container_of(node, struct hrtimer, node);
-		if (is_hotplug)
-
-			BUG_ON(hrtimer_callback_running(timer));
-
+		BUG_ON(hrtimer_callback_running(timer));
 		debug_deactivate(timer);
 
 		/*
@@ -1916,12 +1718,6 @@ static void migrate_hrtimer_list(struct hrtimer_clock_base *old_base,
 		 * under us on another CPU
 		 */
 		__remove_hrtimer(timer, old_base, HRTIMER_STATE_ENQUEUED, 0);
-
-		is_pinned = timer->state & HRTIMER_STATE_PINNED;
-		if (!remove_pinned && is_pinned) {
-			timerqueue_add(&pinned, &timer->node);
-			continue;
-		}
 
 		timer->base = new_base;
 		/*
@@ -1935,29 +1731,19 @@ static void migrate_hrtimer_list(struct hrtimer_clock_base *old_base,
 		enqueue_hrtimer(timer, new_base);
 	}
 
-	/* Re-queue pinned timers for non-hotplug usecase */
-	while ((node = timerqueue_getnext(&pinned))) {
-		timer = container_of(node, struct hrtimer, node);
-
-		timerqueue_del(&pinned, &timer->node);
-		enqueue_hrtimer(timer, old_base);
-	}
 }
 
-static void __migrate_hrtimers(unsigned int scpu, bool remove_pinned)
-
+int hrtimers_dead_cpu(unsigned int scpu)
 {
 	struct hrtimer_cpu_base *old_base, *new_base;
-	unsigned long flags;
+
 	int i;
 
-
+	BUG_ON(cpu_online(scpu));
 	save_pcpu_tick(scpu);
+	tick_cancel_sched_timer(scpu);
 
-
-
-
-	local_irq_save(flags);
+	local_irq_disable();
 	old_base = &per_cpu(hrtimer_bases, scpu);
 	new_base = this_cpu_ptr(&hrtimer_bases);
 	/*
@@ -1969,13 +1755,8 @@ static void __migrate_hrtimers(unsigned int scpu, bool remove_pinned)
 
 	for (i = 0; i < HRTIMER_MAX_CLOCK_BASES; i++) {
 		migrate_hrtimer_list(&old_base->clock_base[i],
-				     &new_base->clock_base[i], remove_pinned);
+				     &new_base->clock_base[i]);
 	}
-
-
-
-
-
 
 
 	raw_spin_unlock(&old_base->lock);
@@ -1983,28 +1764,10 @@ static void __migrate_hrtimers(unsigned int scpu, bool remove_pinned)
 
 	/* Check, if we got expired work to do */
 	__hrtimer_peek_ahead_timers();
-	local_irq_restore(flags);
-
-
-}
-
-
-
-int hrtimers_dead_cpu(unsigned int scpu)
-{
-	BUG_ON(cpu_online(scpu));
-	tick_cancel_sched_timer(scpu);
-
-	__migrate_hrtimers(scpu, true);
+	local_irq_enable();
 	return 0;
 }
 
-
-
-void hrtimer_quiesce_cpu(void *cpup)
-{
-	__migrate_hrtimers(*(int *)cpup, false);
-}
 
 #endif /* CONFIG_HOTPLUG_CPU */
 

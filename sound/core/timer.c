@@ -273,6 +273,8 @@ int snd_timer_open(struct snd_timer_instance **ti,
 			err = -EBUSY;
 			goto unlock;
 		}
+
+
 		timeri = snd_timer_instance_new(owner, NULL);
 		if (!timeri) {
 			err = -ENOMEM;
@@ -289,9 +291,11 @@ int snd_timer_open(struct snd_timer_instance **ti,
 			timeri = NULL;
 		}
 		goto unlock;
+
 	}
 
 	/* open a master instance */
+
 	timer = snd_timer_find(tid);
 #ifdef CONFIG_MODULES
 	if (!timer) {
@@ -340,6 +344,7 @@ int snd_timer_open(struct snd_timer_instance **ti,
 				card_dev_to_put = &timer->card->card_dev;
 			module_put(timer->module);
 			goto unlock;
+
 		}
 	}
 

@@ -4,6 +4,7 @@
  *
  * Copyright (c) 2012 Samsung Electronics Co., Ltd.
  *             http://www.samsung.com/
+
  */
 #include <linux/fs.h>
 #include <linux/module.h>
@@ -53,10 +54,12 @@ static int gc_thread_func(void *data)
 			continue;
 		}
 
+
 		if (time_to_inject(sbi, FAULT_CHECKPOINT)) {
 			f2fs_show_injection_info(FAULT_CHECKPOINT);
 			f2fs_stop_checkpoint(sbi, false);
 		}
+
 
 		if (!sb_start_write_trylock(sbi->sb)) {
 			stat_other_skip_bggc_count(sbi);
@@ -133,6 +136,7 @@ int f2fs_start_gc_thread(struct f2fs_sb_info *sbi)
 	gc_th->min_sleep_time = DEF_GC_THREAD_MIN_SLEEP_TIME;
 	gc_th->max_sleep_time = DEF_GC_THREAD_MAX_SLEEP_TIME;
 	gc_th->no_gc_sleep_time = DEF_GC_THREAD_NOGC_SLEEP_TIME;
+
 
 	gc_th->gc_wake= 0;
 
@@ -233,6 +237,7 @@ static unsigned int check_bg_victims(struct f2fs_sb_info *sbi)
 	for_each_set_bit(secno, dirty_i->victim_secmap, MAIN_SECS(sbi)) {
 		if (sec_usage_check(sbi, secno))
 			continue;
+
 		clear_bit(secno, dirty_i->victim_secmap);
 		return GET_SEG_FROM_SEC(sbi, secno);
 	}
@@ -270,6 +275,7 @@ static unsigned int get_cb_cost(struct f2fs_sb_info *sbi, unsigned int segno)
 
 	return UINT_MAX - ((100 * (100 - u) * age) / (100 + u));
 }
+
 
 static inline unsigned int get_gc_cost(struct f2fs_sb_info *sbi,
 			unsigned int segno, struct victim_sel_policy *p)
@@ -395,6 +401,7 @@ static int get_victim_by_default(struct f2fs_sb_info *sbi,
 		/* W/A for FG_GC failure due to Atomic Write File and Pinned File */
 		if (test_bit(secno, dirty_i->blacklist_victim_secmap))
 			goto next;
+
 		cost = get_gc_cost(sbi, segno, &p);
 
 		if (p.min_cost > cost) {
@@ -423,12 +430,14 @@ got_result:
 				set_bit(secno, dirty_i->victim_secmap);
 		}
 
+
 	}
 out:
 	if (p.min_segno != NULL_SEGNO)
 		trace_f2fs_get_victim(sbi->sb, type, gc_type, &p,
 				sbi->cur_victim_sec,
 				prefree_segments(sbi), free_segments(sbi));
+
 	mutex_unlock(&dirty_i->seglist_lock);
 
 	return (p.min_segno == NULL_SEGNO) ? 0 : 1;
@@ -753,6 +762,7 @@ static int move_data_block(struct inode *inode, block_t bidx,
 		F2FS_I(inode)->i_gc_failures[GC_FAILURE_ATOMIC]++;
 		F2FS_I_SB(inode)->skipped_atomic_files[gc_type]++;
 		err = -EAGAIN;
+
 		goto out;
 	}
 
@@ -786,6 +796,7 @@ static int move_data_block(struct inode *inode, block_t bidx,
 	err = f2fs_get_node_info(fio.sbi, dn.nid, &ni);
 	if (err)
 		goto put_out;
+
 
 	set_summary(&sum, dn.nid, dn.ofs_in_node, ni.version);
 
@@ -842,6 +853,7 @@ static int move_data_block(struct inode *inode, block_t bidx,
 write_page:
 	f2fs_wait_on_page_writeback(fio.encrypted_page, DATA, true, true);
 	set_page_dirty(fio.encrypted_page);
+
 	if (clear_page_dirty_for_io(fio.encrypted_page))
 		dec_page_count(fio.sbi, F2FS_DIRTY_META);
 
@@ -940,11 +952,13 @@ static int move_data_page(struct inode *inode, block_t bidx, int gc_type,
 		};
 		bool is_dirty = PageDirty(page);
 
+
 		f2fs_cond_set_fua(&fio);
 retry:
 		f2fs_wait_on_page_writeback(page, DATA, true, true);
 
 		set_page_dirty(page);
+
 		if (clear_page_dirty_for_io(page)) {
 			inode_dec_dirty_pages(inode);
 			f2fs_remove_dirty_inode(inode);
@@ -1382,6 +1396,7 @@ stop:
 
 void f2fs_build_gc_manager(struct f2fs_sb_info *sbi)
 {
+
 	DIRTY_I(sbi)->v_ops = &default_v_ops;
 
 	sbi->gc_pin_file_threshold = DEF_GC_FAILED_PINNED_FILES;

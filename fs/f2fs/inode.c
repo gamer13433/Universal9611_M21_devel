@@ -4,6 +4,7 @@
  *
  * Copyright (c) 2012 Samsung Electronics Co., Ltd.
  *             http://www.samsung.com/
+
  */
 #include <linux/fs.h>
 #include <linux/f2fs_fs.h>
@@ -121,6 +122,7 @@ static void __recover_inline_status(struct inode *inode, struct page *ipage)
 static bool f2fs_enable_inode_chksum(struct f2fs_sb_info *sbi, struct page *page)
 {
 	struct f2fs_inode *ri = &F2FS_NODE(page)->i;
+
 
 	if (!f2fs_sb_has_inode_chksum(sbi))
 		return false;
@@ -338,7 +340,7 @@ static int do_read_inode(struct inode *inode)
 	inode->i_ctime.tv_nsec = le32_to_cpu(ri->i_ctime_nsec);
 	inode->i_mtime.tv_nsec = le32_to_cpu(ri->i_mtime_nsec);
 	inode->i_generation = le32_to_cpu(ri->i_generation);
-
+	if (S_ISDIR(inode->i_mode))
 	if (IS_I_VERSION(inode))
 		inode->i_version++;
 
@@ -598,6 +600,7 @@ void f2fs_update_inode(struct inode *inode, struct page *node_page)
 
 	__set_inode_rdev(inode, ri);
 
+
 	/* deleted inode */
 	if (inode->i_nlink == 0)
 		clear_inline_node(node_page);
@@ -616,6 +619,7 @@ void f2fs_update_inode_page(struct inode *inode)
 {
 	struct f2fs_sb_info *sbi = F2FS_I_SB(inode);
 	struct page *node_page;
+
 retry:
 	node_page = f2fs_get_node_page(sbi, inode->i_ino);
 	if (IS_ERR(node_page)) {
@@ -630,6 +634,7 @@ retry:
 	}
 	f2fs_update_inode(inode, node_page);
 	f2fs_put_page(node_page, 1);
+
 }
 
 int f2fs_write_inode(struct inode *inode, struct writeback_control *wbc)
@@ -700,6 +705,7 @@ void f2fs_evict_inode(struct inode *inode)
 retry:
 	if (F2FS_HAS_BLOCKS(inode))
 		err = f2fs_truncate(inode);
+
 
 	if (time_to_inject(sbi, FAULT_EVICT_INODE)) {
 		f2fs_show_injection_info(FAULT_EVICT_INODE);

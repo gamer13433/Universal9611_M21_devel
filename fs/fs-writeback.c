@@ -45,6 +45,7 @@ struct wb_completion {
 struct wb_writeback_work {
 	long nr_pages;
 	struct super_block *sb;
+
 	enum writeback_sync_modes sync_mode;
 	unsigned int tagged_writepages:1;
 	unsigned int for_kupdate:1;
@@ -531,6 +532,7 @@ static void inode_switch_wbs(struct inode *inode, int new_wb_id)
 	spin_unlock(&inode->i_lock);
 
 	isw->inode = inode;
+
 
 	/*
 	 * In addition to synchronizing among switchers, I_WB_SWITCH tells
@@ -1155,7 +1157,9 @@ static bool inode_dirtied_after(struct inode *inode, unsigned long t)
 static int move_expired_inodes(struct list_head *delaying_queue,
 			       struct list_head *dispatch_queue,
 			       unsigned long dirtied_before)
+
 {
+
 	LIST_HEAD(tmp);
 	struct list_head *pos, *node;
 	struct super_block *sb = NULL;
@@ -1163,9 +1167,11 @@ static int move_expired_inodes(struct list_head *delaying_queue,
 	int do_sb_sort = 0;
 	int moved = 0;
 
+
 	while (!list_empty(delaying_queue)) {
 		inode = wb_inode(delaying_queue->prev);
 		if (inode_dirtied_after(inode, dirtied_before))
+
 			break;
 		list_move(&inode->i_io_list, &tmp);
 		moved++;
@@ -1410,7 +1416,14 @@ __writeback_single_inode(struct inode *inode, struct writeback_control *wbc)
 	 * write_inode()
 	 */
 	spin_lock(&inode->i_lock);
+
 	dirty = inode->i_state & I_DIRTY;
+
+
+
+
+
+
 	inode->i_state &= ~dirty;
 
 	/*
@@ -1433,6 +1446,8 @@ __writeback_single_inode(struct inode *inode, struct writeback_control *wbc)
 
 	if (newly_dirty)
 		__mark_inode_dirty(inode, I_DIRTY_PAGES);
+
+
 	/* Don't write the inode if only I_DIRTY_PAGES was set */
 	if (dirty & ~I_DIRTY_PAGES) {
 		int err = write_inode(inode, wbc);
@@ -1598,6 +1613,7 @@ static long writeback_sb_inodes(struct super_block *sb,
 		if (inode->i_state & (I_NEW | I_FREEING | I_WILL_FREE)) {
 			redirty_tail_locked(inode, wb);
 			spin_unlock(&inode->i_lock);
+
 			continue;
 		}
 		if ((inode->i_state & I_SYNC) && wbc.sync_mode != WB_SYNC_ALL) {
@@ -1770,6 +1786,7 @@ static long wb_writeback(struct bdi_writeback *wb,
 	struct inode *inode;
 	long progress;
 	struct blk_plug plug;
+
 
 	blk_start_plug(&plug);
 	spin_lock(&wb->list_lock);
@@ -2136,6 +2153,7 @@ static noinline void block_dump___mark_inode_dirty(struct inode *inode)
  */
 void __mark_inode_dirty(struct inode *inode, int flags)
 {
+
 	struct super_block *sb = inode->i_sb;
 	int dirtytime;
 
@@ -2245,6 +2263,8 @@ void __mark_inode_dirty(struct inode *inode, int flags)
 	}
 out_unlock_inode:
 	spin_unlock(&inode->i_lock);
+
+
 }
 EXPORT_SYMBOL(__mark_inode_dirty);
 

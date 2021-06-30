@@ -422,9 +422,7 @@ static int __check_block_validity(struct inode *inode, const char *func,
 	     le32_to_cpu(EXT4_SB(inode->i_sb)->s_es->s_journal_inum)))
 		return 0;
 	if (!ext4_inode_block_valid(inode, map->m_pblk, map->m_len)) {
-		printk(KERN_ERR "printing inode..\n");
-		print_block_data(inode->i_sb, 0, (unsigned char *)inode, 0,
-				EXT4_INODE_SIZE(inode->i_sb));
+
 		ext4_error_inode(inode, func, line, map->m_pblk,
 				 "lblock %lu mapped to illegal pblock %llu "
 				 "(length %d)", (unsigned long) map->m_lblk,
@@ -752,19 +750,19 @@ out_sem:
 		    !(map->m_flags & EXT4_MAP_UNWRITTEN) &&
 		    !(flags & EXT4_GET_BLOCKS_ZERO) &&
 		    !ext4_is_quota_file(inode) &&
-		    ext4_should_order_data(inode) &&
-		    !(flags & EXT4_GET_BLOCKS_IO_SUBMIT)) {
+		    ext4_should_order_data(inode)) {
 			loff_t start_byte =
 				(loff_t)map->m_lblk << inode->i_blkbits;
 			loff_t length = (loff_t)map->m_len << inode->i_blkbits;
-#if 0
+
+
 			if (flags & EXT4_GET_BLOCKS_IO_SUBMIT)
 				ret = ext4_jbd2_inode_add_wait(handle, inode,
 						start_byte, length);
 			else
-#endif
 				ret = ext4_jbd2_inode_add_write(handle, inode,
 						start_byte, length);
+
 			if (ret)
 				return ret;
 		}
@@ -2095,6 +2093,8 @@ static int __ext4_journalled_writepage(struct page *page,
 	if (!ret)
 		ret = err;
 
+
+
 	ext4_set_inode_state(inode, EXT4_STATE_JDATA);
 out:
 	unlock_page(page);
@@ -2687,6 +2687,7 @@ static int mpage_prepare_extent_to_map(struct mpage_da_data *mpd)
 			struct page *page = pvec.pages[i];
 
 			/*
+
 			 * Accumulated enough dirty pages? This doesn't apply
 			 * to WB_SYNC_ALL mode. For integrity sync we have to
 			 * keep going because someone may be concurrently
@@ -3868,6 +3869,8 @@ static ssize_t ext4_direct_IO(struct kiocb *iocb, struct iov_iter *iter)
 	if (ext4_encrypted_inode(inode) && S_ISREG(inode->i_mode)
 			&& !fscrypt_inline_encrypted(inode))
 		return 0;
+
+
 	/*
 	 * If we are doing data journalling we don't support O_DIRECT
 	 */
@@ -4102,8 +4105,8 @@ static int __ext4_block_zero_page_range(handle_t *handle,
 		err = 0;
 		mark_buffer_dirty(bh);
 		if (ext4_should_order_data(inode))
-			err = ext4_jbd2_inode_add_write(handle, inode, from,
-					length);
+			err = ext4_jbd2_inode_add_write(handle, inode, from, length);
+
 	}
 
 unlock:
@@ -4835,10 +4838,10 @@ struct inode *__ext4_iget(struct super_block *sb, unsigned long ino,
 		if (EXT4_GOOD_OLD_INODE_SIZE + ei->i_extra_isize >
 			EXT4_INODE_SIZE(inode->i_sb) ||
 		    (ei->i_extra_isize & 3)) {
-			print_iloc_info(sb, iloc);
 			ext4_error_inode(inode, function, line, 0,
 					 "iget: bad extra_isize %u "
 					 "(inode size %u)",
+
 					 ei->i_extra_isize,
 					 EXT4_INODE_SIZE(inode->i_sb));
 			ret = -EFSCORRUPTED;
@@ -4860,9 +4863,9 @@ struct inode *__ext4_iget(struct super_block *sb, unsigned long ino,
 	}
 
 	if (!ext4_inode_csum_verify(inode, raw_inode, ei)) {
-		print_iloc_info(sb, iloc);
 		ext4_error_inode(inode, function, line, 0,
 				 "iget: checksum invalid");
+
 		ret = -EFSBADCRC;
 		goto bad_inode;
 	}
@@ -4919,7 +4922,6 @@ struct inode *__ext4_iget(struct super_block *sb, unsigned long ino,
 			((__u64)le16_to_cpu(raw_inode->i_file_acl_high)) << 32;
 	inode->i_size = ext4_isize(sb, raw_inode);
 	if ((size = i_size_read(inode)) < 0) {
-		print_iloc_info(sb, iloc);
 		ext4_error_inode(inode, function, line, 0,
 				 "iget: bad i_size value: %lld", size);
 		ret = -EFSCORRUPTED;
@@ -4934,6 +4936,7 @@ struct inode *__ext4_iget(struct super_block *sb, unsigned long ino,
 	    ext4_test_inode_flag(inode, EXT4_INODE_INDEX)) {
 		EXT4_ERROR_INODE(inode,
 				 "iget: Dir with htree data on filesystem without dir_index feature.");
+
 		ret = -EFSCORRUPTED;
 		goto bad_inode;
 	}
@@ -5007,9 +5010,9 @@ struct inode *__ext4_iget(struct super_block *sb, unsigned long ino,
 	ret = 0;
 	if (ei->i_file_acl &&
 	    !ext4_inode_block_valid(inode, ei->i_file_acl, 1)) {
-		print_iloc_info(sb, iloc);
 		ext4_error_inode(inode, function, line, 0,
 				 "iget: bad extended attribute block %llu",
+
 				 ei->i_file_acl);
 		ret = -EFSCORRUPTED;
 		goto bad_inode;
@@ -5066,9 +5069,9 @@ struct inode *__ext4_iget(struct super_block *sb, unsigned long ino,
 		make_bad_inode(inode);
 	} else {
 		ret = -EFSCORRUPTED;
-		print_iloc_info(sb, iloc);
 		ext4_error_inode(inode, function, line, 0,
 				 "iget: bogus i_mode (%o)", inode->i_mode);
+
 		goto bad_inode;
 	}
 	brelse(iloc.bh);
@@ -5082,6 +5085,8 @@ bad_inode:
 	iget_failed(inode);
 	return ERR_PTR(ret);
 }
+
+
 
 static int ext4_inode_blocks_set(handle_t *handle,
 				struct ext4_inode *raw_inode,
@@ -5252,6 +5257,8 @@ static int ext4_do_update_inode(handle_t *handle,
 	EXT4_INODE_SET_XTIME(i_mtime, inode, raw_inode);
 	EXT4_INODE_SET_XTIME(i_atime, inode, raw_inode);
 	EXT4_EINODE_SET_XTIME(i_crtime, ei, raw_inode);
+
+
 
 	raw_inode->i_dtime = cpu_to_le32(ei->i_dtime);
 	raw_inode->i_flags = cpu_to_le32(ei->i_flags & 0xFFFFFFFF);
@@ -5496,13 +5503,8 @@ int ext4_setattr(struct dentry *dentry, struct iattr *attr)
 	if (unlikely(ext4_forced_shutdown(EXT4_SB(inode->i_sb))))
 		return -EIO;
 
-	if (unlikely(IS_IMMUTABLE(inode)))
-		return -EPERM;
 
-	if (unlikely(IS_APPEND(inode) &&
-		     (ia_valid & (ATTR_MODE | ATTR_UID |
-				  ATTR_GID | ATTR_TIMES_SET))))
-		return -EPERM;
+
 
 	error = setattr_prepare(dentry, attr);
 	if (error)
@@ -5613,7 +5615,7 @@ int ext4_setattr(struct dentry *dentry, struct iattr *attr)
 			up_write(&EXT4_I(inode)->i_data_sem);
 			ext4_journal_stop(handle);
 			if (error) {
-				if (orphan && inode->i_nlink)
+				if (orphan)
 					ext4_orphan_del(NULL, inode);
 				goto err_out;
 			}
@@ -5996,7 +5998,7 @@ int ext4_expand_extra_isize(struct inode *inode,
 
 	ext4_write_lock_xattr(inode, &no_expand);
 
-	BUFFER_TRACE(iloc->bh, "get_write_access");
+	BUFFER_TRACE(iloc.bh, "get_write_access");
 	error = ext4_journal_get_write_access(handle, iloc->bh);
 	if (error) {
 		brelse(iloc->bh);
@@ -6012,6 +6014,7 @@ int ext4_expand_extra_isize(struct inode *inode,
 
 out_unlock:
 	ext4_write_unlock_xattr(inode, &no_expand);
+
 	ext4_journal_stop(handle);
 	return error;
 }
@@ -6223,8 +6226,8 @@ int ext4_page_mkwrite(struct vm_fault *vmf)
 	get_block_t *get_block;
 	int retries = 0;
 
-	if (unlikely(IS_IMMUTABLE(inode)))
-		return VM_FAULT_SIGBUS;
+
+
 
 	sb_start_pagefault(inode->i_sb);
 	file_update_time(vma->vm_file);

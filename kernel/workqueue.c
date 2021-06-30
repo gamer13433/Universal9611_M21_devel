@@ -49,6 +49,7 @@
 #include <linux/moduleparam.h>
 #include <linux/uaccess.h>
 #include <linux/nmi.h>
+#include <linux/kvm_para.h>
 #include <linux/sec_debug.h>
 #include <linux/kvm_para.h>
 #include <linux/debug-snapshot.h>
@@ -1412,6 +1413,8 @@ retry:
 	if (wq->flags & WQ_UNBOUND) {
 		if (req_cpu == WORK_CPU_UNBOUND)
 			cpu = wq_select_unbound_cpu(raw_smp_processor_id());
+
+
 		pwq = unbound_pwq_by_node(wq, cpu_to_node(cpu));
 	} else {
 		if (req_cpu == WORK_CPU_UNBOUND)
@@ -4236,6 +4239,8 @@ void destroy_workqueue(struct workqueue_struct *wq)
 	mutex_lock(&wq_pool_mutex);
 	list_del_rcu(&wq->list);
 	mutex_unlock(&wq_pool_mutex);
+
+
 
 	if (!(wq->flags & WQ_UNBOUND)) {
 		/*

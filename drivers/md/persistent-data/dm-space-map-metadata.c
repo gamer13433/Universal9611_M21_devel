@@ -147,6 +147,7 @@ static int brb_peek(struct bop_ring_buffer *brb, struct block_op *result)
 
 	bop = brb->bops + brb->begin;
 	memcpy(result, bop, sizeof(*result));
+
 	return 0;
 }
 
@@ -180,6 +181,7 @@ struct sm_metadata {
 static int add_bop(struct sm_metadata *smm, enum block_op_type type, dm_block_t b, dm_block_t e)
 {
 	int r = brb_push(&smm->uncommitted, type, b, e);
+
 	if (r) {
 		DMERR("too many recursive allocations");
 		return -ENOMEM;
@@ -511,6 +513,7 @@ static int sm_metadata_commit(struct dm_space_map *sm)
 		return r;
 
 	memcpy(&smm->old_ll, &smm->ll, sizeof(smm->old_ll));
+
 	smm->allocated_this_transaction = 0;
 
 	return 0;
@@ -736,6 +739,7 @@ static int sm_metadata_extend(struct dm_space_map *sm, dm_block_t extra_blocks)
 	 */
 	do {
 		r = add_bop(smm, BOP_INC, old_len, smm->begin);
+
 		if (r)
 			goto out;
 
@@ -782,6 +786,7 @@ int dm_sm_metadata_create(struct dm_space_map *sm,
 			  dm_block_t superblock)
 {
 	int r;
+
 	struct sm_metadata *smm = container_of(sm, struct sm_metadata, sm);
 
 	smm->begin = superblock + 1;
@@ -807,6 +812,7 @@ int dm_sm_metadata_create(struct dm_space_map *sm,
 	 * allocated blocks that they were built from.
 	 */
 	r = add_bop(smm, BOP_INC, superblock, smm->begin);
+
 	if (r)
 		return r;
 

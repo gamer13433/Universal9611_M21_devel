@@ -298,6 +298,8 @@ static int propagate_one(struct mount *m)
 #else
 	child->mnt.mnt_flags &= ~MNT_LOCKED;
 #endif
+
+
 	read_seqlock_excl(&mount_lock);
 	mnt_set_mountpoint(m, mp, child);
 	if (m->mnt_master != dest_master)

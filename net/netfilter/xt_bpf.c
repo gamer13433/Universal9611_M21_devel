@@ -55,11 +55,15 @@ static int __bpf_mt_check_fd(int fd, struct bpf_prog **ret)
 
 static int __bpf_mt_check_path(const char *path, struct bpf_prog **ret)
 {
+
 	if (strnlen(path, XT_BPF_PATH_MAX) == XT_BPF_PATH_MAX)
 		return -EINVAL;
 
 	*ret = bpf_prog_get_type_path(path, BPF_PROG_TYPE_SOCKET_FILTER);
 	return PTR_ERR_OR_ZERO(*ret);
+
+
+
 }
 
 static int bpf_mt_check(const struct xt_mtchk_param *par)

@@ -2086,6 +2086,7 @@ static int packet_rcv(struct sk_buff *skb, struct net_device *dev,
 	unsigned int snaplen, res;
 	bool is_drop_n_account = false;
 
+
 	sk = pt->af_packet_priv;
 	po = pkt_sk(sk);
 
@@ -2219,6 +2220,7 @@ static int tpacket_rcv(struct sk_buff *skb, struct net_device *dev,
 	BUILD_BUG_ON(TPACKET_ALIGN(sizeof(*h.h2)) != 32);
 	BUILD_BUG_ON(TPACKET_ALIGN(sizeof(*h.h3)) != 48);
 
+
 	sk = pt->af_packet_priv;
 	po = pkt_sk(sk);
 
@@ -2339,6 +2341,7 @@ static int tpacket_rcv(struct sk_buff *skb, struct net_device *dev,
 		if (po->stats.stats1.tp_drops)
 			status |= TP_STATUS_LOSING;
 	}
+
 
 	po->stats.stats1.tp_packets++;
 	if (copy_skb) {
@@ -2679,6 +2682,7 @@ static int tpacket_snd(struct packet_sock *po, struct msghdr *msg)
 	bool need_wait = !(msg->msg_flags & MSG_DONTWAIT);
 	unsigned char *addr = NULL;
 	int tp_len, size_max;
+
 	void *data;
 	int len_sum = 0;
 	int status = TP_STATUS_AVAILABLE;
@@ -2697,6 +2701,7 @@ static int tpacket_snd(struct packet_sock *po, struct msghdr *msg)
 	if (likely(saddr == NULL)) {
 		dev	= packet_cached_dev_get(po);
 		proto	= po->num;
+
 	} else {
 		err = -EINVAL;
 		if (msg->msg_namelen < sizeof(struct sockaddr_ll))
@@ -2706,6 +2711,7 @@ static int tpacket_snd(struct packet_sock *po, struct msghdr *msg)
 						sll_addr)))
 			goto out;
 		proto	= saddr->sll_protocol;
+
 		dev = dev_get_by_index(sock_net(&po->sk), saddr->sll_ifindex);
 		if (po->sk.sk_socket->type == SOCK_DGRAM) {
 			if (dev && msg->msg_namelen < dev->addr_len +
@@ -2910,6 +2916,7 @@ static int packet_snd(struct socket *sock, struct msghdr *msg, size_t len)
 	if (likely(saddr == NULL)) {
 		dev	= packet_cached_dev_get(po);
 		proto	= po->num;
+
 	} else {
 		err = -EINVAL;
 		if (msg->msg_namelen < sizeof(struct sockaddr_ll))
@@ -2917,6 +2924,7 @@ static int packet_snd(struct socket *sock, struct msghdr *msg, size_t len)
 		if (msg->msg_namelen < (saddr->sll_halen + offsetof(struct sockaddr_ll, sll_addr)))
 			goto out;
 		proto	= saddr->sll_protocol;
+
 		dev = dev_get_by_index(sock_net(sk), saddr->sll_ifindex);
 		if (sock->type == SOCK_DGRAM) {
 			if (dev && msg->msg_namelen < dev->addr_len +

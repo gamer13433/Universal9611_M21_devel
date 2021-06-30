@@ -62,6 +62,8 @@
 
 static const char ip6_frag_cache_name[] = "ip6-frags";
 
+
+
 static u8 ip6_frag_ecn(const struct ipv6hdr *ipv6h)
 {
 	return 1 << (ipv6_get_dsfield(ipv6h) & INET_ECN_MASK);
@@ -71,6 +73,9 @@ static struct inet_frags ip6_frags;
 
 static int ip6_frag_reasm(struct frag_queue *fq, struct sk_buff *skb,
 			  struct sk_buff *prev_tail, struct net_device *dev);
+
+
+
 
 static void ip6_frag_expire(struct timer_list *t)
 {
@@ -111,6 +116,8 @@ static int ip6_frag_queue(struct frag_queue *fq, struct sk_buff *skb,
 			  struct frag_hdr *fhdr, int nhoff,
 			  u32 *prob_offset)
 {
+
+
 	struct net *net = dev_net(skb_dst(skb)->dev);
 	int offset, end, fragsize;
 	struct sk_buff *prev_tail;
@@ -128,7 +135,6 @@ static int ip6_frag_queue(struct frag_queue *fq, struct sk_buff *skb,
 
 	if ((unsigned int)end > IPV6_MAXPLEN) {
 		*prob_offset = (u8 *)&fhdr->frag_off - skb_network_header(skb);
-		DROPDUMP_QUEUE_SKB(skb, NET_DROPDUMP_IPSTATS_MIB_INHDRERRORS15);
 		/* note that if prob_offset is set, the skb is freed elsewhere,
 		 * we do not free it here.
 		 */
@@ -163,7 +169,10 @@ static int ip6_frag_queue(struct frag_queue *fq, struct sk_buff *skb,
 			 * this case. -DaveM
 			 */
 			*prob_offset = offsetof(struct ipv6hdr, payload_len);
+
 			DROPDUMP_QUEUE_SKB(skb, NET_DROPDUMP_IPSTATS_MIB_INHDRERRORS16);
+
+
 			return -1;
 		}
 		if (end > fq->q.len) {
@@ -180,6 +189,9 @@ static int ip6_frag_queue(struct frag_queue *fq, struct sk_buff *skb,
 	err = -ENOMEM;
 	/* Point into the IP datagram 'data' part. */
 	if (!pskb_pull(skb, (u8 *) (fhdr + 1) - skb->data))
+
+
+
 		goto discard_fq;
 
 	err = pskb_trim_rcsum(skb, end - offset);
@@ -196,8 +208,12 @@ static int ip6_frag_queue(struct frag_queue *fq, struct sk_buff *skb,
 	if (err)
 		goto insert_error;
 
+
+
 	if (dev)
+
 		fq->iif = dev->ifindex;
+
 
 	fq->q.stamp = skb->tstamp;
 	fq->q.meat += skb->len;
@@ -218,6 +234,7 @@ static int ip6_frag_queue(struct frag_queue *fq, struct sk_buff *skb,
 
 	if (fq->q.flags == (INET_FRAG_FIRST_IN | INET_FRAG_LAST_IN) &&
 	    fq->q.meat == fq->q.len) {
+
 		unsigned long orefdst = skb->_skb_refdst;
 
 		skb->_skb_refdst = 0UL;
@@ -239,16 +256,18 @@ insert_error:
 			IPSTATS_MIB_REASM_OVERLAPS);
 discard_fq:
 	inet_frag_kill(&fq->q);
-err:
+
 	__IP6_INC_STATS(net, ip6_dst_idev(skb_dst(skb)),
 			IPSTATS_MIB_REASMFAILS);
-	DROPDUMP_QUEUE_SKB(skb, NET_DROPDUMP_IPSTATS_MIB_REASMFAILS1);
+err:
 	kfree_skb(skb);
 	return err;
 }
 
 /*
  *	Check if this packet is complete.
+
+
  *
  *	It is called with locked fq, and caller must check that
  *	queue is eligible for reassembly i.e. it is not COMPLETE,
@@ -258,6 +277,8 @@ static int ip6_frag_reasm(struct frag_queue *fq, struct sk_buff *skb,
 			  struct sk_buff *prev_tail, struct net_device *dev)
 {
 	struct net *net = container_of(fq->q.net, struct net, ipv6.frags);
+
+
 	unsigned int nhoff;
 	void *reasm_data;
 	int payload_len;
@@ -271,13 +292,21 @@ static int ip6_frag_reasm(struct frag_queue *fq, struct sk_buff *skb,
 
 	reasm_data = inet_frag_reasm_prepare(&fq->q, skb, prev_tail);
 	if (!reasm_data)
+
+
+
 		goto out_oom;
 
 	payload_len = ((skb->data - skb_network_header(skb)) -
+
+
+
 		       sizeof(struct ipv6hdr) + fq->q.len -
 		       sizeof(struct frag_hdr));
 	if (payload_len > IPV6_MAXPLEN)
 		goto out_oversize;
+
+
 
 	/* We have to remove fragment header from datagram and to relocate
 	 * header in order to calculate ICV correctly. */
@@ -289,9 +318,17 @@ static int ip6_frag_reasm(struct frag_queue *fq, struct sk_buff *skb,
 		skb->mac_header += sizeof(struct frag_hdr);
 	skb->network_header += sizeof(struct frag_hdr);
 
+
+
+
+
+
 	skb_reset_transport_header(skb);
 
 	inet_frag_reasm_finish(&fq->q, skb, reasm_data);
+
+
+
 
 	skb->dev = dev;
 	ipv6_hdr(skb)->payload_len = htons(payload_len);
@@ -299,6 +336,7 @@ static int ip6_frag_reasm(struct frag_queue *fq, struct sk_buff *skb,
 	IP6CB(skb)->nhoff = nhoff;
 	IP6CB(skb)->flags |= IP6SKB_FRAGMENTED;
 	IP6CB(skb)->frag_max_size = fq->q.max_size;
+
 
 	/* Yes, and fold redundant checksum back. 8) */
 	skb_postpush_rcsum(skb, skb_network_header(skb),
@@ -362,6 +400,7 @@ static int ipv6_frag_rcv(struct sk_buff *skb)
 					    sizeof(struct ipv6hdr);
 		return 1;
 	}
+
 
 	iif = skb->dev ? skb->dev->ifindex : 0;
 	fq = fq_find(net, fhdr->identification, hdr, iif);
@@ -553,12 +592,16 @@ static struct pernet_operations ip6_frags_ops = {
 };
 
 static const struct rhashtable_params ip6_rhash_params = {
+
+
+
 	.head_offset		= offsetof(struct inet_frag_queue, node),
 	.hashfn			= ip6frag_key_hashfn,
 	.obj_hashfn		= ip6frag_obj_hashfn,
 	.obj_cmpfn		= ip6frag_obj_cmpfn,
 	.automatic_shrinking	= true,
 };
+
 
 int __init ipv6_frag_init(void)
 {
@@ -600,6 +643,7 @@ err_protocol:
 
 void ipv6_frag_exit(void)
 {
+
 	ip6_frags_sysctl_unregister();
 	unregister_pernet_subsys(&ip6_frags_ops);
 	inet6_del_protocol(&frag_protocol, IPPROTO_FRAGMENT);

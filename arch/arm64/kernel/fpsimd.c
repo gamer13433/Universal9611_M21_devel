@@ -17,10 +17,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+
 #include <linux/cpu.h>
 #include <linux/cpu_pm.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
+
 #include <linux/preempt.h>
 #include <linux/sched/signal.h>
 #include <linux/signal.h>
@@ -66,6 +68,7 @@
  * CPU currently contain the most recent userland FPSIMD state of the current
  * task.
  *
+
  * For a certain task, the sequence may look something like this:
  * - the task gets scheduled in; if both the task's fpsimd_state.cpu field
  *   contains the id of the current CPU, and the CPU's fpsimd_last_state per-cpu
@@ -212,9 +215,11 @@ void fpsimd_flush_thread(void)
 {
 	if (!system_supports_fpsimd())
 		return;
+
 	memset(&current->thread.fpsimd_state, 0, sizeof(struct fpsimd_state));
 	fpsimd_flush_task_state(current);
 	set_thread_flag(TIF_FOREIGN_FPSTATE);
+
 }
 
 /*
@@ -241,6 +246,7 @@ void fpsimd_restore_current_state(void)
 	if (!system_supports_fpsimd())
 		return;
 	preempt_disable();
+
 	if (test_and_clear_thread_flag(TIF_FOREIGN_FPSTATE)) {
 		struct fpsimd_state *st = &current->thread.fpsimd_state;
 
@@ -361,6 +367,7 @@ EXPORT_SYMBOL(kernel_neon_begin_partial);
 
 void kernel_neon_end(void)
 {
+
 	if (!system_supports_fpsimd())
 		return;
 	if (in_interrupt()) {

@@ -208,6 +208,7 @@ static inline void tcp_event_ack_sent(struct sock *sk, unsigned int pkts,
 
 
 
+
 /* Determine a window scaling and initial window to offer.
  * Based on the assumption that the given amount of space
  * will be offered. Store the results in the tp structure.
@@ -258,6 +259,7 @@ void tcp_select_initial_window(int __space, __u32 mss,
 			(*rcv_wscale)++;
 		}
 	}
+
 
 
 
@@ -958,6 +960,7 @@ enum hrtimer_restart tcp_pace_kick(struct hrtimer *timer)
 }
 
 
+
 static void tcp_internal_pacing(struct sock *sk, const struct sk_buff *skb)
 {
 	u64 len_ns;
@@ -968,6 +971,7 @@ static void tcp_internal_pacing(struct sock *sk, const struct sk_buff *skb)
 	rate = sk->sk_pacing_rate;
 	if (!rate || rate == ~0U)
 		return;
+
 
 
 	len_ns = (u64)skb->len * NSEC_PER_SEC;
@@ -1006,6 +1010,7 @@ static int __tcp_transmit_skb(struct sock *sk, struct sk_buff *skb,
 	tp = tcp_sk(sk);
 
 	if (clone_it) {
+
 
 		oskb = skb;
 		if (unlikely(skb_cloned(skb)))
@@ -2443,6 +2448,7 @@ repair:
 		if (push_one != 2)
 			tcp_schedule_loss_probe(sk, false);
 
+
 		return false;
 	}
 	return !tp->packets_out && tcp_send_head(sk);
@@ -2549,6 +2555,7 @@ void tcp_send_loss_probe(struct sock *sk)
 		inet_csk(sk)->icsk_pending = 0;
 		return;
 	}
+
 
 	if (skb_still_in_host_queue(sk, skb))
 		goto rearm_timer;
@@ -3005,6 +3012,7 @@ int tcp_retransmit_skb(struct sock *sk, struct sk_buff *skb, int segs)
  * retransmitted data is acknowledged.  It tries to continue
  * resending the rest of the retransmit queue, until either
  * we've sent it all or the congestion window limit is reached.
+
 
  */
 void tcp_xmit_retransmit_queue(struct sock *sk)

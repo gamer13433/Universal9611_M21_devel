@@ -226,6 +226,7 @@ struct eventpoll {
 	/* used to optimize loop detection check */
 	u64 gen;
 
+
 #ifdef CONFIG_NET_RX_BUSY_POLL
 	/* used to track busy poll napi_id */
 	unsigned int napi_id;
@@ -289,6 +290,8 @@ static struct kmem_cache *epi_cache __read_mostly;
 
 /* Slab cache used to allocate "struct eppoll_entry" */
 static struct kmem_cache *pwq_cache __read_mostly;
+
+
 
 /*
  * List of files with newly added links, where we may need to limit the number
@@ -1499,6 +1502,8 @@ static int ep_insert(struct eventpoll *ep, struct epoll_event *event,
 	if (epi->nwait < 0)
 		goto error_unregister;
 
+
+
 	/* We have to drop the new item inside our item list to keep track of it */
 	spin_lock_irqsave(&ep->lock, flags);
 
@@ -1535,6 +1540,8 @@ error_remove_epi:
 	spin_unlock(&tfile->f_lock);
 
 	rb_erase_cached(&epi->rbn, &ep->rbr);
+
+
 
 	/*
 	 * We need to do this because an event could have been arrived on some
@@ -1879,6 +1886,7 @@ static int ep_loop_check_proc(void *priv, void *cookie, int call_nests)
 
 	mutex_lock_nested(&ep->mtx, call_nests + 1);
 	ep->gen = loop_check_gen;
+
 	for (rbp = rb_first_cached(&ep->rbr); rbp; rbp = rb_next(rbp)) {
 		epi = rb_entry(rbp, struct epitem, rbn);
 		if (unlikely(is_file_epoll(epi->ffd.file))) {
@@ -1925,7 +1933,11 @@ static int ep_loop_check_proc(void *priv, void *cookie, int call_nests)
 static int ep_loop_check(struct eventpoll *ep, struct file *file)
 {
 	return ep_call_nested(&poll_loop_ncalls, EP_MAX_NESTS,
+
+
 			      ep_loop_check_proc, file, ep, current);
+
+
 }
 
 static void clear_tfile_check_list(void)
@@ -2090,9 +2102,12 @@ SYSCALL_DEFINE4(epoll_ctl, int, epfd, int, op, int, fd,
 			if (is_file_epoll(tf.file)) {
 				error = -ELOOP;
 				if (ep_loop_check(ep, tf.file) != 0)
+
 					goto error_tgt_fput;
+
 			} else {
 				get_file(tf.file);
+
 				list_add(&tf.file->f_tfile_llink,
 							&tfile_check_list);
 			}
@@ -2119,6 +2134,8 @@ SYSCALL_DEFINE4(epoll_ctl, int, epfd, int, op, int, fd,
 			error = ep_insert(ep, &epds, tf.file, fd, full_check);
 		} else
 			error = -EEXIST;
+
+
 		break;
 	case EPOLL_CTL_DEL:
 		if (epi)

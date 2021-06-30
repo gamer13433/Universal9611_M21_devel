@@ -902,6 +902,7 @@ static inline u32 _emit_GO(unsigned dry_run, u8 buf[],
 	return SZ_DMAGO;
 }
 
+
 /* Returns Time-Out */
 static bool _until_dmac_idle(struct pl330_thread *thrd)
 {
@@ -916,7 +917,9 @@ static bool _until_dmac_idle(struct pl330_thread *thrd)
 		cpu_relax();
 	} while (time_before(jiffies, timeout));
 
+
 	return true;
+
 }
 
 static inline void _execute_DBGINSN(struct pl330_thread *thrd,
@@ -1020,6 +1023,9 @@ static void _stop(struct pl330_thread *thrd)
 
 	_emit_KILL(0, insn);
 
+
+
+
 	_execute_DBGINSN(thrd, insn, is_manager(thrd));
 
 	/* clear the event */
@@ -1058,6 +1064,7 @@ static bool _trigger(struct pl330_thread *thrd)
 	/* Return if no request */
 	if (!req)
 		return true;
+
 
 	desc = req->desc;
 
@@ -1159,6 +1166,7 @@ static inline int _ldst_devtomem(struct pl330_dmac *pl330, unsigned dry_run,
 		off += _emit_WFP(dry_run, &buf[off], cond, pxs->desc->peri);
 		off += _emit_LDP(dry_run, &buf[off], cond, pxs->desc->peri);
 		off += _emit_ST(dry_run, &buf[off], ALWAYS);
+
 	}
 
 	return off;
@@ -1742,6 +1750,7 @@ static int pl330_update(struct pl330_dmac *pl330)
 
 			/* Detach the req */
 			descdone = thrd->req[active].desc;
+
 
 			if (!descdone->infiniteloop) {
 				thrd->req[active].desc = NULL;
@@ -2867,6 +2876,7 @@ pl330_prep_dma_memcpy(struct dma_chan *chan, dma_addr_t dst,
 	if (burst * 8 < pl330->pcfg.data_bus_width)
 		desc->rqcfg.brst_len = 1;
 
+
 	desc->bytes_requested = len;
 
 	desc->txd.flags = flags;
@@ -3166,6 +3176,7 @@ pl330_probe(struct amba_device *adev, const struct amba_id *id)
 	pd->dev = &adev->dev;
 
 
+
 	/* get quirk */
 	for (i = 0; i < ARRAY_SIZE(of_quirks); i++)
 		if (of_property_read_bool(np, of_quirks[i].quirk))
@@ -3409,6 +3420,7 @@ static struct amba_driver pl330_driver = {
 		.owner = THIS_MODULE,
 		.pm = PL330_PM,
 		.name = "dma-pl330",
+
 	},
 	.id_table = pl330_ids,
 	.probe = pl330_probe,

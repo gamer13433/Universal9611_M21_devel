@@ -1890,6 +1890,7 @@ static void yield_task_rt(struct rq *rq)
 
 #ifdef CONFIG_SMP
 
+
 /* TODO:
  * attach/detach/migrate_task_rt_rq() for load tracking
  */
@@ -1960,6 +1961,7 @@ select_task_rq_rt(struct task_struct *p, int cpu, int sd_flag, int flags,
 	    (curr->nr_cpus_allowed < 2 ||
 	     curr->prio <= p->prio)) {
 		int target = find_lowest_rq(p);
+
 		/*
 		 * Don't bother moving it if the destination CPU is
 		 * not running a lower priority task.
@@ -2370,6 +2372,7 @@ static void put_prev_task_rt(struct rq *rq, struct task_struct *p)
 	u64 now = rq_clock_task(rq);
 
 	update_curr_rt(rq);
+
 
 	/*
 	 * The previous task needs to be made eligible for pushing
@@ -3580,6 +3583,7 @@ static void task_tick_rt(struct rq *rq, struct task_struct *p, int queued)
 
 	update_curr_rt(rq);
 
+
 	for_each_sched_rt_entity(rt_se)
 		update_rt_load_avg(now, rt_se);
 
@@ -3831,6 +3835,7 @@ int sched_group_set_rt_runtime(struct task_group *tg, long rt_runtime_us)
 		rt_runtime = RUNTIME_INF;
 	else if ((u64)rt_runtime_us > U64_MAX / NSEC_PER_USEC)
 		return -EINVAL;
+
 
 	return tg_set_rt_bandwidth(tg, rt_period, rt_runtime);
 }

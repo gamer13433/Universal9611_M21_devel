@@ -64,9 +64,13 @@ static const char *handler[]= {
 
 int show_unhandled_signals = 0;
 
+
+
 static void dump_backtrace_entry(unsigned long where)
 {
 	printk(" %pS\n", (void *)where);
+
+
 }
 
 #ifdef CONFIG_SEC_DEBUG_AUTO_COMMENT
@@ -148,6 +152,8 @@ void dump_backtrace(struct pt_regs *regs, struct task_struct *tsk)
 
 	printk("Call trace:\n");
 	do {
+
+
 #ifdef CONFIG_SEC_DEBUG_LIMIT_BACKTRACE
 		if (MAX_UNWINDING_LOOP < cnt) {
 			pr_info("%s: Forcely break dump_backtrace to avoid infinity backtrace\n", __func__);
@@ -172,7 +178,11 @@ void dump_backtrace(struct pt_regs *regs, struct task_struct *tsk)
 			dbg_snapshot_save_log(raw_smp_processor_id(), regs->pc);
 		}
 	} while (!unwind_frame(tsk, &frame));
+
+
+
 		cnt++;
+
 
 	put_task_stack(tsk);
 }
@@ -527,6 +537,7 @@ asmlinkage void __exception do_undefinstr(struct pt_regs *regs, unsigned int esr
 void cpu_enable_cache_maint_trap(const struct arm64_cpu_capabilities *__unused)
 {
 	config_sctlr_el1(SCTLR_EL1_UCI, 0);
+
 }
 
 #define __user_cache_maint(insn, address, res)			\
@@ -742,6 +753,7 @@ asmlinkage void bad_mode(struct pt_regs *regs, int reason, unsigned int esr)
 		sec_debug_set_extra_info_esr(esr);
 	}
 #endif
+
 
 	local_irq_disable();
 	panic("bad mode");

@@ -83,6 +83,7 @@
 static DEFINE_IDR(loop_index_idr);
 static DEFINE_MUTEX(loop_index_mutex);
 
+
 static int max_part;
 static int part_shift;
 
@@ -252,8 +253,10 @@ static void loop_set_size(struct loop_device *lo, loff_t size)
 
 	set_capacity(lo->lo_disk, size);
 	bd_set_size(bdev, size << 9);
+
 	/* let user-space know about the new size */
 	kobject_uevent(&disk_to_dev(bdev->bd_disk)->kobj, KOBJ_CHANGE);
+
 }
 
 static inline int
@@ -437,6 +440,7 @@ static int lo_fallocate(struct loop_device *lo, struct request *rq, loff_t pos,
 	 * information.
 	 */
 	struct file *file = lo->lo_backing_file;
+
 	int ret;
 
 	mode |= FALLOC_FL_KEEP_SIZE;
@@ -580,6 +584,7 @@ static int do_req_filebacked(struct loop_device *lo, struct request *rq)
 	switch (req_op(rq)) {
 	case REQ_OP_FLUSH:
 		return lo_req_flush(lo, rq);
+
 	case REQ_OP_WRITE_ZEROES:
 		/*
 		 * If the caller doesn't want deallocation, call zeroout to
@@ -1003,6 +1008,7 @@ static int loop_configure(struct loop_device *lo, fmode_t mode,
 	struct file	*file;
 	struct inode	*inode;
 	struct address_space *mapping;
+
 	int		error;
 	loff_t		size;
 	unsigned short bsize;
@@ -1047,6 +1053,7 @@ static int loop_configure(struct loop_device *lo, fmode_t mode,
 	    !file->f_op->write_iter)
 		lo->lo_flags |= LO_FLAGS_READ_ONLY;
 
+
 	error = loop_prepare_queue(lo);
 	if (error)
 		goto out_putf;
@@ -1057,7 +1064,9 @@ static int loop_configure(struct loop_device *lo, fmode_t mode,
 
 	lo->use_dio = lo->lo_flags & LO_FLAGS_DIRECT_IO;
 	lo->lo_device = bdev;
+
 	lo->lo_backing_file = file;
+
 	lo->old_gfp_mask = mapping_gfp_mask(mapping);
 	mapping_set_gfp_mask(mapping, lo->old_gfp_mask & ~(__GFP_IO|__GFP_FS));
 
@@ -1075,8 +1084,10 @@ static int loop_configure(struct loop_device *lo, fmode_t mode,
 	}
 
 	loop_update_dio(lo);
+
 	loop_sysfs_init(lo);
 	loop_set_size(lo, size);
+
 
 	if (config->block_size)
 		bsize = config->block_size;
@@ -1105,6 +1116,7 @@ static int loop_configure(struct loop_device *lo, fmode_t mode,
 	module_put(THIS_MODULE);
 	return error;
 }
+
 
 static int loop_clr_fd(struct loop_device *lo)
 {
@@ -1194,6 +1206,7 @@ static int
 loop_set_status(struct loop_device *lo, const struct loop_info64 *info)
 {
 	int err;
+
 	kuid_t uid = current_uid();
 	int prev_lo_flags;
 	bool size_changed = false;
@@ -1205,6 +1218,7 @@ loop_set_status(struct loop_device *lo, const struct loop_info64 *info)
 	if (lo->lo_state != Lo_bound) {
 		return -ENXIO;
 	}
+
 
 	if (lo->lo_offset != info->lo_offset ||
 	    lo->lo_sizelimit != info->lo_sizelimit) {
@@ -1218,6 +1232,7 @@ loop_set_status(struct loop_device *lo, const struct loop_info64 *info)
 
 	if (size_changed && lo->lo_device->bd_inode->i_mapping->nrpages) {
 		/* If any pages were dirtied after kill_bdev(), try again */
+
 		err = -EAGAIN;
 		pr_warn("%s: loop%d (%s) has still dirty pages (nrpages=%lu)\n",
 			__func__, lo->lo_number, lo->lo_file_name,
@@ -1225,7 +1240,9 @@ loop_set_status(struct loop_device *lo, const struct loop_info64 *info)
 		goto exit;
 	}
 
+
 	prev_lo_flags = lo->lo_flags;
+
 
 	err = loop_set_status_from_info(lo, info);
 	if (err)
@@ -1253,6 +1270,7 @@ loop_set_status(struct loop_device *lo, const struct loop_info64 *info)
 
 	if (!err && (lo->lo_flags & LO_FLAGS_PARTSCAN) &&
 	     !(prev_lo_flags & LO_FLAGS_PARTSCAN)) {
+
 		lo->lo_disk->flags &= ~GENHD_FL_NO_PART_SCAN;
 		loop_reread_partitions(lo, lo->lo_device);
 	}
@@ -1451,13 +1469,16 @@ static int loop_set_block_size(struct loop_device *lo, unsigned long arg)
 	if (lo->lo_queue->limits.logical_block_size == arg)
 		return 0;
 
+
 	sync_blockdev(lo->lo_device);
 		invalidate_bdev(lo->lo_device);
+
 
 	blk_mq_freeze_queue(lo->lo_queue);
 
 	/* invalidate_bdev should have truncated all the pages */
 	if (lo->lo_device->bd_inode->i_mapping->nrpages) {
+
 		err = -EAGAIN;
 		pr_warn("%s: loop%d (%s) has still dirty pages (nrpages=%lu)\n",
 			__func__, lo->lo_number, lo->lo_file_name,
@@ -1520,6 +1541,7 @@ static int lo_ioctl(struct block_device *bdev, fmode_t mode,
 		err = -EPERM;
 		if ((mode & FMODE_WRITE) || capable(CAP_SYS_ADMIN))
 			err = loop_set_status_old(lo, argp);
+
 		break;
 	case LOOP_GET_STATUS:
 		err = loop_get_status_old(lo, argp);
@@ -1529,6 +1551,7 @@ static int lo_ioctl(struct block_device *bdev, fmode_t mode,
 		err = -EPERM;
 		if ((mode & FMODE_WRITE) || capable(CAP_SYS_ADMIN))
 			err = loop_set_status64(lo, argp);
+
 		break;
 	case LOOP_GET_STATUS64:
 		err = loop_get_status64(lo, argp);

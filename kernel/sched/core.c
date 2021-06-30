@@ -1157,6 +1157,7 @@ static int __set_cpus_allowed_ptr(struct task_struct *p,
 	if (cpumask_test_cpu(task_cpu(p), new_mask))
 		goto out;
 
+
 	if (task_running(rq, p) || p->state == TASK_WAKING) {
 		struct migration_arg arg = { p, dest_cpu };
 		/* Need help from migration thread: drop lock and wait. */
@@ -4933,6 +4934,7 @@ SYSCALL_DEFINE0(sched_yield)
 	schedstat_inc(rq->yld_count);
 	current->sched_class->yield_task(rq);
 
+
 	preempt_disable();
 	rq_unlock_irq(rq, &rf);
 	sched_preempt_enable_no_resched();
@@ -5351,6 +5353,7 @@ void init_idle(struct task_struct *idle, int cpu)
 
 	raw_spin_lock_irqsave(&idle->pi_lock, flags);
 	raw_spin_lock(&rq->lock);
+
 
 	idle->state = TASK_RUNNING;
 	idle->se.exec_start = sched_clock();
@@ -6467,6 +6470,7 @@ static int cpu_cgroup_can_attach(struct cgroup_taskset *tset)
 #ifdef CONFIG_RT_GROUP_SCHED
 		if (!sched_rt_can_attach(css_tg(css), task))
 			return -EINVAL;
+
 #endif
 		/*
 		 * Serialize against wake_up_new_task() such that if its
@@ -6609,6 +6613,7 @@ int tg_set_cfs_quota(struct task_group *tg, long cfs_quota_us)
 		quota = (u64)cfs_quota_us * NSEC_PER_USEC;
 	else
 		return -EINVAL;
+
 
 	return tg_set_cfs_bandwidth(tg, period, quota);
 }

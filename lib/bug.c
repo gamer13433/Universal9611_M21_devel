@@ -159,6 +159,9 @@ enum bug_trap_type report_bug(unsigned long bugaddr, struct pt_regs *regs)
 	file = NULL;
 	line = 0;
 
+
+
+
 #ifdef CONFIG_DEBUG_BUGVERBOSE
 #ifndef CONFIG_GENERIC_BUG_RELATIVE_POINTERS
 	file = bug->file;
@@ -181,6 +184,7 @@ enum bug_trap_type report_bug(unsigned long bugaddr, struct pt_regs *regs)
 		bug->flags |= BUGFLAG_DONE;
 	}
 
+
 	if (warning) {
 		/* this is a WARN_ON rather than BUG/BUG_ON */
 		__warn(file, line, (void *)bugaddr, BUG_GET_TAINT(bug), regs,
@@ -190,15 +194,12 @@ enum bug_trap_type report_bug(unsigned long bugaddr, struct pt_regs *regs)
 
 	printk(KERN_DEFAULT "------------[ cut here ]------------\n");
 
-#ifdef CONFIG_SEC_DEBUG_EXTRA_INFO
-	if (file)
-		sec_debug_set_extra_info_bug(file, line);
-#endif
+
 
 	if (file)
-		pr_auto(ASL1, "kernel BUG at %s:%u!\n", file, line);
+		pr_crit("kernel BUG at %s:%u!\n", file, line);
 	else
-		pr_auto(ASL1, "Kernel BUG at %p [verbose debug info unavailable]\n",
+		pr_crit("Kernel BUG at %pB [verbose debug info unavailable]\n",
 			(void *)bugaddr);
 
 	return BUG_TRAP_TYPE_BUG;

@@ -420,7 +420,7 @@ static void ext4_journal_commit_callback(journal_t *journal, transaction_t *txn)
 	spin_unlock(&sbi->s_md_lock);
 }
 
-/* @fs.sec -- ed6287f38b4c758f36cd7864940cdbd81e26efee -- */
+
 extern int ignore_fs_panic;
 
 /* Deal with the reporting of failure conditions on a filesystem such as
@@ -438,7 +438,7 @@ extern int ignore_fs_panic;
  * that error until we've noted it down and cleared it.
  */
 
-/* @fs.sec -- 10e386db3959e3c02220744400a053e7807e07ad -- */
+
 static void ext4_handle_error(struct super_block *sb, char *buf)
 {
 	if (sb_rdonly(sb) || ignore_fs_panic)
@@ -1201,6 +1201,8 @@ static struct inode *ext4_nfs_get_inode(struct super_block *sb,
 	struct inode *inode;
 
 	/*
+
+
 	 * Currently we don't know the generation for parent directory, so
 	 * a generation of 0 means "accept any"
 	 */
@@ -1373,6 +1375,7 @@ static const struct fscrypt_operations ext4_cryptops = {
 	.set_knox_context	= ext4_set_knox_context,
 #endif
 	.dummy_context		= ext4_dummy_context,
+
 	.empty_dir		= ext4_empty_dir,
 	.max_namelen		= EXT4_NAME_LEN,
 };
@@ -2384,6 +2387,7 @@ static int ext4_fill_flex_info(struct super_block *sb)
 		atomic64_add(ext4_free_group_clusters(sb, gdp),
 			     &fg->free_clusters);
 		atomic_add(ext4_used_dirs_count(sb, gdp), &fg->used_dirs);
+
 	}
 
 	return 1;
@@ -2967,8 +2971,11 @@ static int ext4_feature_set_ok(struct super_block *sb, int readonly)
 #if !IS_ENABLED(CONFIG_QUOTA) || !IS_ENABLED(CONFIG_QFMT_V2)
 	if (!readonly && (ext4_has_feature_quota(sb) ||
 			  ext4_has_feature_project(sb))) {
+
+
 		ext4_msg(sb, KERN_ERR,
 			 "The kernel was not built with CONFIG_QUOTA and CONFIG_QFMT_V2");
+
 		return 0;
 	}
 #endif  /* CONFIG_QUOTA */
@@ -3557,6 +3564,7 @@ int ext4_calculate_overhead(struct super_block *sb)
 	return 0;
 }
 
+
 static void ext4_set_resv_clusters(struct super_block *sb)
 {
 	ext4_fsblk_t resv_clusters;
@@ -3629,7 +3637,7 @@ static int ext4_fill_super(struct super_block *sb, void *data, int silent)
 	sbi->s_sb_block = sb_block;
 	if (sb->s_bdev->bd_part)
 		sbi->s_sectors_written_start =
-			part_stat_read(sb->s_bdev->bd_part, sectors[STAT_WRITE]);
+			part_stat_read(sb->s_bdev->bd_part, sectors[1]);
 
 	/* Cleanup superblock name */
 	strreplace(sb->s_id, '/', '!');
@@ -3960,6 +3968,8 @@ static int ext4_fill_super(struct super_block *sb, void *data, int silent)
 	if (!ext4_feature_set_ok(sb, (sb_rdonly(sb))))
 		goto failed_mount;
 
+
+
 	if (le32_to_cpu(es->s_log_block_size) >
 	    (EXT4_MAX_BLOCK_LOG_SIZE - EXT4_MIN_BLOCK_LOG_SIZE)) {
 		ext4_msg(sb, KERN_ERR,
@@ -4028,6 +4038,8 @@ static int ext4_fill_super(struct super_block *sb, void *data, int silent)
 	sbi->s_bitmap_maxbytes = ext4_max_bitmap_size(sb->s_blocksize_bits,
 						      has_huge_files);
 	sb->s_maxbytes = ext4_max_size(sb->s_blocksize_bits, has_huge_files);
+
+
 
 	sbi->s_desc_size = le16_to_cpu(es->s_desc_size);
 	if (ext4_has_feature_64bit(sb)) {
@@ -4333,7 +4345,7 @@ static int ext4_fill_super(struct super_block *sb, void *data, int silent)
 				 "data=, fs mounted w/o journal");
 			goto failed_mount_wq;
 		}
-		sbi->s_def_mount_opt &= ~EXT4_MOUNT_JOURNAL_CHECKSUM;
+		sbi->s_def_mount_opt &= EXT4_MOUNT_JOURNAL_CHECKSUM;
 		clear_opt(sb, JOURNAL_CHECKSUM);
 		clear_opt(sb, DATA_FLAGS);
 		sbi->s_journal = NULL;
@@ -4487,6 +4499,31 @@ no_journal:
 	if (ext4_setup_super(sb, es, sb_rdonly(sb)))
 		sb->s_flags |= MS_RDONLY;
 
+	/* determine the minimum size of new large inodes, if present */
+	if (sbi->s_inode_size > EXT4_GOOD_OLD_INODE_SIZE &&
+	    sbi->s_want_extra_isize == 0) {
+		sbi->s_want_extra_isize = sizeof(struct ext4_inode) -
+						     EXT4_GOOD_OLD_INODE_SIZE;
+		if (ext4_has_feature_extra_isize(sb)) {
+			if (sbi->s_want_extra_isize <
+			    le16_to_cpu(es->s_want_extra_isize))
+				sbi->s_want_extra_isize =
+					le16_to_cpu(es->s_want_extra_isize);
+			if (sbi->s_want_extra_isize <
+			    le16_to_cpu(es->s_min_extra_isize))
+				sbi->s_want_extra_isize =
+					le16_to_cpu(es->s_min_extra_isize);
+		}
+	}
+	/* Check if enough inode space is available */
+	if (EXT4_GOOD_OLD_INODE_SIZE + sbi->s_want_extra_isize >
+							sbi->s_inode_size) {
+		sbi->s_want_extra_isize = sizeof(struct ext4_inode) -
+						       EXT4_GOOD_OLD_INODE_SIZE;
+		ext4_msg(sb, KERN_INFO, "required extra inode space not"
+			 "available");
+	}
+
 	ext4_set_resv_clusters(sb);
 
 	err = ext4_setup_system_zone(sb);
@@ -4605,6 +4642,7 @@ cantfind_ext4:
 	if (!silent)
 		ext4_msg(sb, KERN_ERR, "VFS: Can't find ext4 filesystem");
 	goto failed_mount;
+
 
 failed_mount8:
 	ext4_unregister_sysfs(sb);
@@ -4969,7 +5007,8 @@ static int ext4_commit_super(struct super_block *sb, int sync)
 	if (block_device_ejected(sb))
 		return -ENODEV;
 
-	/*
+
+
 	if (unlikely(le16_to_cpu(es->s_magic) != EXT4_SUPER_MAGIC)) {
 		print_bh(sb, sbh, 0, EXT4_BLOCK_SIZE(sb));
 		if (test_opt(sb, ERRORS_PANIC))
@@ -4977,6 +5016,7 @@ static int ext4_commit_super(struct super_block *sb, int sync)
 		return -EIO;
 	}
 
+	/*
 	 * If the file system is mounted read-only, don't update the
 	 * superblock write time.  This avoids updating the superblock
 	 * write time when we are mounting the root file system
@@ -4991,8 +5031,7 @@ static int ext4_commit_super(struct super_block *sb, int sync)
 	if (sb->s_bdev->bd_part)
 		es->s_kbytes_written =
 			cpu_to_le64(EXT4_SB(sb)->s_kbytes_written +
-			    ((part_stat_read(sb->s_bdev->bd_part,
-					     sectors[STAT_WRITE]) -
+			    ((part_stat_read(sb->s_bdev->bd_part, sectors[1]) -
 			      EXT4_SB(sb)->s_sectors_written_start) >> 1));
 	else
 		es->s_kbytes_written =
@@ -5070,6 +5109,7 @@ static int ext4_mark_recovery_complete(struct super_block *sb,
 		ext4_clear_feature_journal_needs_recovery(sb);
 		ext4_commit_super(sb, 1);
 	}
+
 out:
 	jbd2_journal_unlock_updates(journal);
 	return err;
@@ -5321,6 +5361,7 @@ static int ext4_remount(struct super_block *sb, int *flags, char *data)
 		err = -EINVAL;
 		goto restore_opts;
 	}
+
 
 	if ((old_opts.s_mount_opt & EXT4_MOUNT_JOURNAL_CHECKSUM) ^
 	    test_opt(sb, JOURNAL_CHECKSUM)) {

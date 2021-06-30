@@ -2221,6 +2221,7 @@ static void shrink_active_list(unsigned long nr_to_scan,
  */
 static bool inactive_list_is_low(struct lruvec *lruvec, bool file,
 				 struct scan_control *sc, bool trace)
+
 {
 	enum lru_list active_lru = file * LRU_FILE + LRU_ACTIVE;
 	struct pglist_data *pgdat = lruvec_pgdat(lruvec);
@@ -2239,6 +2240,7 @@ static bool inactive_list_is_low(struct lruvec *lruvec, bool file,
 
 	inactive = lruvec_lru_size(lruvec, inactive_lru, sc->reclaim_idx);
 	active = lruvec_lru_size(lruvec, active_lru, sc->reclaim_idx);
+
 
 	/*
 	 * When refaults are being observed, it means a new workingset
@@ -2267,9 +2269,11 @@ static bool inactive_list_is_low(struct lruvec *lruvec, bool file,
 
 static unsigned long shrink_list(enum lru_list lru, unsigned long nr_to_scan,
 				 struct lruvec *lruvec, struct scan_control *sc)
+
 {
 	if (is_active_lru(lru)) {
 		if (inactive_list_is_low(lruvec, is_file_lru(lru), sc, true))
+
 			shrink_active_list(nr_to_scan, lruvec, sc, lru);
 		return 0;
 	}
@@ -3079,6 +3083,7 @@ static void snapshot_refaults(struct mem_cgroup *root_memcg, pg_data_t *pgdat)
 		unsigned long refaults;
 		struct lruvec *lruvec;
 
+
 		lruvec = mem_cgroup_lruvec(pgdat, memcg);
 		refaults = lruvec_page_state(lruvec, WORKINGSET_ACTIVATE);
 		lruvec->refaults = refaults;
@@ -3714,6 +3719,7 @@ static enum zone_type kswapd_classzone_idx(pg_data_t *pgdat,
 {
 	enum zone_type curr_idx = READ_ONCE(pgdat->kswapd_classzone_idx);
 
+
 	return curr_idx == MAX_NR_ZONES ? prev_classzone_idx : curr_idx;
 }
 
@@ -3939,6 +3945,9 @@ void wakeup_kswapd(struct zone *zone, int order, enum zone_type classzone_idx)
 
 	if (READ_ONCE(pgdat->kswapd_order) < order)
 		WRITE_ONCE(pgdat->kswapd_order, order);
+
+
+
 
 	if (!waitqueue_active(&pgdat->kswapd_wait))
 		return;

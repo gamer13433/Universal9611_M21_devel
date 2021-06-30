@@ -1243,11 +1243,13 @@ static int fat_add_new_entries(struct inode *dir, void *slots, int nr_slots,
 			/* Avoid race with userspace read via bdev */
 			lock_buffer(bhs[n]);
 			memcpy(bhs[n]->b_data, slots, copy);
+
 			set_buffer_uptodate(bhs[n]);
 			unlock_buffer(bhs[n]);
 			mark_buffer_dirty_inode(bhs[n], dir);
 			slots += copy;
 			size -= copy;
+
 			if (!size)
 				break;
 			n++;

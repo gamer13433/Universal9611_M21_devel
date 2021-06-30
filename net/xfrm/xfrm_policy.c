@@ -45,6 +45,7 @@ struct xfrm_flo {
 	u8 flags;
 };
 
+
 static DEFINE_SPINLOCK(xfrm_if_cb_lock);
 static struct xfrm_if_cb const __rcu *xfrm_if_cb __read_mostly;
 
@@ -732,6 +733,7 @@ static bool xfrm_policy_mark_match(struct xfrm_policy *policy,
 				   struct xfrm_policy *pol)
 {
 	if (policy->mark.v == pol->mark.v &&
+
 	    policy->priority == pol->priority)
 		return true;
 
@@ -1631,6 +1633,7 @@ static struct dst_entry *xfrm_bundle_create(struct xfrm_policy *policy,
 			family = xfrm[i]->props.family;
 			dst = xfrm_dst_lookup(xfrm[i], tos, fl->flowi_oif,
 					      &saddr, &daddr, family, mark);
+
 			err = PTR_ERR(dst);
 			if (IS_ERR(dst))
 				goto put_states;
@@ -1738,6 +1741,8 @@ static int xfrm_expand_policies(const struct flowi *fl, u16 family,
 
 }
 
+
+
 static struct xfrm_dst *
 xfrm_resolve_and_create_bundle(struct xfrm_policy **pols, int num_pols,
 			       const struct flowi *fl, u16 family,
@@ -1760,6 +1765,8 @@ xfrm_resolve_and_create_bundle(struct xfrm_policy **pols, int num_pols,
 		return ERR_PTR(err);
 	}
 
+
+
 	dst = xfrm_bundle_create(pols[0], xfrm, err, fl, dst_orig);
 	if (IS_ERR(dst)) {
 		XFRM_INC_STATS(net, LINUX_MIB_XFRMOUTBUNDLEGENERROR);
@@ -1771,6 +1778,8 @@ xfrm_resolve_and_create_bundle(struct xfrm_policy **pols, int num_pols,
 	xdst->num_pols = num_pols;
 	memcpy(xdst->pols, pols, sizeof(struct xfrm_policy *) * num_pols);
 	xdst->policy_genid = atomic_read(&pols[0]->genid);
+
+
 
 	return xdst;
 }
@@ -1974,8 +1983,11 @@ static struct xfrm_dst *xfrm_bundle_lookup(struct net *net,
 	if (num_xfrms <= 0)
 		goto make_dummy_bundle;
 
+
 	xdst = xfrm_resolve_and_create_bundle(pols, num_pols, fl, family,
 					      xflo->dst_orig);
+
+
 	if (IS_ERR(xdst)) {
 		err = PTR_ERR(xdst);
 		if (err == -EREMOTE) {
@@ -2073,9 +2085,11 @@ struct dst_entry *xfrm_lookup_with_ifid(struct net *net,
 				goto no_transform;
 			}
 
+
 			xdst = xfrm_resolve_and_create_bundle(
 					pols, num_pols, fl,
 					family, dst_orig);
+
 
 			if (IS_ERR(xdst)) {
 				xfrm_pols_put(pols, num_pols);
@@ -2337,8 +2351,10 @@ int __xfrm_policy_check(struct sock *sk, int dir, struct sk_buff *skb,
 
 	if (ifcb) {
 		xi = ifcb->decode_session(skb);
-		if (xi)
+		if (xi) {
 			if_id = xi->p.if_id;
+			net = xi->net;
+		}
 	}
 	rcu_read_unlock();
 
@@ -2948,6 +2964,8 @@ static struct pernet_operations __net_initdata xfrm_net_ops = {
 
 void __init xfrm_init(void)
 {
+
+
 	register_pernet_subsys(&xfrm_net_ops);
 	seqcount_init(&xfrm_policy_hash_generation);
 	xfrm_input_init();

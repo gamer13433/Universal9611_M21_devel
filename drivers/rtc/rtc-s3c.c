@@ -334,7 +334,7 @@ static int s3c_rtc_setalarm(struct device *dev, struct rtc_wkalrm *alrm)
 	struct rtc_time *tm = &alrm->time;
 	unsigned int alrm_en;
 	int ret;
-	int year = tm->tm_year - 100;
+
 
 	dev_dbg(dev, "s3c_rtc_setalarm: %d, %04d.%02d.%02d %02d:%02d:%02d\n",
 		alrm->enabled,
@@ -363,10 +363,8 @@ static int s3c_rtc_setalarm(struct device *dev, struct rtc_wkalrm *alrm)
 		writeb(bin2bcd(tm->tm_hour), info->base + S3C2410_ALMHOUR);
 	}
 
-	if (year < 100 && year >= 0) {
-		alrm_en |= S3C2410_RTCALM_YEAREN;
-		writew(bin2bcd(year), info->base + S3C2410_ALMYEAR);
-	}
+
+
 
 	if (tm->tm_mon < 12 && tm->tm_mon >= 0) {
 		alrm_en |= S3C2410_RTCALM_MONEN;
@@ -541,14 +539,18 @@ static int s3c_rtc_probe(struct platform_device *pdev)
 	if (!info->data->clock_ctrl_disable) {
 		info->rtc_clk = devm_clk_get(&pdev->dev, "rtc");
 		if (IS_ERR(info->rtc_clk)) {
+
 			dev_err(&pdev->dev, "failed to find rtc clock\n");
 			return PTR_ERR(info->rtc_clk);
+
 		}
 		clk_prepare_enable(info->rtc_clk);
+
 
 		if (info->data->needs_src_clk) {
 			info->rtc_src_clk = devm_clk_get(&pdev->dev, "rtc_src");
 			if (IS_ERR(info->rtc_src_clk)) {
+
 				dev_err(&pdev->dev,
 					"failed to find rtc source clock\n");
 				clk_disable_unprepare(info->rtc_clk);
@@ -556,7 +558,9 @@ static int s3c_rtc_probe(struct platform_device *pdev)
 			}
 			clk_prepare_enable(info->rtc_src_clk);
 		}
+
 	}
+
 	/* check to see if everything is setup correctly */
 	if (info->data->enable)
 		info->data->enable(info);
@@ -567,13 +571,16 @@ static int s3c_rtc_probe(struct platform_device *pdev)
 	device_init_wakeup(&pdev->dev, 1);
 
 	/* Initialize BCD register */
+
 	rtc_tm.tm_year	= 100;
 	rtc_tm.tm_mon	= 0;
 	rtc_tm.tm_mday	= 1;
 	rtc_tm.tm_hour	= 0;
 	rtc_tm.tm_min	= 0;
 	rtc_tm.tm_sec	= 0;
+
 	s3c_rtc_settime(&pdev->dev, &rtc_tm);
+
 
 	/* register RTC and exit */
 	info->rtc = devm_rtc_device_register(&pdev->dev, "s3c", &s3c_rtcops,
@@ -614,6 +621,7 @@ err_nortc:
 
 	if (info->data->needs_src_clk)
 		clk_disable_unprepare(info->rtc_src_clk);
+
 
 	return ret;
 }

@@ -88,6 +88,7 @@ struct avc_callback_node {
 	struct avc_callback_node *next;
 };
 
+
 #ifdef CONFIG_SECURITY_SELINUX_AVC_STATS
 DEFINE_PER_CPU(struct avc_cache_stats, avc_cache_stats) = { 0 };
 #endif
@@ -211,6 +212,7 @@ static void avc_dump_query(struct audit_buffer *ab, struct selinux_state *state,
  */
 void __init avc_init(void)
 {
+
 	avc_node_cachep = kmem_cache_create("avc_node", sizeof(struct avc_node),
 					0, SLAB_PANIC, NULL);
 	avc_xperms_cachep = kmem_cache_create("avc_xperms_node",
@@ -908,6 +910,7 @@ static int avc_update_node(struct selinux_avc *avc,
 		rc = avc_xperms_populate(node, orig->ae.xp_node);
 		if (rc) {
 			avc_node_kill(avc, node);
+
 			goto out_unlock;
 		}
 	}
@@ -1031,6 +1034,7 @@ static noinline int avc_denied(struct selinux_state *state,
 
 	if (enforcing_enabled(state) &&
 	    !(avd->flags & AVD_FLAGS_PERMISSIVE))
+
 		return -EACCES;
 
 	avc_update_node(state->avc, AVC_CALLBACK_GRANT, requested, driver,

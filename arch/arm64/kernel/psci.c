@@ -70,7 +70,7 @@ static int cpu_psci_cpu_disable(unsigned int cpu)
 
 static void cpu_psci_cpu_die(unsigned int cpu)
 {
-	u32 state;
+         u32 state;
 	int ret, affinity_level = 0;
 	/*
 	 * There are no known implementations of PSCI actually using the
@@ -86,9 +86,9 @@ static void cpu_psci_cpu_die(unsigned int cpu)
 			<< PSCI_0_2_POWER_STATE_AFFL_SHIFT)
 			& PSCI_0_2_POWER_STATE_AFFL_MASK);
 
-	ret = psci_ops.cpu_off(state);
+	psci_ops.cpu_off(state);
 
-	pr_crit("unable to power off CPU%u (%d)\n", cpu, ret);
+
 }
 
 static int cpu_psci_cpu_kill(unsigned int cpu)
@@ -117,6 +117,7 @@ static int cpu_psci_cpu_kill(unsigned int cpu)
 		usleep_range(100, 1000);
 	} while (time_before(jiffies, end));
 
+
 	pr_warn("CPU%d may not have shut down cleanly (AFFINITY_INFO reports %d)\n",
 			cpu, err);
 	return -ETIMEDOUT;
@@ -138,4 +139,3 @@ const struct cpu_operations cpu_psci_ops = {
 	.cpu_kill	= cpu_psci_cpu_kill,
 #endif
 };
-

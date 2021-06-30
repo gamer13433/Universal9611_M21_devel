@@ -4,6 +4,7 @@
  *
  * Copyright (c) 2012 Samsung Electronics Co., Ltd.
  *             http://www.samsung.com/
+
  */
 #include <linux/fs.h>
 #include <linux/f2fs_fs.h>
@@ -97,6 +98,7 @@ static struct f2fs_dir_entry *find_in_block(struct page *dentry_page,
 	de = f2fs_find_target_dentry(fname, namehash, max_slots, &d);
 	if (de)
 		*res_page = dentry_page;
+
 
 	return de;
 }
@@ -282,6 +284,7 @@ ino_t f2fs_inode_by_name(struct inode *dir, const struct qstr *qstr,
 	de = f2fs_find_entry(dir, qstr, page);
 	if (de) {
 		res = le32_to_cpu(de->ino);
+
 		f2fs_put_page(*page, 0);
 	}
 
@@ -296,6 +299,7 @@ void f2fs_set_link(struct inode *dir, struct f2fs_dir_entry *de,
 	f2fs_wait_on_page_writeback(page, type, true, true);
 	de->ino = cpu_to_le32(inode->i_ino);
 	set_de_type(de, inode->i_mode);
+
 	set_page_dirty(page);
 
 	dir->i_mtime = dir->i_ctime = current_time(dir);
@@ -395,6 +399,7 @@ struct page *f2fs_init_inode_metadata(struct inode *inode, struct inode *dir,
 		page = f2fs_get_node_page(F2FS_I_SB(dir), inode->i_ino);
 		if (IS_ERR(page))
 			return page;
+
 	}
 
 	if (new_name) {
@@ -514,6 +519,7 @@ int f2fs_add_regular_entry(struct inode *dir, const struct qstr *new_name,
 	}
 
 start:
+
 	if (time_to_inject(F2FS_I_SB(dir), FAULT_DIR_DEPTH)) {
 		f2fs_show_injection_info(FAULT_DIR_DEPTH);
 		return -ENOSPC;
@@ -542,6 +548,7 @@ start:
 						slots, NR_DENTRY_IN_BLOCK);
 		if (bit_pos < NR_DENTRY_IN_BLOCK)
 			goto add_dentry;
+
 
 		f2fs_put_page(dentry_page, 1);
 	}
@@ -576,6 +583,7 @@ add_dentry:
 fail:
 	if (inode)
 		up_write(&F2FS_I(inode)->i_sem);
+
 
 	f2fs_put_page(dentry_page, 1);
 
@@ -630,6 +638,7 @@ int f2fs_do_add_link(struct inode *dir, const struct qstr *name,
 		F2FS_I(dir)->task = NULL;
 	}
 	if (de) {
+
 		f2fs_put_page(page, 0);
 		err = -EEXIST;
 	} else if (IS_ERR(page)) {
@@ -658,6 +667,7 @@ int f2fs_do_tmpfile(struct inode *inode, struct inode *dir)
 	f2fs_update_time(F2FS_I_SB(inode), REQ_TIME);
 fail:
 	up_write(&F2FS_I(inode)->i_sem);
+
 	return err;
 }
 
@@ -694,6 +704,7 @@ void f2fs_delete_entry(struct f2fs_dir_entry *dentry, struct page *page,
 	struct	f2fs_dentry_block *dentry_blk;
 	unsigned int bit_pos;
 	int slots = GET_DENTRY_SLOTS(le16_to_cpu(dentry->name_len));
+
 	int i;
 
 	f2fs_update_time(F2FS_I_SB(dir), REQ_TIME);
@@ -716,6 +727,7 @@ void f2fs_delete_entry(struct f2fs_dir_entry *dentry, struct page *page,
 	bit_pos = find_next_bit_le(&dentry_blk->dentry_bitmap,
 			NR_DENTRY_IN_BLOCK,
 			0);
+
 	set_page_dirty(page);
 
 	dir->i_ctime = dir->i_mtime = current_time(dir);
@@ -765,6 +777,7 @@ bool f2fs_empty_dir(struct inode *dir)
 		bit_pos = find_next_bit_le(&dentry_blk->dentry_bitmap,
 						NR_DENTRY_IN_BLOCK,
 						bit_pos);
+
 
 		f2fs_put_page(dentry_page, 1);
 
@@ -827,6 +840,7 @@ int f2fs_fill_dentries(struct dir_context *ctx, struct f2fs_dentry_ptr *d,
 		if (f2fs_encrypted_inode(d->inode)) {
 			int save_len = fstr->len;
 
+
 			err = fscrypt_fname_disk_to_usr(d->inode,
 						(u32)de->hash_code, 0,
 						&de_name, fstr);
@@ -845,6 +859,7 @@ int f2fs_fill_dentries(struct dir_context *ctx, struct f2fs_dentry_ptr *d,
 
 		if (readdir_ra)
 			f2fs_ra_node_page(sbi, le32_to_cpu(de->ino));
+
 
 		ctx->pos = start_pos + bit_pos;
 	}

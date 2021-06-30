@@ -241,6 +241,8 @@ void __put_cred(struct cred *cred)
 	if (cred->non_rcu)
 		put_cred_rcu(&cred->rcu);
 	else
+
+
 		call_rcu(&cred->rcu, put_cred_rcu);
 }
 EXPORT_SYMBOL(__put_cred);
@@ -821,6 +823,7 @@ const struct cred *override_creds(const struct cred *new)
 	validate_creds(old);
 	validate_creds(new);
 
+
 	/*
 	 * NOTE! This uses 'get_new_cred()' rather than 'get_cred()'.
 	 *
@@ -833,8 +836,11 @@ const struct cred *override_creds(const struct cred *new)
 	 * on the validation in 'get_cred()'.
 	 */
 	get_new_cred((struct cred *)new);
+
+
 	alter_cred_subscribers(new, 1);
 	rcu_assign_pointer(current->cred, new);
+
 	alter_cred_subscribers(old, -1);
 
 	kdebug("override_creds() = %p{%d,%d}", old,

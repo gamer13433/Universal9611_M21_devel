@@ -2004,6 +2004,8 @@ static int inited = 0;
 static DEFINE_MUTEX(clk_debug_lock);
 static HLIST_HEAD(clk_debug_list);
 
+
+
 static void clk_summary_show_one(struct seq_file *s, struct clk_core *c,
 				 int level)
 {
@@ -2173,6 +2175,7 @@ static int clk_debug_create_one(struct clk_core *core, struct dentry *pdentry)
 	core->dentry = d;
 
 	d = debugfs_create_ulong("clk_rate", 0444, core->dentry, &core->rate);
+
 	if (!d)
 		goto err_out;
 
@@ -2182,6 +2185,7 @@ static int clk_debug_create_one(struct clk_core *core, struct dentry *pdentry)
 		goto err_out;
 
 	d = debugfs_create_u32("clk_phase", 0444, core->dentry, &core->phase);
+
 	if (!d)
 		goto err_out;
 
@@ -3021,6 +3025,7 @@ int clk_notifier_register(struct clk *clk, struct notifier_block *nb)
 			goto found;
 
 	/* if clk wasn't in the notifier list, allocate new clk_notifier */
+
 	cn = kzalloc(sizeof(*cn), GFP_KERNEL);
 	if (!cn)
 		goto out;
@@ -3029,6 +3034,8 @@ int clk_notifier_register(struct clk *clk, struct notifier_block *nb)
 	srcu_init_notifier_head(&cn->notifier_head);
 
 	list_add(&cn->node, &clk_notifier_list);
+
+
 
 found:
 	ret = srcu_notifier_chain_register(&cn->notifier_head, nb);
@@ -3064,6 +3071,8 @@ int clk_notifier_unregister(struct clk *clk, struct notifier_block *nb)
 	clk_prepare_lock();
 
 	list_for_each_entry(cn, &clk_notifier_list, node) {
+
+
 		if (cn->clk == clk) {
 			ret = srcu_notifier_chain_unregister(&cn->notifier_head, nb);
 
@@ -3077,6 +3086,8 @@ int clk_notifier_unregister(struct clk *clk, struct notifier_block *nb)
 			}
 			break;
 		}
+
+
 	}
 
 	clk_prepare_unlock();

@@ -111,6 +111,8 @@ static void hub_release(struct kref *kref);
 static int usb_reset_and_verify_device(struct usb_device *udev);
 static int hub_port_disable(struct usb_hub *hub, int port1, int set_state);
 static void hub_set_initial_usb2_lpm_policy(struct usb_device *udev);
+static bool hub_port_warm_reset_required(struct usb_hub *hub, int port1,
+		u16 portstatus);
 
 static inline char *portspeed(struct usb_hub *hub, int portstatus)
 {
@@ -1124,6 +1126,11 @@ static void hub_activate(struct usb_hub *hub, enum hub_activation_type type)
 				usb_clear_port_feature(hdev, port1,
 						   USB_PORT_FEAT_ENABLE);
 		}
+
+		/* Make sure a warm-reset request is handled by port_event */
+		if (type == HUB_RESUME &&
+		    hub_port_warm_reset_required(hub, port1, portstatus))
+			set_bit(port1, hub->event_bits);
 
 		/*
 		 * Add debounce if USB3 link is in polling/link training state.
@@ -3232,6 +3239,7 @@ int usb_port_suspend(struct usb_device *udev, pm_message_t msg)
 	/* disable USB2 hardware LPM */
 	usb_disable_usb2_hardware_lpm(udev);
 
+
 	if (usb_disable_ltm(udev)) {
 		dev_err(&udev->dev, "Failed to disable LTM before suspend\n.");
 		status = -ENOMEM;
@@ -3269,6 +3277,7 @@ int usb_port_suspend(struct usb_device *udev, pm_message_t msg)
  err_ltm:
 		/* Try to enable USB2 hardware LPM again */
 		usb_enable_usb2_hardware_lpm(udev);
+
 
 		if (udev->do_remote_wakeup)
 			(void) usb_disable_remote_wakeup(udev);
@@ -3519,6 +3528,8 @@ int usb_port_resume(struct usb_device *udev, pm_message_t msg)
 		 * sequence.
 		 */
 		status = hub_port_status(hub, port1, &portstatus, &portchange);
+
+
 	}
 
  SuspendCleared:
@@ -3552,6 +3563,7 @@ int usb_port_resume(struct usb_device *udev, pm_message_t msg)
 	} else  {
 		/* Try to enable USB2 hardware LPM */
 		usb_enable_usb2_hardware_lpm(udev);
+
 
 		/* Try to enable USB3 LTM */
 		usb_enable_ltm(udev);
@@ -3997,6 +4009,7 @@ static void usb_enable_link_state(struct usb_hcd *hcd, struct usb_device *udev,
 	 */
 	if (udev->actconfig &&
 	    usb_set_device_initiated_lpm(udev, state, true) == 0) {
+
 		if (state == USB3_LPM_U1)
 			udev->usb3_lpm_u1_enabled = 1;
 		else if (state == USB3_LPM_U2)
@@ -5579,6 +5592,7 @@ static int usb_reset_and_verify_device(struct usb_device *udev)
 	 */
 	usb_disable_usb2_hardware_lpm(udev);
 
+
 	/* Disable LPM and LTM while we reset the device and reinstall the alt
 	 * settings.  Device-initiated LPM settings, and system exit latency
 	 * settings are cleared when the device is reset, so we have to set
@@ -5734,6 +5748,7 @@ int usb_reset_device(struct usb_device *udev)
 	struct usb_hub *hub = usb_hub_to_struct_hub(udev->parent);
 
 	if (udev->state == USB_STATE_NOTATTACHED) {
+
 		dev_dbg(&udev->dev, "device reset not allowed in state %d\n",
 				udev->state);
 		return -EINVAL;

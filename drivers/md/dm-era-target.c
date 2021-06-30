@@ -71,6 +71,7 @@ static size_t bitset_size(unsigned nr_bits)
  */
 static int writeset_alloc(struct writeset *ws, dm_block_t nr_blocks)
 {
+
 	ws->bits = vzalloc(bitset_size(nr_blocks));
 	if (!ws->bits) {
 		DMERR("%s: couldn't allocate in memory bitset", __func__);
@@ -372,6 +373,7 @@ static void ws_inc(void *context, const void *value, unsigned count)
 	for (i = 0; i < count; i++) {
 		memcpy(&ws_d, value + (i * sizeof(ws_d)), sizeof(ws_d));
 		b = le64_to_cpu(ws_d.root);
+
 		dm_tm_inc(md->tm, b);
 	}
 }
@@ -386,6 +388,7 @@ static void ws_dec(void *context, const void *value, unsigned count)
 	for (i = 0; i < count; i++) {
 		memcpy(&ws_d, value + (i * sizeof(ws_d)), sizeof(ws_d));
 		b = le64_to_cpu(ws_d.root);
+
 		dm_bitset_del(&md->bitset_info, b);
 	}
 }
@@ -588,6 +591,7 @@ static int open_metadata(struct era_metadata *md)
 
 	setup_infos(md);
 
+
 	md->nr_blocks = le32_to_cpu(disk->nr_blocks);
 	md->current_era = le32_to_cpu(disk->current_era);
 
@@ -778,6 +782,7 @@ static int metadata_digest_start(struct era_metadata *md, struct digest *d)
 		return 0;
 
 	memset(d, 0, sizeof(*d));
+
 	d->step = metadata_digest_lookup_writeset;
 
 	return 0;
@@ -888,6 +893,7 @@ static int metadata_era_archive(struct era_metadata *md)
 	}
 
 	ws_pack(&md->current_writeset->md, &value);
+
 
 	keys[0] = md->current_era;
 	__dm_bless_for_disk(&value);
@@ -1262,6 +1268,7 @@ static void process_deferred_bios(struct era *era)
 
 	while ((bio = bio_list_pop(&deferred_bios))) {
 		r = writeset_test_and_set(&era->md->bitset_info, ws,
+
 					  get_block(era, bio));
 		if (r < 0) {
 			/*
@@ -1269,6 +1276,7 @@ static void process_deferred_bios(struct era *era)
 			 * FIXME: finish.
 			 */
 			failed = true;
+
 		} else if (r == 0)
 			commit_needed = true;
 
@@ -1516,6 +1524,7 @@ static int era_ctr(struct dm_target *ti, unsigned argc, char **argv)
 		return PTR_ERR(md);
 	}
 	era->md = md;
+
 
 	era->wq = alloc_ordered_workqueue("dm-" DM_MSG_PREFIX, WQ_MEM_RECLAIM);
 	if (!era->wq) {

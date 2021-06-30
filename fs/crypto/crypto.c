@@ -175,9 +175,14 @@ int fscrypt_do_page_crypto(const struct inode *inode, fscrypt_direction_t rw,
 
 	fscrypt_generate_iv(&iv, lblk_num, ci);
 
+
+
+
+
 	req = skcipher_request_alloc(tfm, gfp_flags);
 	if (!req)
 		return -ENOMEM;
+
 
 	skcipher_request_set_callback(
 		req, CRYPTO_TFM_REQ_MAY_BACKLOG | CRYPTO_TFM_REQ_MAY_SLEEP,
@@ -374,6 +379,7 @@ static int fscrypt_d_revalidate(struct dentry *dentry, unsigned int flags)
 		return 0;
 	}
 
+
 	spin_lock(&dentry->d_lock);
 	cached_with_key = dentry->d_flags & DCACHE_ENCRYPTED_WITH_KEY;
 	spin_unlock(&dentry->d_lock);
@@ -410,6 +416,7 @@ const struct dentry_operations fscrypt_d_ops = {
 	.d_delete     = fscrypt_sdp_d_delete,
 #endif
 };
+
 
 void fscrypt_restore_control_page(struct page *page)
 {
@@ -476,6 +483,7 @@ fail:
 	fscrypt_destroy();
 	mutex_unlock(&fscrypt_init_mutex);
 	return res;
+
 }
 
 void fscrypt_msg(struct super_block *sb, const char *level,

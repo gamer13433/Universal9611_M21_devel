@@ -66,6 +66,7 @@ struct cpuhp_cpu_state {
 	bool			rollback;
 	bool			single;
 	bool			bringup;
+
 	struct hlist_node	*node;
 	struct hlist_node	*last;
 	enum cpuhp_state	cb_state;
@@ -1327,6 +1328,7 @@ void smp_shutdown_nonboot_cpus(unsigned int primary_cpu)
 	cpu_maps_update_done();
 }
 
+
 #else
 #define takedown_cpu		NULL
 #endif /*CONFIG_HOTPLUG_CPU*/
@@ -2530,6 +2532,7 @@ int cpuhp_smt_disable(enum cpuhp_smt_control ctrlval)
 	}
 	if (!ret)
 		cpu_smt_control = ctrlval;
+
 
 	cpu_maps_update_done();
 	return ret;

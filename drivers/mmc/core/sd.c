@@ -1229,6 +1229,7 @@ static int _mmc_sd_resume(struct mmc_host *host)
 #else
 	err = mmc_sd_init_card(host, host->card->ocr, host->card);
 #endif
+
 	mmc_card_clr_suspended(host->card);
 
 out:

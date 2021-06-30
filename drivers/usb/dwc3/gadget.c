@@ -269,6 +269,7 @@ void dwc3_gadget_del_and_unmap_request(struct dwc3_ep *dep,
 		list_del(&req->list);
 	req->remaining = 0;
 
+
 	if (req->request.status == -EINPROGRESS)
 		req->request.status = status;
 
@@ -369,6 +370,7 @@ int dwc3_send_gadget_ep_cmd(struct dwc3_ep *dep, unsigned cmd,
 	u32			reg;
 
 	int			cmd_status = 0;
+
 	int			ret = -EINVAL;
 
 	/*
@@ -386,6 +388,7 @@ int dwc3_send_gadget_ep_cmd(struct dwc3_ep *dep, unsigned cmd,
 		if (unlikely(reg & DWC3_GUSB2PHYCFG_SUSPHY)) {
 			saved_config |= DWC3_GUSB2PHYCFG_SUSPHY;
 			reg &= ~DWC3_GUSB2PHYCFG_SUSPHY;
+
 		}
 
 		if (reg & DWC3_GUSB2PHYCFG_ENBLSLPM) {
@@ -399,6 +402,10 @@ int dwc3_send_gadget_ep_cmd(struct dwc3_ep *dep, unsigned cmd,
 
 	if (DWC3_DEPCMD_CMD(cmd) == DWC3_DEPCMD_STARTTRANSFER) {
 		int link_state;
+
+
+
+
 
 		link_state = dwc3_gadget_get_link_state(dwc);
 		if (link_state == DWC3_LINK_STATE_U1 ||
@@ -1090,7 +1097,9 @@ static void __dwc3_prepare_one_trb(struct dwc3_ep *dep, struct dwc3_trb *trb,
 	}
 
 	/* always enable Continue on Short Packet */
+
 	if (usb_endpoint_dir_out(dep->endpoint.desc)) {
+
 		trb->ctrl |= DWC3_TRB_CTRL_CSP;
 
 		if (short_not_ok)
@@ -1108,6 +1117,7 @@ static void __dwc3_prepare_one_trb(struct dwc3_ep *dep, struct dwc3_trb *trb,
 		trb->ctrl |= DWC3_TRB_CTRL_SID_SOFN(stream_id);
 
 	trb->ctrl |= DWC3_TRB_CTRL_HWO;
+
 
 	trace_dwc3_prepare_trb(dep, trb);
 }
@@ -1671,6 +1681,7 @@ int __dwc3_gadget_ep_set_halt(struct dwc3_ep *dep, int value, int protocol)
 		else
 			dep->flags |= DWC3_EP_STALL;
 	} else {
+
 		ret = dwc3_send_clear_stall_ep_cmd(dep);
 		if (ret)
 			dev_err(dwc->dev, "failed to clear STALL on %s\n",
@@ -1765,6 +1776,7 @@ static int __dwc3_gadget_wakeup(struct dwc3 *dwc)
 
 	u8			link_state;
 
+
 	/*
 	 * According to the Databook Remote wakeup request should
 	 * be issued only when the device is in early suspend state.
@@ -1772,6 +1784,8 @@ static int __dwc3_gadget_wakeup(struct dwc3 *dwc)
 	 * We can check that via USB Link State bits in DSTS register.
 	 */
 	reg = dwc3_readl(dwc->regs, DWC3_DSTS);
+
+
 
 	link_state = DWC3_DSTS_USBLNKST(reg);
 
@@ -2022,6 +2036,7 @@ static int dwc3_gadget_run_stop(struct dwc3 *dwc, int is_on, int suspend)
 
 				} while (--retries);
 
+
 				return -ETIMEDOUT;
 			}
 
@@ -2261,8 +2276,10 @@ static int dwc3_gadget_pullup(struct usb_gadget *g, int is_on)
 	if (is_on) {
 		dwc3_soft_reset(dwc);
 
+
 		phy_tune(dwc->usb2_generic_phy, otg->state);
 		phy_tune(dwc->usb3_generic_phy, otg->state);
+
 
 		/**
 		 * In case there is not a resistance to detect VBUS,
@@ -2406,6 +2423,7 @@ static int __dwc3_gadget_start(struct dwc3 *dwc)
 
 	/* begin to receive SETUP packets */
 	dwc->ep0state = EP0_SETUP_PHASE;
+
 	dwc3_ep0_out_start(dwc);
 
 	dwc3_gadget_enable_irq(dwc);
@@ -2484,6 +2502,7 @@ err0:
 static void __dwc3_gadget_stop(struct dwc3 *dwc)
 {
 	dwc3_gadget_disable_irq(dwc);
+
 	__dwc3_gadget_ep_disable(dwc->eps[1]);
 	__dwc3_gadget_ep_disable(dwc->eps[0]);
 }
@@ -3606,6 +3625,7 @@ static void dwc3_gadget_linksts_change_interrupt(struct dwc3 *dwc,
 		if (dwc->speed == USB_SPEED_SUPER)
 			dwc3_suspend_gadget(dwc);
 		break;
+
 	case DWC3_LINK_STATE_U3:
 #ifdef CONFIG_MUIC_SM5713_BC1_2_CERTI
 		printk("usb: sending usb u3 suspend state\n");
@@ -4006,6 +4026,7 @@ int dwc3_gadget_init(struct dwc3 *dwc)
 	dwc->gadget.sg_supported	= true;
 	dwc->gadget.name		= "dwc3-gadget";
 
+
 	/*
 	 * FIXME We might be setting max_speed to <SUPER, however versions
 	 * <2.20a of dwc3 have an issue with metastability (documented
@@ -4097,6 +4118,7 @@ int dwc3_gadget_suspend(struct dwc3 *dwc)
 	dwc3_gadget_run_stop(dwc, false, false);
 	dwc3_disconnect_gadget(dwc);
 	__dwc3_gadget_stop(dwc);
+
 
 	return 0;
 }

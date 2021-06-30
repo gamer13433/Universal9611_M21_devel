@@ -32,6 +32,9 @@ static inline long do_strnlen_user(const char __user *src, unsigned long count, 
 	unsigned long c;
 
 	/*
+
+
+
 	 * Do everything aligned. But that means that we
 	 * need to also expand the maximum..
 	 */

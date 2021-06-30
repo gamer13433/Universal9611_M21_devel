@@ -261,6 +261,7 @@ int scsi_add_host_with_dma(struct Scsi_Host *shost, struct device *dev,
 		goto out_del_gendev;
 
 
+
 	if (shost->transportt->host_size) {
 		shost->shost_data = kzalloc(shost->transportt->host_size,
 					 GFP_KERNEL);
@@ -519,6 +520,8 @@ struct Scsi_Host *scsi_host_alloc(struct scsi_host_template *sht, int privsize)
 	 * dev_name(&shost->shost_dev).
 	 */
 	put_device(&shost->shost_gendev);
+
+
 
 	return NULL;
 }

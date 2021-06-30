@@ -5,6 +5,7 @@
  * Copyright (c) 2012 Samsung Electronics Co., Ltd.
  *             http://www.samsung.com/
  * Copyright (c) 2017 Chao Yu <chao@kernel.org>
+
  */
 #include <linux/compiler.h>
 #include <linux/proc_fs.h>
@@ -594,6 +595,7 @@ static ssize_t __sbi_store(struct f2fs_attr *a,
 	unsigned int *ui;
 	ssize_t ret;
 
+
 	ptr = __struct_ptr(sbi, a->struct_type);
 	if (!ptr)
 		return -EINVAL;
@@ -633,15 +635,19 @@ out:
 		return ret ? ret : count;
 	} else if(!strcmp(a->attr.name, "sec_gc_stat")) {
 		__sec_bigdata_init_value(sbi, a->attr.name);
+
 		return count;
 	} else if (!strcmp(a->attr.name, "sec_io_stat")) {
 		__sec_bigdata_init_value(sbi, a->attr.name);
+
 		return count;
 	} else if (!strcmp(a->attr.name, "sec_fsck_stat")) {
 		__sec_bigdata_init_value(sbi, a->attr.name);
+
 		return count;
 	} else if (!strcmp(a->attr.name, "sec_defrag_stat")) {
 		__sec_bigdata_init_value(sbi, a->attr.name);
+
 		return count;
 	} else if (!strcmp(a->attr.name, "sec_fua_mode")) {
 		const char *mode= strim((char *)buf);
@@ -681,6 +687,7 @@ out:
 	}
 
 	if (!strcmp(a->attr.name, "discard_granularity")) {
+
 		if (t == 0 || t > MAX_PLIST_NUM)
 			return -EINVAL;
 		if (t == *ui)
@@ -720,6 +727,7 @@ out:
 			sbi->gc_mode = GC_NORMAL;
 		return count;
 	}
+
 
 
 	if (!strcmp(a->attr.name, "iostat_enable")) {

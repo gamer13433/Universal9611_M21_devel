@@ -550,6 +550,8 @@ static int atm_tc_init(struct Qdisc *sch, struct nlattr *opt)
 	p->link.common.classid = sch->handle;
 	p->link.ref = 1;
 
+
+
 	err = tcf_block_get(&p->link.block, &p->link.filter_list, sch);
 	if (err)
 		return err;

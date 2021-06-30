@@ -4,6 +4,7 @@
  *
  * Copyright (c) 2012 Samsung Electronics Co., Ltd.
  *             http://www.samsung.com/
+
  */
 #include <linux/fs.h>
 #include <linux/f2fs_fs.h>
@@ -100,6 +101,7 @@ bool f2fs_available_free_memory(struct f2fs_sb_info *sbi, int type)
 
 static void clear_node_page_dirty(struct page *page)
 {
+
 	if (PageDirty(page)) {
 		f2fs_clear_radix_tree_dirty_tag(page);
 		clear_page_dirty_for_io(page);
@@ -117,6 +119,7 @@ static struct page *get_next_nat_page(struct f2fs_sb_info *sbi, nid_t nid)
 {
 	struct page *src_page;
 	struct page *dst_page;
+
 	pgoff_t dst_off;
 	void *src_addr;
 	void *dst_addr;
@@ -207,6 +210,7 @@ static unsigned int __gang_lookup_nat_cache(struct f2fs_nm_info *nm_i,
 
 static void __del_from_nat_cache(struct f2fs_nm_info *nm_i, struct nat_entry *e)
 {
+
 	radix_tree_delete(&nm_i->nat_root, nat_get_nid(e));
 	nm_i->nat_cnt--;
 	__free_nat_entry(e);
@@ -255,6 +259,7 @@ static void __set_nat_cache_dirty(struct f2fs_nm_info *nm_i,
 		goto refresh_list;
 
 	nm_i->dirty_nat_cnt++;
+
 	set_nat_flag(ne, IS_DIRTY, true);
 refresh_list:
 	spin_lock(&nm_i->nat_list_lock);
@@ -461,6 +466,7 @@ static void set_node_addr(struct f2fs_sb_info *sbi, struct node_info *ni,
 	if (nat_get_blkaddr(e) != NEW_ADDR && new_blkaddr == NULL_ADDR) {
 		unsigned char version = nat_get_version(e);
 		nat_set_version(e, inc_node_version(version));
+
 	}
 
 	/* change address */
@@ -570,6 +576,7 @@ int f2fs_get_node_info(struct f2fs_sb_info *sbi, nid_t nid,
 	f2fs_put_page(page, 1);
 cache:
 	/* cache nat entry */
+
 	cache_nat_entry(sbi, nid, &ne);
 	return 0;
 }
@@ -1146,6 +1153,7 @@ int f2fs_truncate_xattr_node(struct inode *inode)
 
 	f2fs_i_xnid_write(inode, 0);
 
+
 	return 0;
 }
 
@@ -1434,6 +1442,7 @@ iput_out:
 	iput(inode);
 }
 
+
 static struct page *last_fsync_dnode(struct f2fs_sb_info *sbi, nid_t ino)
 {
 	pgoff_t index;
@@ -1443,6 +1452,7 @@ static struct page *last_fsync_dnode(struct f2fs_sb_info *sbi, nid_t ino)
 
 	pagevec_init(&pvec, 0);
 	index = 0;
+
 
 	while ((nr_pages = pagevec_lookup_tag(&pvec, NODE_MAPPING(sbi), &index,
 				PAGECACHE_TAG_DIRTY))) {
@@ -1539,6 +1549,7 @@ static int __write_node_page(struct page *page, bool atomic, bool *submitted,
 	} else {
 		down_read(&sbi->node_write);
 	}
+
 
 	/* This page is already truncated */
 	if (unlikely(ni.blk_addr == NULL_ADDR)) {
@@ -1662,6 +1673,7 @@ int f2fs_fsync_node_pages(struct f2fs_sb_info *sbi, struct inode *inode,
 retry:
 	pagevec_init(&pvec, 0);
 	index = 0;
+
 
 	while ((nr_pages = pagevec_lookup_tag(&pvec, NODE_MAPPING(sbi), &index,
 				PAGECACHE_TAG_DIRTY))) {
@@ -1823,6 +1835,7 @@ int f2fs_sync_node_pages(struct f2fs_sb_info *sbi,
 next_step:
 	index = 0;
 
+
 	while (!done && (nr_pages = pagevec_lookup_tag(&pvec,
 			NODE_MAPPING(sbi), &index, PAGECACHE_TAG_DIRTY))) {
 		int i;
@@ -1882,6 +1895,9 @@ continue_unlock:
 			}
 write_node:
 			f2fs_wait_on_page_writeback(page, NODE, true, true);
+
+
+
 
 			if (!clear_page_dirty_for_io(page))
 				goto continue_unlock;
@@ -2000,6 +2016,7 @@ static int f2fs_write_node_pages(struct address_space *mapping,
 	trace_f2fs_writepages(mapping->host, wbc, NODE);
 
 	diff = nr_pages_to_write(sbi, NODE, wbc);
+
 	blk_start_plug(&plug);
 	f2fs_sync_node_pages(sbi, wbc, true, FS_NODE_IO);
 	blk_finish_plug(&plug);
@@ -2228,11 +2245,13 @@ static int scan_nat_page(struct f2fs_sb_info *sbi,
 	unsigned int nat_ofs = NAT_BLOCK_OFFSET(start_nid);
 	int i;
 
+
 	__set_bit_le(nat_ofs, nm_i->nat_block_bitmap);
 
 	i = start_nid % NAT_ENTRY_PER_BLOCK;
 
 	for (; i < NAT_ENTRY_PER_BLOCK; i++, start_nid++) {
+
 		if (unlikely(start_nid >= nm_i->max_nid))
 			break;
 
@@ -2258,6 +2277,7 @@ static int scan_nat_page(struct f2fs_sb_info *sbi,
 
 static void scan_curseg_cache(struct f2fs_sb_info *sbi)
 {
+
 	struct curseg_info *curseg = CURSEG_I(sbi, CURSEG_HOT_DATA);
 	struct f2fs_journal *journal = curseg->journal;
 	int i;
@@ -2305,6 +2325,7 @@ static void scan_free_nid_bits(struct f2fs_sb_info *sbi)
 	}
 out:
 	scan_curseg_cache(sbi);
+
 
 	up_read(&nm_i->nat_tree_lock);
 }
@@ -2378,6 +2399,7 @@ static int __f2fs_build_free_nids(struct f2fs_sb_info *sbi,
 	/* find free nids from current sum_pages */
 	scan_curseg_cache(sbi);
 
+
 	up_read(&nm_i->nat_tree_lock);
 
 	f2fs_ra_meta_pages(sbi, NAT_BLOCK_OFFSET(nm_i->next_scan_nid),
@@ -2431,6 +2453,7 @@ bool f2fs_alloc_nid(struct f2fs_sb_info *sbi, nid_t *nid)
 	struct f2fs_nm_info *nm_i = NM_I(sbi);
 	struct free_nid *i = NULL;
 retry:
+
 	if (time_to_inject(sbi, FAULT_ALLOC_NID)) {
 		f2fs_show_injection_info(FAULT_ALLOC_NID);
 		return false;

@@ -119,6 +119,7 @@ void __init check_bugs(void)
 
 	arch_smt_update();
 
+
 #ifdef CONFIG_X86_32
 	/*
 	 * Check whether we are able to run this kernel safely on SMP.
@@ -753,6 +754,7 @@ spectre_v2_user_select_mitigation(enum spectre_v2_mitigation_cmd v2_cmd)
 		pr_info("mitigation: Enabling %s Indirect Branch Prediction Barrier\n",
 			static_key_enabled(&switch_mm_always_ibpb) ?
 			"always-on" : "conditional");
+
 	}
 
 	/*
@@ -948,6 +950,7 @@ specv2_set_mode:
 
 	/* Set up IBPB and STIBP depending on the general spectre V2 command */
 	spectre_v2_user_select_mitigation(cmd);
+
 }
 
 static void update_stibp_msr(void * __unused)
@@ -986,6 +989,8 @@ static void update_indir_branch_cond(void)
 
 /* Update the static key controlling the MDS CPU buffer clear in idle */
 static void update_mds_branch_idle(void)
+
+
 {
 	/*
 	 * Enable the idle clearing if SMT is active on CPUs which are
@@ -1176,6 +1181,7 @@ static enum ssb_mitigation __init __ssb_select_mitigation(void)
 			x86_amd_ssb_disable();
 		} else {
 			x86_spec_ctrl_base |= SPEC_CTRL_SSBD;
+
 			wrmsrl(MSR_IA32_SPEC_CTRL, x86_spec_ctrl_base);
 		}
 	}
@@ -1273,6 +1279,7 @@ static int ib_prctl_set(struct task_struct *task, unsigned long ctrl)
 		 */
 		if (!is_spec_ib_user_controlled() ||
 		    task_spec_ib_force_disable(task))
+
 			return -EPERM;
 
 		task_clear_spec_ib_disable(task);
@@ -1289,6 +1296,7 @@ static int ib_prctl_set(struct task_struct *task, unsigned long ctrl)
 			return -EPERM;
 
 		if (!is_spec_ib_user_controlled())
+
 			return 0;
 
 		task_set_spec_ib_disable(task);
@@ -1354,6 +1362,7 @@ static int ib_prctl_get(struct task_struct *task)
 	    spectre_v2_user_stibp == SPECTRE_V2_USER_NONE)
 		return PR_SPEC_ENABLE;
 	else if (is_spec_ib_user_controlled()) {
+
 		if (task_spec_ib_force_disable(task))
 			return PR_SPEC_PRCTL | PR_SPEC_FORCE_DISABLE;
 		if (task_spec_ib_disable(task))

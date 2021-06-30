@@ -40,6 +40,7 @@ void arch_set_freq_scale(struct cpumask *cpus, unsigned long cur_freq,
 		per_cpu(freq_scale, i) = scale;
 		per_cpu(max_cpu_freq, i) = max_freq;
 	}
+
 }
 
 void arch_set_max_freq_scale(struct cpumask *cpus,
@@ -190,12 +191,14 @@ int detect_share_cap_flag(void)
 			cpumask_equal(topology_sibling_cpumask(cpu),
 				  policy->related_cpus)) {
 			share_cap_level = share_cap_thread;
+			cpufreq_cpu_put(policy);
 			continue;
 		}
 
 		if (cpumask_equal(topology_core_cpumask(cpu),
 				  policy->related_cpus)) {
 			share_cap_level = share_cap_core;
+			cpufreq_cpu_put(policy);
 			continue;
 		}
 
@@ -208,8 +211,11 @@ int detect_share_cap_flag(void)
 		if (cpumask_equal(cpu_cpu_mask(cpu),
 				  policy->related_cpus)) {
 			share_cap_level = share_cap_die;
+			cpufreq_cpu_put(policy);
 			continue;
 		}
+
+		cpufreq_cpu_put(policy);
 	}
 
 	if (share_cap != share_cap_level) {
@@ -403,6 +409,7 @@ void topology_normalize_cpu_scale(void)
 	pr_debug("cpu_capacity: capacity_scale=%u\n", capacity_scale);
 	mutex_lock(&cpu_scale_mutex);
 	for_each_possible_cpu(cpu) {
+
 		capacity = (raw_capacity[cpu] << SCHED_CAPACITY_SHIFT)
 			/ capacity_scale;
 		topology_set_cpu_scale(cpu, capacity);

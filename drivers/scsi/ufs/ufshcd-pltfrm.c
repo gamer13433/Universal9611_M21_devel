@@ -389,6 +389,8 @@ int ufshcd_pltfrm_init(struct platform_device *pdev,
 
 	ufshcd_parse_pm_lvl_policy(hba);
 	ufshcd_parse_caps_info(hba);
+
+
 	ufshcd_init_lanes_per_dir(hba);
 
 	err = ufshcd_init(hba, mmio_base, irq);
@@ -403,6 +405,8 @@ int ufshcd_pltfrm_init(struct platform_device *pdev,
 	pm_runtime_enable(&pdev->dev);
 
 	return 0;
+
+
 
 dealloc_host:
 	ufshcd_dealloc_host(hba);

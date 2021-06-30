@@ -584,6 +584,7 @@ int __page_mapcount(struct page *page);
  */
 static inline int page_mapcount(struct page *page)
 {
+
 	if (unlikely(PageCompound(page)))
 		return __page_mapcount(page);
 	return atomic_read(&page->_mapcount) + 1;

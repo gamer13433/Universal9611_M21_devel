@@ -123,6 +123,7 @@ find_and_lock_process_key(const char *prefix,
 		goto invalid;
 	}
 
+
 	if (payload->size < min_keysize) {
 		fscrypt_warn(NULL,
 			     "key with description '%s' is too short (got %u bytes, need %u+ bytes)",
@@ -193,6 +194,7 @@ static struct fscrypt_mode available_modes[] = {
 static struct fscrypt_mode *
 select_encryption_mode(const struct fscrypt_info *ci, const struct inode *inode)
 {
+
 	if (!fscrypt_valid_enc_modes(ci->ci_data_mode, ci->ci_filename_mode)) {
 		fscrypt_warn(inode->i_sb,
 			     "inode %lu uses unsupported encryption modes (contents mode %d, filenames mode %d)",
@@ -288,9 +290,11 @@ err:
 }
 
 static void put_inline_crypt_info(void *ci)
+
 {
 	if (!ci)
 		return;
+
 
 	blk_crypt_put_context(ci);
 }
@@ -708,6 +712,7 @@ int fscrypt_get_encryption_info(struct inode *inode)
 		if (fscrypt_sdp_is_classified(crypt_info)) {
 			res = derive_fek(inode, &ctx, crypt_info, raw_key, mode->keysize);
 			if (res)
+
 				goto out;
 			fscrypt_sdp_update_conv_status(crypt_info);
 			goto sdp_dek;
@@ -716,6 +721,7 @@ int fscrypt_get_encryption_info(struct inode *inode)
 #endif
 
 	res = find_and_derive_key(inode, &ctx, raw_key, mode);
+
 	if (res)
 		goto out;
 

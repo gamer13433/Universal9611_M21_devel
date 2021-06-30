@@ -829,6 +829,7 @@ static int fuse_check_page(struct page *page)
 {
 	if (page_mapcount(page) ||
 	    page->mapping != NULL ||
+
 	    (page->flags & PAGE_FLAGS_CHECK_AT_PREP &
 	     ~(1 << PG_locked |
 	       1 << PG_referenced |
@@ -964,6 +965,7 @@ static int fuse_ref_page(struct fuse_copy_state *cs, struct page *page,
 	fuse_copy_finish(cs);
 
 	buf = cs->pipebufs;
+
 	buf->page = page;
 	buf->offset = offset;
 	buf->len = count;
@@ -2013,6 +2015,8 @@ static ssize_t fuse_dev_splice_write(struct pipe_inode_info *pipe,
 	if (rem < len)
 		goto out_free;
 
+
+
 	rem = len;
 	while (rem) {
 		struct pipe_buffer *ibuf;
@@ -2058,6 +2062,7 @@ out_free:
 	for (idx = 0; idx < nbuf; idx++)
 		pipe_buf_release(pipe, &bufs[idx]);
 	pipe_unlock(pipe);
+
 
 	kfree(bufs);
 	return ret;

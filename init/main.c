@@ -115,6 +115,7 @@ void __init __weak defex_load_rules(void) { }
 static int kernel_init(void *);
 
 extern void init_IRQ(void);
+
 extern void radix_tree_init(void);
 
 /*
@@ -710,6 +711,8 @@ asmlinkage __visible void __init start_kernel(void)
 	if (!IS_ERR_OR_NULL(after_dashes))
 		parse_args("Setting init args", after_dashes, NULL, 0, -1, -1,
 			   NULL, set_init_arg);
+
+
 
 	/*
 	 * These use large bootmem allocations and must precede

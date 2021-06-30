@@ -102,6 +102,7 @@ static void __proc_set_tty(struct tty_struct *tty)
 	put_pid(tty->session);
 	put_pid(tty->pgrp);
 	tty->pgrp = get_pid(task_pgrp(current));
+
 	tty->session = get_pid(task_session(current));
 	spin_unlock_irqrestore(&tty->ctrl_lock, flags);
 	if (current->signal->tty) {
@@ -292,6 +293,7 @@ void disassociate_ctty(int on_exit)
 	spin_lock_irq(&current->sighand->siglock);
 	put_pid(current->signal->tty_old_pgrp);
 	current->signal->tty_old_pgrp = NULL;
+
 	tty = tty_kref_get(current->signal->tty);
 	spin_unlock_irq(&current->sighand->siglock);
 
@@ -308,6 +310,7 @@ void disassociate_ctty(int on_exit)
 		tty_unlock(tty);
 		tty_kref_put(tty);
 	}
+
 
 	/* Now clear signal->tty under the lock */
 	read_lock(&tasklist_lock);
@@ -480,6 +483,8 @@ static int tiocspgrp(struct tty_struct *tty, struct tty_struct *real_tty, pid_t 
 	if (retval)
 		return retval;
 
+
+
 	if (get_user(pgrp_nr, p))
 		return -EFAULT;
 	if (pgrp_nr < 0)
@@ -501,8 +506,10 @@ static int tiocspgrp(struct tty_struct *tty, struct tty_struct *real_tty, pid_t 
 	if (session_of_pgrp(pgrp) != task_session(current))
 		goto out_unlock;
 	retval = 0;
+
 	put_pid(real_tty->pgrp);
 	real_tty->pgrp = get_pid(pgrp);
+
 out_unlock:
 	rcu_read_unlock();
 out_unlock_ctrl:
@@ -518,6 +525,8 @@ out_unlock_ctrl:
  *
  *	Obtain the session id of the tty. If there is no session
  *	return an error.
+
+
  */
 static int tiocgsid(struct tty_struct *tty, struct tty_struct *real_tty, pid_t __user *p)
 {
@@ -542,6 +551,7 @@ static int tiocgsid(struct tty_struct *tty, struct tty_struct *real_tty, pid_t _
 err:
 	spin_unlock_irqrestore(&real_tty->ctrl_lock, flags);
 	return -ENOTTY;
+
 }
 
 /*

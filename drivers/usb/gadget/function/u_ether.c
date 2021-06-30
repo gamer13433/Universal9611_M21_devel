@@ -53,9 +53,10 @@
 #define UETH__VERSION	"29-May-2008"
 
 /* Experiments show that both Linux and Windows hosts allow up to 16k
- * frame sizes. Set the max size to 15k+52 to prevent allocating 32k
+ * frame sizes. Set the max MTU size to 15k+52 to prevent allocating 32k
  * blocks and still have efficient handling. */
-#define GETHER_MAX_ETH_FRAME_LEN 15412
+#define GETHER_MAX_MTU_SIZE 15412
+#define GETHER_MAX_ETH_FRAME_LEN (GETHER_MAX_MTU_SIZE + ETH_HLEN)
 
 static struct workqueue_struct	*uether_wq;
 
@@ -105,6 +106,7 @@ struct eth_dev {
 #define	WORK_RX_MEMORY		0
 
 	bool			zlp;
+
 	u8			host_mac[ETH_ALEN];
 	u8			dev_mac[ETH_ALEN];
 	int 			no_of_zlp;
@@ -220,6 +222,7 @@ static void rx_complete(struct usb_ep *ep, struct usb_request *req);
 static int
 rx_submit(struct eth_dev *dev, struct usb_request *req, gfp_t gfp_flags)
 {
+
 	struct sk_buff	*skb;
 	int		retval = -ENOMEM;
 	size_t		size = 0;
@@ -231,6 +234,7 @@ rx_submit(struct eth_dev *dev, struct usb_request *req, gfp_t gfp_flags)
 		out = dev->port_usb->out_ep;
 	else
 		out = NULL;
+
 
 	if (!out)
 	{
@@ -252,6 +256,7 @@ rx_submit(struct eth_dev *dev, struct usb_request *req, gfp_t gfp_flags)
 	 */
 	size += sizeof(struct ethhdr) + dev->net->mtu + RX_EXTRA;
 	size += dev->port_usb->header_len;
+
 	size += out->maxpacket - 1;
 	size -= size % out->maxpacket;
 
@@ -273,6 +278,7 @@ rx_submit(struct eth_dev *dev, struct usb_request *req, gfp_t gfp_flags)
 	 * but on at least one, checksumming fails otherwise.  Note:
 	 * RNDIS headers involve variable numbers of LE32 values.
 	 */
+
 	skb_reserve(skb, NET_IP_ALIGN);
 
 	req->buf = skb->data;
@@ -288,6 +294,7 @@ enomem:
 		DBG(dev, "rx submit --> %d\n", retval);
 		if (skb)
 			dev_kfree_skb_any(skb);
+
 	}
 	return retval;
 }
@@ -327,6 +334,7 @@ static void rx_complete(struct usb_ep *ep, struct usb_request *req)
 		}
 		if (!status)
 			queue = 1;
+
 		break;
 
 	/* software-driven interface shutdown */
@@ -356,6 +364,7 @@ quiesce:
 		break;
 	}
 
+
 clean:
 	spin_lock(&dev->req_lock);
 	list_add(&req->list, &dev->rx_reqs);
@@ -363,6 +372,7 @@ clean:
 
 	if (queue)
 		queue_work(uether_wq, &dev->rx_work);
+
 }
 
 
@@ -567,6 +577,7 @@ static void tx_complete(struct usb_ep *ep, struct usb_request *req)
 		/* FALLTHROUGH */
 	case -ECONNRESET:		/* unlink */
 	case -ESHUTDOWN:		/* disconnect etc */
+
 		break;
 	case 0:
 		if (!req->zero && !dev->zlp)
@@ -660,6 +671,7 @@ static void tx_complete(struct usb_ep *ep, struct usb_request *req)
 		spin_unlock(&dev->req_lock);
 		dev_kfree_skb_any(skb);
 	}
+
 
 	if (netif_carrier_ok(dev->net))
 		netif_wake_queue(dev->net);
@@ -882,6 +894,7 @@ static netdev_tx_t eth_start_xmit(struct sk_buff *skb,
 			 * later which is not a dropped frame.
 			 */
 			if (dev->port_usb->supports_multi_frame)
+
 				goto multiframe;
 			goto drop;
 		}
@@ -943,6 +956,7 @@ static netdev_tx_t eth_start_xmit(struct sk_buff *skb,
 	retval = tx_task(dev, req);
 #else
 	req->complete = tx_complete;
+
 
 	req->zero = 0;
 	if ((length % in->maxpacket) == 0) {
@@ -1205,6 +1219,10 @@ struct eth_dev *gether_setup_name(struct usb_gadget *g,
 
 	net->ethtool_ops = &ops;
 
+	/* MTU range: 14 - 15412 */
+	net->min_mtu = ETH_HLEN;
+	net->max_mtu = GETHER_MAX_MTU_SIZE;
+
 	dev->gadget = g;
 	SET_NETDEV_DEV(net, &g->dev);
 	SET_NETDEV_DEVTYPE(net, &gadget_type);
@@ -1271,6 +1289,10 @@ struct net_device *gether_setup_name_default(const char *netname)
 	/* MTU range: 14 - 15412 */
 	net->min_mtu = ETH_HLEN;
 	net->max_mtu = GETHER_MAX_ETH_FRAME_LEN;
+
+	/* MTU range: 14 - 15412 */
+	net->min_mtu = ETH_HLEN;
+	net->max_mtu = GETHER_MAX_MTU_SIZE;
 
 	return net;
 }
@@ -1341,8 +1363,10 @@ int gether_get_dev_addr(struct net_device *net, char *dev_addr, int len)
 {
 	struct eth_dev *dev;
 
+
 	dev = netdev_priv(net);
 	return get_ether_addr_str(dev->dev_mac, dev_addr, len);
+
 }
 EXPORT_SYMBOL_GPL(gether_get_dev_addr);
 
@@ -1363,8 +1387,10 @@ int gether_get_host_addr(struct net_device *net, char *host_addr, int len)
 {
 	struct eth_dev *dev;
 
+
 	dev = netdev_priv(net);
 	return get_ether_addr_str(dev->host_mac, host_addr, len);
+
 }
 EXPORT_SYMBOL_GPL(gether_get_host_addr);
 
@@ -1411,6 +1437,7 @@ EXPORT_SYMBOL_GPL(gether_get_qmult);
 
 int gether_get_ifname(struct net_device *net, char *name, int len)
 {
+
 	rtnl_lock();
 	strlcpy(name, netdev_name(net), len);
 	rtnl_unlock();
@@ -1491,7 +1518,9 @@ struct net_device *gether_connect(struct gether *link)
 #endif
 
 
+
 	dev->zlp = link->is_zlp_ok;
+
 	DBG(dev, "qlen %d\n", qlen(dev->gadget, dev->qmult));
 
 	dev->header_len = link->header_len;
@@ -1515,6 +1544,7 @@ struct net_device *gether_connect(struct gether *link)
 	netif_carrier_on(dev->net);
 	if (netif_running(dev->net))
 		eth_start(dev, GFP_ATOMIC);
+
 
 fail0:
 	/* caller is responsible for cleanup on error */

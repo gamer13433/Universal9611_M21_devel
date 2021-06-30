@@ -104,6 +104,7 @@
 
 struct selinux_state selinux_state;
 
+
 /* SECMARK reference count */
 static atomic_t selinux_secmark_refcount = ATOMIC_INIT(0);
 
@@ -531,6 +532,9 @@ static int may_context_mount_inode_relabel(u32 sid,
 
 static int selinux_is_genfs_special_handling(struct super_block *sb)
 {
+
+
+
 	/* Special handling. Genfs but also in-core setxattr handler */
 	return	!strcmp(sb->s_type->name, "sysfs") ||
 		!strcmp(sb->s_type->name, "pstore") ||
@@ -1768,6 +1772,7 @@ out:
 			isec->initialized = LABEL_INVALID;
 			goto out_unlock;
 		}
+
 		isec->initialized = LABEL_INITIALIZED;
 		isec->sid = sid;
 	}
@@ -3278,6 +3283,7 @@ static int selinux_inode_permission(struct inode *inode, int mask)
 			pr_err("SELinux : inode->i_security is not initialized. not fixed.\n");
 	}
 // ] SEC_SELINUX_PORTING_COMMON
+
 
 	audited = avc_audit_required(perms, &avd, rc,
 				     from_access ? FILE__AUDIT_ACCESS : 0,
@@ -5373,6 +5379,7 @@ static int selinux_nlmsg_perm(struct sock *sk, struct sk_buff *skb)
 	while (data_len >= nlmsg_total_size(0)) {
 		nlh = (struct nlmsghdr *)data;
 
+
 		/* NOTE: the nlmsg_len field isn't reliably set by some netlink
 		 *       users which means we can't reject skb's with bogus
 		 *       length fields; our solution is to follow what
@@ -5389,6 +5396,7 @@ static int selinux_nlmsg_perm(struct sock *sk, struct sk_buff *skb)
 				return rc;
 		} else if (rc == -EINVAL) {
 			/* -EINVAL is a missing msg/perm mapping */
+
 			pr_warn_ratelimited("SELinux: unrecognized netlink"
 				" message: protocol=%hu nlmsg_type=%hu sclass=%s"
 				" pid=%d comm=%s\n",
@@ -5415,6 +5423,8 @@ static int selinux_nlmsg_perm(struct sock *sk, struct sk_buff *skb)
 	}
 
 	return rc;
+
+
 }
 
 #ifdef CONFIG_NETFILTER
@@ -6953,6 +6963,16 @@ static struct security_hook_list selinux_hooks[] __lsm_ro_after_init_kdp = {
 	LSM_HOOK_INIT(bpf_map_free_security, selinux_bpf_map_free),
 	LSM_HOOK_INIT(bpf_prog_free_security, selinux_bpf_prog_free),
 #endif
+
+#ifdef CONFIG_BPF_SYSCALL
+	LSM_HOOK_INIT(bpf, selinux_bpf),
+	LSM_HOOK_INIT(bpf_map, selinux_bpf_map),
+	LSM_HOOK_INIT(bpf_prog, selinux_bpf_prog),
+	LSM_HOOK_INIT(bpf_map_alloc_security, selinux_bpf_map_alloc),
+	LSM_HOOK_INIT(bpf_prog_alloc_security, selinux_bpf_prog_alloc),
+	LSM_HOOK_INIT(bpf_map_free_security, selinux_bpf_map_free),
+	LSM_HOOK_INIT(bpf_prog_free_security, selinux_bpf_prog_free),
+#endif
 };
 
 static __init int selinux_init(void)
@@ -7139,6 +7159,7 @@ static void selinux_nf_ip_exit(void)
 
 #ifdef CONFIG_SECURITY_SELINUX_DISABLE
 int selinux_disable(struct selinux_state *state)
+
 {
 	if (state->initialized) {
 		/* Not permitted after initial policy load. */
@@ -7153,6 +7174,7 @@ int selinux_disable(struct selinux_state *state)
 	state->disabled = 1;
 
 	printk(KERN_INFO "SELinux:  Disabled at runtime.\n");
+
 
 	selinux_enabled = 0;
 

@@ -24,8 +24,10 @@
 #include <linux/ip.h>
 #include <linux/ipv6.h>
 #include <net/ip6_checksum.h>
+
 #include <linux/usb/cdc.h>
 #include <linux/suspend.h>
+
 
 #include "compatibility.h"
 
@@ -465,6 +467,7 @@ enum spd_duplex {
 
 /* OCP_PHY_STATUS */
 #define PHY_STAT_MASK		0x0007
+
 #define PHY_STAT_LAN_ON		3
 #define PHY_STAT_PWRDN		5
 
@@ -552,6 +555,7 @@ enum spd_duplex {
 /* SRAM_IMPEDANCE */
 #define RX_DRIVING_MASK		0x6000
 
+
 enum rtl_register_content {
 	_1000bps	= 0x10,
 	_100bps		= 0x08,
@@ -599,12 +603,15 @@ enum rtl8152_flags {
 	SELECTIVE_SUSPEND,
 	PHY_RESET,
 	SCHEDULE_NAPI,
+
 };
 
 /* Define these values to match your device */
 #define VENDOR_ID_REALTEK		0x0bda
+
 #define VENDOR_ID_SAMSUNG		0x04e8
 #define VENDOR_ID_LENOVO		0x17ef
+
 #define VENDOR_ID_TPLINK		0x2357
 #define VENDOR_ID_NVIDIA		0x0955
 
@@ -1167,6 +1174,7 @@ out1:
 	return ret;
 }
 
+
 static int set_ethernet_addr(struct r8152 *tp)
 {
 	struct net_device *dev = tp->netdev;
@@ -1365,6 +1373,7 @@ static void intr_callback(struct urb *urb)
 		}
 	} else {
 		if (netif_carrier_ok(tp->netdev)) {
+
 			set_bit(RTL8152_LINK_CHG, &tp->flags);
 			schedule_delayed_work(&tp->schedule, 0);
 		}
@@ -1435,6 +1444,7 @@ static int alloc_all_mem(struct r8152 *tp)
 	spin_lock_init(&tp->rx_lock);
 	spin_lock_init(&tp->tx_lock);
 	INIT_LIST_HEAD(&tp->tx_free);
+
 	skb_queue_head_init(&tp->tx_queue);
 	skb_queue_head_init(&tp->rx_queue);
 
@@ -1889,6 +1899,7 @@ static int rx_bottom(struct r8152 *tp, int budget)
 	struct list_head *cursor, *next, rx_queue;
 	int ret = 0, work_done = 0;
 
+
 	if (!skb_queue_empty(&tp->rx_queue)) {
 		while (work_done < budget) {
 			struct sk_buff *skb = __skb_dequeue(&tp->rx_queue);
@@ -1957,6 +1968,7 @@ static int rx_bottom(struct r8152 *tp, int budget)
 			struct net_device_stats *stats;
 			unsigned int pkt_len;
 			struct sk_buff *skb;
+
 
 			pkt_len = le32_to_cpu(rx_desc->opts1) & RX_LEN_MASK;
 			if (pkt_len < ETH_ZLEN)
@@ -2127,7 +2139,9 @@ static inline int __r8152_poll(struct r8152 *tp, int budget)
 		napi_complete(napi);
 		if (!list_empty(&tp->rx_done))
 			napi_schedule(napi);
+
 	}
+
 
 	return work_done;
 }
@@ -2580,11 +2594,14 @@ static void r8153_set_rx_early_size(struct r8152 *tp)
 	ocp_write_word(tp, MCU_TYPE_USB, USB_RX_EARLY_SIZE, ocp_data);
 
 	switch (tp->version) {
+
 	case RTL_VER_08:
 	case RTL_VER_09:
+
 		r8153b_rx_agg_chg_indicate(tp);
 		break;
 	default:
+
 		break;
 	}
 }
@@ -2802,6 +2819,7 @@ static void __rtl_set_wol(struct r8152 *tp, u32 wolopts)
 		device_set_wakeup_enable(&tp->udev->dev, false);
 }
 
+
 static void r8153_u1u2en(struct r8152 *tp, bool enable)
 {
 	u8 u1u2[8];
@@ -2839,6 +2857,9 @@ static void r8153_u2p3en(struct r8152 *tp, bool enable)
 	ocp_write_word(tp, MCU_TYPE_USB, USB_U2P3_CTRL, ocp_data);
 }
 
+
+
+
 static void r8153b_ups_en(struct r8152 *tp, bool enable)
 {
 	u32 ocp_data;
@@ -2862,6 +2883,7 @@ static void r8153b_ups_en(struct r8152 *tp, bool enable)
 		ocp_data = ocp_read_word(tp, MCU_TYPE_USB, USB_MISC_0);
 		ocp_data &= ~PCUT_STATUS;
 		ocp_write_word(tp, MCU_TYPE_USB, USB_MISC_0, ocp_data);
+
 	}
 }
 
@@ -2954,6 +2976,9 @@ static void rtl8153_runtime_enable(struct r8152 *tp, bool enable)
 	rtl_runtime_suspend_enable(tp, enable);
 	tp->rtl_ops.u1u2_enable(tp, !enable);
 	tp->rtl_ops.u2p3_enable(tp, !enable);
+
+
+
 }
 
 static void rtl8153b_runtime_enable(struct r8152 *tp, bool enable)
@@ -5092,6 +5117,7 @@ static void r8153_hw_phy_cfg(struct r8152 *tp)
 	r8153_aldps_en(tp, true);
 	r8152b_enable_fc(tp);
 
+
 	set_bit(PHY_RESET, &tp->flags);
 }
 
@@ -5186,6 +5212,7 @@ static void r8153b_hw_phy_cfg(struct r8152 *tp)
 	r8153b_aldps_en(tp, true);
 	r8153b_enable_fc(tp);
 
+
 	set_bit(PHY_RESET, &tp->flags);
 }
 
@@ -5193,6 +5220,7 @@ static void r8153_first_init(struct r8152 *tp)
 {
 	u32 ocp_data;
 	int i;
+
 
 	rxdy_gated_en(tp, true);
 	r8153_teredo_off(tp);
@@ -5269,6 +5297,7 @@ static void r8153_enter_oob(struct r8152 *tp)
 {
 	u32 ocp_data;
 	int i;
+
 
 	ocp_data = ocp_read_byte(tp, MCU_TYPE_PLA, PLA_OOB_CTRL);
 	ocp_data &= ~NOW_IS_OOB;
@@ -5512,6 +5541,7 @@ static void rtl8153_down(struct r8152 *tp)
 	tp->rtl_ops.aldps_enable(tp, true);
 }
 
+
 static bool rtl8152_in_nway(struct r8152 *tp)
 {
 	u16 nway_state;
@@ -5541,6 +5571,7 @@ static bool rtl8153_in_nway(struct r8152 *tp)
 static void set_carrier(struct r8152 *tp)
 {
 	struct net_device *netdev = tp->netdev;
+
 	u8 speed;
 
 	speed = rtl8152_get_speed(tp);
@@ -5553,6 +5584,7 @@ static void set_carrier(struct r8152 *tp)
 			netif_carrier_on(netdev);
 			rtl_start_rx(tp);
 			napi_enable(&tp->napi);
+
 		}
 	} else {
 		if (netif_carrier_ok(netdev)) {
@@ -5566,6 +5598,7 @@ static void set_carrier(struct r8152 *tp)
 
 static inline void __rtl_work_func(struct r8152 *tp)
 {
+
 	/* If the device is unplugged or !netif_running(), the workqueue
 	 * doesn't need to wake the device, and could return directly.
 	 */
@@ -5602,6 +5635,7 @@ out1:
 
 static inline void __rtl_hw_phy_work_func(struct r8152 *tp)
 {
+
 	if (test_bit(RTL8152_UNPLUG, &tp->flags))
 		return;
 
@@ -5707,6 +5741,8 @@ static int rtl8152_open(struct net_device *netdev)
 
 	usb_autopm_put_interface(tp->intf);
 
+
+
 out:
 	pr_info("%s : end of function!\n", __func__);
 	return res;
@@ -5717,6 +5753,7 @@ static int rtl8152_close(struct net_device *netdev)
 	struct r8152 *tp = netdev_priv(netdev);
 	int res = 0;
 	int timeleft = -1;
+
 
 	clear_bit(WORK_ENABLE, &tp->flags);
 	usb_kill_urb(tp->intr_urb);
@@ -5840,7 +5877,9 @@ static void r8153_init(struct r8152 *tp)
 		if (ocp_read_word(tp, MCU_TYPE_PLA, PLA_BOOT_CTRL) &
 		    AUTOLOAD_DONE)
 			break;
+
 		msleep(20);
+
 	}
 
 	for (i = 0; i < 500; i++) {
@@ -5925,8 +5964,11 @@ static void r8153_init(struct r8152 *tp)
 
 	ocp_write_word(tp, MCU_TYPE_USB, USB_CONNECT_TIMER, 0x0001);
 
+
 	r8153_power_cut_en(tp, false);
 	r8153_u1u2en(tp, true);
+
+
 
 	/* MAC clock speed down */
 	ocp_write_word(tp, MCU_TYPE_PLA, PLA_MAC_PWR_CTRL, 0);
@@ -5968,7 +6010,9 @@ static void r8153b_init(struct r8152 *tp)
 		if (ocp_read_word(tp, MCU_TYPE_PLA, PLA_BOOT_CTRL) &
 		    AUTOLOAD_DONE)
 			break;
+
 		msleep(20);
+
 	}
 
 	for (i = 0; i < 500; i++) {
@@ -6002,12 +6046,15 @@ static void r8153b_init(struct r8152 *tp)
 	r8153B_power_cut_en(tp, false);
 	r8153b_ups_en(tp, false);
 	r8153b_queue_wake(tp, false);
+
 	r8153b_u1u2en(tp, true);
+
 
 	/* MAC clock speed down */
 	ocp_data = ocp_read_word(tp, MCU_TYPE_PLA, PLA_MAC_PWR_CTRL2);
 	ocp_data |= MAC_CLK_SPDWN_EN;
 	ocp_write_word(tp, MCU_TYPE_PLA, PLA_MAC_PWR_CTRL2, ocp_data);
+
 
 	rtl_tally_reset(tp);
 
@@ -6032,6 +6079,7 @@ static int rtl8152_pre_reset(struct usb_interface *intf)
 	netdev = tp->netdev;
 	if (!netif_running(netdev))
 		return 0;
+
 
 	napi_disable(&tp->napi);
 	clear_bit(WORK_ENABLE, &tp->flags);
@@ -6063,12 +6111,14 @@ static int rtl8152_post_reset(struct usb_interface *intf)
 	if (netif_carrier_ok(netdev)) {
 		mutex_lock(&tp->control);
 		tp->rtl_ops.enable(tp);
+
 		rtl8152_set_rx_mode(netdev);
 		mutex_unlock(&tp->control);
 		netif_wake_queue(netdev);
 	}
 
 	napi_enable(&tp->napi);
+
 
 	return 0;
 }
@@ -6093,6 +6143,7 @@ static bool delay_autosuspend(struct r8152 *tp)
 	 */
 	if (!sw_linking && tp->rtl_ops.in_nway(tp))
 		return true;
+
 	else
 		return false;
 }
@@ -6100,7 +6151,9 @@ static bool delay_autosuspend(struct r8152 *tp)
 static int rtl8152_rumtime_suspend(struct r8152 *tp)
 {
 	struct net_device *netdev = tp->netdev;
+
 	int ret = 0;
+
 
 	if (netif_running(netdev) && test_bit(WORK_ENABLE, &tp->flags)) {
 		u32 rcr = 0;
@@ -6122,6 +6175,7 @@ static int rtl8152_rumtime_suspend(struct r8152 *tp)
 			if (!(ocp_data & RXFIFO_EMPTY)) {
 				rxdy_gated_en(tp, false);
 				ocp_write_dword(tp, MCU_TYPE_PLA, PLA_RCR, rcr);
+
 				ret = -EBUSY;
 				goto out1;
 			}
@@ -6139,6 +6193,7 @@ static int rtl8152_rumtime_suspend(struct r8152 *tp)
 			ocp_write_dword(tp, MCU_TYPE_PLA, PLA_RCR, rcr);
 			napi_enable(&tp->napi);
 		}
+
 	}
 
 	set_bit(SELECTIVE_SUSPEND, &tp->flags);
@@ -6155,6 +6210,7 @@ static int rtl8152_system_suspend(struct r8152 *tp)
 	netif_device_detach(netdev);
 
 	if (netif_running(netdev) && test_bit(WORK_ENABLE, &tp->flags)) {
+
 		clear_bit(WORK_ENABLE, &tp->flags);
 		usb_kill_urb(tp->intr_urb);
 		napi_disable(&tp->napi);
@@ -6186,6 +6242,7 @@ static int rtl8152_suspend(struct usb_interface *intf, pm_message_t message)
 static int rtl8152_resume(struct usb_interface *intf)
 {
 	struct r8152 *tp = usb_get_intfdata(intf);
+
 
 	mutex_lock(&tp->control);
 
@@ -6223,6 +6280,7 @@ static int rtl8152_reset_resume(struct usb_interface *intf)
 	struct r8152 *tp = usb_get_intfdata(intf);
 
 	clear_bit(SELECTIVE_SUSPEND, &tp->flags);
+
 	tp->rtl_ops.init(tp);
 	queue_delayed_work(system_long_wq, &tp->hw_phy_work, 0);
 	set_ethernet_addr(tp);
@@ -7162,6 +7220,7 @@ static void rtl8153_unload(struct r8152 *tp)
 
 static void rtl_fake_enable(struct r8152 *tp, bool enable)
 {
+
 }
 
 static int rtl_ops_init(struct r8152 *tp)
@@ -7245,10 +7304,12 @@ static int rtl_ops_init(struct r8152 *tp)
 	return ret;
 }
 
+
 static int rtl8152_probe(struct usb_interface *intf,
 			 const struct usb_device_id *id)
 {
 	struct usb_device *udev = interface_to_usbdev(intf);
+
 	struct r8152 *tp;
 	struct net_device *netdev;
 	int ret;
@@ -7262,8 +7323,7 @@ static int rtl8152_probe(struct usb_interface *intf,
 		return -ENODEV;
 	}
 
-	if (intf->cur_altsetting->desc.bNumEndpoints < 3)
-		return -ENODEV;
+
 
 	usb_reset_device(udev);
 	netdev = alloc_etherdev(sizeof(struct r8152));
@@ -7279,6 +7339,7 @@ static int rtl8152_probe(struct usb_interface *intf,
 	tp->udev = udev;
 	tp->netdev = netdev;
 	tp->intf = intf;
+
 
 	r8152b_get_version(tp);
 	ret = rtl_ops_init(tp);
@@ -7344,6 +7405,7 @@ static int rtl8152_probe(struct usb_interface *intf,
 
 	intf->needs_remote_wakeup = 1;
 
+
 	if (!rtl_can_wakeup(tp))
 		__rtl_set_wol(tp, 0);
 	else
@@ -7361,6 +7423,7 @@ static int rtl8152_probe(struct usb_interface *intf,
 		netif_err(tp, probe, netdev, "couldn't register the device\n");
 		goto out1;
 	}
+
 
 	if (tp->saved_wolopts)
 		device_set_wakeup_enable(&udev->dev, true);

@@ -153,6 +153,7 @@ int aarch32_setup_vectors_page(struct linux_binprm *bprm, int uses_interp)
 		goto out;
 	}
 
+
 	ret = _install_special_mapping(mm, addr, PAGE_SIZE,
 				       VM_READ|VM_EXEC|
 				       VM_MAYREAD|VM_MAYWRITE|VM_MAYEXEC,
@@ -212,6 +213,7 @@ static int __init vdso_mappings_init(const char *name,
 	/* Grab the vDSO data page. */
 	vdso_pagelist[0] = phys_to_page(__pa_symbol(vdso_data));
 
+
 	/* Grab the vDSO code pages. */
 	pfn = sym_to_pfn(code_start);
 
@@ -265,12 +267,14 @@ arch_initcall(vdso_init);
 static int vdso_setup(struct mm_struct *mm,
 		      const struct vdso_mappings *mappings)
 {
+
 	unsigned long vdso_base, vdso_text_len, vdso_mapping_len;
 	void *ret;
 
 	vdso_text_len = mappings->num_code_pages << PAGE_SHIFT;
 	/* Be sure to map the data page */
 	vdso_mapping_len = vdso_text_len + PAGE_SIZE;
+
 
 	vdso_base = get_unmapped_area(NULL, 0, vdso_mapping_len, 0, 0);
 	if (IS_ERR_VALUE(vdso_base))
@@ -283,6 +287,7 @@ static int vdso_setup(struct mm_struct *mm,
 		return PTR_ERR_OR_ZERO(ret);
 
 	vdso_base += PAGE_SIZE;
+
 	ret = _install_special_mapping(mm, vdso_base, vdso_text_len,
 				       VM_READ|VM_EXEC|
 				       VM_MAYREAD|VM_MAYWRITE|VM_MAYEXEC,
@@ -315,6 +320,7 @@ int aarch32_setup_vectors_page(struct linux_binprm *bprm, int uses_interp)
 #endif
 
 	up_write(&mm->mmap_sem);
+
 
 	return PTR_ERR_OR_ZERO(ret);
 }
@@ -368,6 +374,7 @@ void update_vsyscall(struct timekeeper *tk)
 							tk->tkr_mono.shift;
 	vdso_data->wtm_clock_sec		= tk->wall_to_monotonic.tv_sec;
 	vdso_data->wtm_clock_nsec		= tk->wall_to_monotonic.tv_nsec;
+
 
 #ifdef USE_SYSCALL
 	if (!(use_syscall & USE_SYSCALL)) {

@@ -742,4 +742,3 @@ do {										\
 } while (0)
 
 #endif /* _ASM_X86_UACCESS_H */
-

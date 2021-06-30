@@ -1577,6 +1577,7 @@ static struct dentry *ext4_lookup(struct inode *dir, struct dentry *dentry, unsi
 	inode = NULL;
 	if (bh) {
 		__u32 ino = le32_to_cpu(de->inode);
+
 		if (!ext4_valid_inum(dir->i_sb, ino)) {
 			printk(KERN_ERR "Name of directory entry has bad");
 			print_bh(dir->i_sb, bh, 0, EXT4_BLOCK_SIZE(dir->i_sb));
@@ -2287,10 +2288,12 @@ again:
 						   (frame - 1)->bh);
 			if (err)
 				goto journal_error;
+
 			err = ext4_handle_dirty_dx_node(handle, dir,
 							frame->bh);
 			if (err)
 				goto journal_error;
+
 		} else {
 			struct dx_root *dxroot;
 			memcpy((char *) entries2, (char *) entries,
@@ -2743,6 +2746,7 @@ bool ext4_empty_dir(struct inode *inode)
 	    le32_to_cpu(de->inode) != inode->i_ino || strcmp(".", de->name)) {
 		ext4_warning_inode(inode, "directory missing '.'");
 		print_bh(sb, bh, 0, EXT4_BLOCK_SIZE(sb));
+
 		brelse(bh);
 		return true;
 	}
@@ -2768,11 +2772,14 @@ bool ext4_empty_dir(struct inode *inode)
 			}
 			if (IS_ERR(bh))
 				return true;
+
 		}
 		de = (struct ext4_dir_entry_2 *) (bh->b_data +
 					(offset & (sb->s_blocksize - 1)));
 		if (ext4_check_dir_entry(inode, NULL, de, bh,
 					 bh->b_data, bh->b_size, offset)) {
+
+
 			offset = (offset | (sb->s_blocksize - 1)) + 1;
 			continue;
 		}
@@ -2781,6 +2788,7 @@ bool ext4_empty_dir(struct inode *inode)
 			return false;
 		}
 		offset += ext4_rec_len_from_disk(de->rec_len, sb->s_blocksize);
+
 	}
 	brelse(bh);
 	return true;
@@ -3024,7 +3032,7 @@ static int ext4_rmdir(struct inode *dir, struct dentry *dentry)
 	inode->i_size = 0;
 	ext4_orphan_add(handle, inode);
 	inode->i_ctime = dir->i_ctime = dir->i_mtime = current_time(inode);
-	/* @fs.sec -- 868333f69f69eab81cceeb26fac51f0b4de49c70 -- */
+
 	/* log unlinker's uid or first 4 bytes of comm
 	 * to ext4_inode->i_version_hi */
 	inode->i_version &= 0x00000000FFFFFFFF;
@@ -3090,6 +3098,8 @@ static int ext4_unlink(struct inode *dir, struct dentry *dentry)
 
 	if (IS_DIRSYNC(dir))
 		ext4_handle_sync(handle);
+
+
 
 	retval = ext4_delete_entry(handle, dir, de, bh);
 	if (retval)
@@ -3265,7 +3275,7 @@ static int ext4_link(struct dentry *old_dentry,
 		return -EMLINK;
 	if (ext4_encrypted_inode(dir) &&
 			!fscrypt_has_permitted_context(dir, inode))
-		return -EPERM;
+		return -EXDEV;
 
        if ((ext4_test_inode_flag(dir, EXT4_INODE_PROJINHERIT)) &&
 	   (!projid_eq(EXT4_I(dir)->i_projid,
@@ -3427,6 +3437,8 @@ static int ext4_setent(handle_t *handle, struct ext4_renament *ent,
 			return retval;
 		}
 	}
+
+
 
 	return 0;
 }
@@ -3626,7 +3638,7 @@ static int ext4_rename(struct inode *old_dir, struct dentry *old_dentry,
 	if ((old.dir != new.dir) &&
 	    ext4_encrypted_inode(new.dir) &&
 	    !fscrypt_has_permitted_context(new.dir, old.inode)) {
-		retval = -EPERM;
+		retval = -EXDEV;
 		goto release_bh;
 	}
 
@@ -3653,12 +3665,14 @@ static int ext4_rename(struct inode *old_dir, struct dentry *old_dentry,
 		if (IS_ERR(handle)) {
 			retval = PTR_ERR(handle);
 			goto release_bh;
+
 		}
 	} else {
 		whiteout = ext4_whiteout_for_rename(&old, credits, &handle);
 		if (IS_ERR(whiteout)) {
 			retval = PTR_ERR(whiteout);
 			goto release_bh;
+
 		}
 	}
 
@@ -3689,6 +3703,7 @@ static int ext4_rename(struct inode *old_dir, struct dentry *old_dentry,
 	 */
 	force_reread = (new.dir->i_ino == old.dir->i_ino &&
 			ext4_test_inode_flag(new.dir, EXT4_INODE_INLINE_DATA));
+
 
 	if (whiteout) {
 		/*
@@ -3761,6 +3776,8 @@ static int ext4_rename(struct inode *old_dir, struct dentry *old_dentry,
 	retval = 0;
 
 end_rename:
+
+
 	if (whiteout) {
 		if (retval) {
 			ext4_resetent(handle, &old,
@@ -3772,6 +3789,7 @@ end_rename:
 		ext4_journal_stop(handle);
 		iput(whiteout);
 	} else {
+
 		ext4_journal_stop(handle);
 	}
 release_bh:
@@ -3810,7 +3828,7 @@ static int ext4_cross_rename(struct inode *old_dir, struct dentry *old_dentry,
 	    (old_dir != new_dir) &&
 	    (!fscrypt_has_permitted_context(new_dir, old.inode) ||
 	     !fscrypt_has_permitted_context(old_dir, new.inode)))
-		return -EPERM;
+		return -EXDEV;
 
 	if ((ext4_test_inode_flag(new_dir, EXT4_INODE_PROJINHERIT) &&
 	     !projid_eq(EXT4_I(new_dir)->i_projid,

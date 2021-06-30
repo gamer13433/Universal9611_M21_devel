@@ -246,13 +246,8 @@ static int idletimer_resume(struct notifier_block *notifier,
 	switch (pm_event) {
 	case PM_SUSPEND_PREPARE:
 		get_monotonic_boottime(&timer->last_suspend_time);
-		timer->suspend_time_valid = true;
 		break;
 	case PM_POST_SUSPEND:
-		if (!timer->suspend_time_valid)
-			break;
-		timer->suspend_time_valid = false;
-
 		spin_lock_bh(&timestamp_lock);
 		if (!timer->active) {
 			spin_unlock_bh(&timestamp_lock);
@@ -272,6 +267,7 @@ static int idletimer_resume(struct notifier_block *notifier,
 				timer->timer.expires = 0;
 				timer->active = false;
 				timer->work_pending = true;
+
 				schedule_work(&timer->work);
 			}
 		}
@@ -418,6 +414,8 @@ static unsigned int idletimer_tg_target(struct sk_buff *skb,
 
 	info->timer->active = true;
 
+
+
 	if (time_before(info->timer->timer.expires, now)) {
 		schedule_work(&info->timer->work);
 		pr_debug("Starting timer %s (Expired, Jiffies): %lu, %lu\n",
@@ -457,6 +455,7 @@ static int idletimer_tg_checkentry(const struct xt_tgchk_param *par)
 	if (info->timer) {
 		info->timer->refcnt++;
 		reset_timer(info, NULL);
+
 		pr_debug("increased refcnt of timer %s to %u\n",
 			 info->label, info->timer->refcnt);
 	} else {
@@ -486,6 +485,7 @@ static void idletimer_tg_destroy(const struct xt_tgdtor_param *par)
 
 		list_del(&info->timer->entry);
 		del_timer_sync(&info->timer->timer);
+
 		sysfs_remove_file(idletimer_tg_kobj, &info->timer->attr.attr);
 		unregister_pm_notifier(&info->timer->pm_nb);
 		cancel_work_sync(&info->timer->work);

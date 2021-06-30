@@ -441,6 +441,9 @@ int verity_fec_decode(struct dm_verity *v, struct dm_verity_io *io,
 
 	fio->level++;
 
+
+		block = block - v->hash_start + v->data_blocks;
+
 	/*
 	 * For RS(M, N), the continuous FEC data is divided into blocks of N
 	 * bytes. Since block size may not be divisible by N, the last block

@@ -1846,6 +1846,7 @@ static inline void rq_last_tick_reset(struct rq *rq)
 #endif
 }
 
+
 extern void activate_task(struct rq *rq, struct task_struct *p, int flags);
 extern void deactivate_task(struct rq *rq, struct task_struct *p, int flags);
 

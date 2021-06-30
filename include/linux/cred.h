@@ -159,6 +159,7 @@ struct cred {
 		int non_rcu;			/* Can we skip RCU deletion? */
 		struct rcu_head	rcu;		/* RCU deletion hook */
 	};
+
 } __randomize_layout;
 
 #ifdef CONFIG_RKP_KDP

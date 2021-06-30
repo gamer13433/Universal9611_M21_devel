@@ -228,6 +228,7 @@ repeat:
 	}
 
 	write_unlock_irq(&tasklist_lock);
+
 	release_thread(p);
 	call_rcu(&p->rcu, delayed_put_task_struct);
 
@@ -590,6 +591,8 @@ static struct task_struct *find_child_reaper(struct task_struct *father,
 
 	write_unlock_irq(&tasklist_lock);
 
+
+
 	list_for_each_entry_safe(p, n, dead, ptrace_entry) {
 		list_del_init(&p->ptrace_entry);
 		release_task(p);
@@ -833,12 +836,17 @@ void __noreturn do_exit(long code)
 	if (unlikely(tsk->flags & PF_EXITING)) {
 		pr_alert("Fixing recursive fault but reboot is needed!\n");
 		futex_exit_recursive(tsk);
+
+
 		set_current_state(TASK_UNINTERRUPTIBLE);
 		schedule();
 	}
 
 	exit_signals(tsk);  /* sets PF_EXITING */
 	sync_band(tsk, LEAVE_BAND);
+
+
+
 
 
 	/* sync mm's RSS info before statistics gathering */
@@ -918,6 +926,8 @@ void __noreturn do_exit(long code)
 	 * Make sure we are holding no locks:
 	 */
 	debug_check_no_locks_held();
+
+
 
 	if (tsk->io_context)
 		exit_io_context(tsk);
@@ -1638,6 +1648,7 @@ SYSCALL_DEFINE5(waitid, int, which, pid_t, upid, struct siginfo __user *,
 	if (!user_access_begin(VERIFY_WRITE, infop, sizeof(*infop)))
 		return -EFAULT;
 
+
 	unsafe_put_user(signo, &infop->si_signo, Efault);
 	unsafe_put_user(0, &infop->si_errno, Efault);
 	unsafe_put_user(info.cause, &infop->si_code, Efault);
@@ -1764,6 +1775,7 @@ COMPAT_SYSCALL_DEFINE5(waitid,
 
 	if (!user_access_begin(VERIFY_WRITE, infop, sizeof(*infop)))
 		return -EFAULT;
+
 
 	unsafe_put_user(signo, &infop->si_signo, Efault);
 	unsafe_put_user(0, &infop->si_errno, Efault);

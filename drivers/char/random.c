@@ -438,6 +438,7 @@ static int crng_init_cnt = 0;
 static unsigned long crng_global_init_time = 0;
 #define CRNG_INIT_CNT_THRESH (2*CHACHA_KEY_SIZE)
 static void _extract_crng(struct crng_state *crng, __u8 out[CHACHA_BLOCK_SIZE]);
+
 static void _crng_backtrack_protect(struct crng_state *crng,
 				    __u8 tmp[CHACHA_BLOCK_SIZE], int used);
 static void process_random_ready_list(void);
@@ -2207,6 +2208,7 @@ struct batched_entropy {
 	spinlock_t batch_lock;
 };
 
+
 /*
  * Get a random word for internal kernel use only. The quality of the random
  * number is good as /dev/urandom, but there is no backtrack protection, with
@@ -2223,19 +2225,25 @@ u64 get_random_u64(void)
 {
 	u64 ret;
 	unsigned long flags;
+
 	struct batched_entropy *batch;
 	static void *previous;
+
 
 	warn_unseeded_randomness(&previous);
 
 	batch = raw_cpu_ptr(&batched_entropy_u64);
 	spin_lock_irqsave(&batch->batch_lock, flags);
+
+
 	if (batch->position % ARRAY_SIZE(batch->entropy_u64) == 0) {
 		extract_crng((u8 *)batch->entropy_u64);
 		batch->position = 0;
 	}
 	ret = batch->entropy_u64[batch->position++];
 	spin_unlock_irqrestore(&batch->batch_lock, flags);
+
+
 	return ret;
 }
 EXPORT_SYMBOL(get_random_u64);
@@ -2247,19 +2255,25 @@ u32 get_random_u32(void)
 {
 	u32 ret;
 	unsigned long flags;
+
 	struct batched_entropy *batch;
 	static void *previous;
+
 
 	warn_unseeded_randomness(&previous);
 
 	batch = raw_cpu_ptr(&batched_entropy_u32);
 	spin_lock_irqsave(&batch->batch_lock, flags);
+
+
 	if (batch->position % ARRAY_SIZE(batch->entropy_u32) == 0) {
 		extract_crng((u8 *)batch->entropy_u32);
 		batch->position = 0;
 	}
 	ret = batch->entropy_u32[batch->position++];
 	spin_unlock_irqrestore(&batch->batch_lock, flags);
+
+
 	return ret;
 }
 EXPORT_SYMBOL(get_random_u32);
@@ -2272,6 +2286,7 @@ static void invalidate_batched_entropy(void)
 {
 	int cpu;
 	unsigned long flags;
+
 
 	for_each_possible_cpu (cpu) {
 		struct batched_entropy *batched_entropy;
@@ -2286,6 +2301,7 @@ static void invalidate_batched_entropy(void)
 		batched_entropy->position = 0;
 		spin_unlock_irqrestore(&batched_entropy->batch_lock, flags);
 	}
+
 }
 
 /**

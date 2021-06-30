@@ -95,7 +95,9 @@ struct bbr {
 	u32     mode:3,		     /* current bbr_mode in state machine */
 		prev_ca_state:3,     /* CA state on previous ACK */
 		packet_conservation:1,  /* use packet conservation? */
+
 		round_start:1,	     /* start of packet-timed tx->ack round? */
+
 		idle_restart:1,	     /* restarting after idle? */
 		probe_rtt_round_done:1,  /* a BBR_PROBE_RTT round at 4 pkts? */
 		unused:13,
@@ -325,6 +327,7 @@ static u32 bbr_tso_segs_goal(struct sock *sk)
 {
 	struct tcp_sock *tp = tcp_sk(sk);
 
+
 	return  bbr_tso_segs_generic(sk, tp->mss_cache, GSO_MAX_SIZE);
 }
 
@@ -367,6 +370,7 @@ static void bbr_cwnd_event(struct sock *sk, enum tcp_ca_event event)
  * builds a smaller queue, it becomes more vulnerable to noise in RTT
  * measurements (e.g., delayed ACKs or other ACK compression effects). This
  * noise may cause BBR to under-estimate the rate.
+
  */
 static u32 bbr_bdp(struct sock *sk, u32 bw, int gain)
 {
@@ -481,6 +485,7 @@ static bool bbr_set_cwnd_to_recover_or_restore(
 	}
 	bbr->prev_ca_state = state;
 
+
 	if (bbr->packet_conservation) {
 		*new_cwnd = max(cwnd, tcp_packets_in_flight(tp) + acked);
 		return true;	/* yes, using packet conservation */
@@ -514,6 +519,7 @@ static void bbr_set_cwnd(struct sock *sk, const struct rate_sample *rs,
 	target_cwnd = bbr_quantization_budget(sk, target_cwnd);
 
 	/* If we're below target cwnd, slow start cwnd toward target cwnd. */
+
 	if (bbr_full_bw_reached(sk))  /* only cut cwnd if we filled the pipe */
 		cwnd = min(cwnd + acked, target_cwnd);
 	else if (cwnd < target_cwnd || tp->delivered < TCP_INIT_CWND)
@@ -571,6 +577,7 @@ static void bbr_advance_cycle_phase(struct sock *sk)
 
 	bbr->cycle_idx = (bbr->cycle_idx + 1) & (CYCLE_LEN - 1);
 	bbr->cycle_mstamp = tp->delivered_mstamp;
+
 }
 
 /* Gain cycling: cycle pacing gain to converge to fair share of available bw. */
@@ -588,6 +595,7 @@ static void bbr_reset_startup_mode(struct sock *sk)
 	struct bbr *bbr = inet_csk_ca(sk);
 
 	bbr->mode = BBR_STARTUP;
+
 }
 
 static void bbr_reset_probe_bw_mode(struct sock *sk)
@@ -595,6 +603,7 @@ static void bbr_reset_probe_bw_mode(struct sock *sk)
 	struct bbr *bbr = inet_csk_ca(sk);
 
 	bbr->mode = BBR_PROBE_BW;
+
 	bbr->cycle_idx = CYCLE_LEN - 1 - prandom_u32_max(bbr_cycle_rand);
 	bbr_advance_cycle_phase(sk);	/* flip to next phase of gain cycle */
 }
@@ -933,6 +942,7 @@ static void bbr_update_min_rtt(struct sock *sk, const struct rate_sample *rs)
 	if (bbr_probe_rtt_mode_ms > 0 && filter_expired &&
 	    !bbr->idle_restart && bbr->mode != BBR_PROBE_RTT) {
 		bbr->mode = BBR_PROBE_RTT;  /* dip, drain queue */
+
 		bbr_save_cwnd(sk);  /* note cwnd so we can restore it */
 		bbr->probe_rtt_done_stamp = 0;
 	}
@@ -1009,6 +1019,7 @@ static void bbr_main(struct sock *sk, const struct rate_sample *rs)
 
 	bw = bbr_bw(sk);
 	bbr_set_pacing_rate(sk, bw, bbr->pacing_gain);
+
 	bbr_set_cwnd(sk, rs, rs->acked_sacked, bw, bbr->cwnd_gain);
 }
 
@@ -1033,6 +1044,7 @@ static void bbr_init(struct sock *sk)
 
 	bbr->has_seen_rtt = 0;
 	bbr_init_pacing_rate_from_rtt(sk);
+
 
 	bbr->round_start = 0;
 	bbr->idle_restart = 0;

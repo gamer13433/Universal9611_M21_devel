@@ -875,7 +875,11 @@ static void tun_net_uninit(struct net_device *dev)
 /* Net device open. */
 static int tun_net_open(struct net_device *dev)
 {
+
+
 	netif_tx_start_all_queues(dev);
+
+
 
 	return 0;
 }
