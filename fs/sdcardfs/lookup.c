@@ -198,6 +198,7 @@ static struct dentry *__sdcardfs_interpose(struct dentry *dentry,
 
 	ret_dentry = d_splice_alias(inode, dentry);
 	dentry = ret_dentry ?: dentry;
+
 out:
 	return ret_dentry;
 }
@@ -256,6 +257,7 @@ static struct dentry *__sdcardfs_lookup(struct dentry *dentry,
 	struct dentry *lower_dentry;
 	const struct qstr *name;
 	struct path lower_path;
+
 	struct dentry *ret_dentry = NULL;
 	struct sdcardfs_sb_info *sbi;
 

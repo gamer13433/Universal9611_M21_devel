@@ -971,7 +971,6 @@ enum lru_status binder_alloc_free_page(struct list_head *item,
 		zap_page_range(vma, page_addr, PAGE_SIZE);
 
 		trace_binder_unmap_user_end(alloc, index);
-
 	}
 	up_write(&mm->mmap_sem);
 	mmput(mm);
@@ -1213,4 +1212,3 @@ void binder_alloc_copy_from_buffer(struct binder_alloc *alloc,
 	binder_alloc_do_buffer_copy(alloc, false, buffer, buffer_offset,
 				    dest, bytes);
 }
-

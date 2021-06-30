@@ -821,6 +821,7 @@ config FAIR_GROUP_SCHED
 config CFS_BANDWIDTH
 	bool "CPU bandwidth provisioning for FAIR_GROUP_SCHED"
 	depends on FAIR_GROUP_SCHED
+
 	default n
 	help
 	  This option allows users to define CPU bandwidth rates (limits) for
@@ -1245,6 +1246,7 @@ config BPF
 
 menuconfig EXPERT
 	bool "Configure standard kernel features (expert users)"
+
 	help
 	  This option allows certain base kernel options and settings
           to be disabled or tweaked. This is for specialized

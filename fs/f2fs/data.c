@@ -4,6 +4,7 @@
  *
  * Copyright (c) 2012 Samsung Electronics Co., Ltd.
  *             http://www.samsung.com/
+
  */
 #include <linux/fs.h>
 #include <linux/f2fs_fs.h>
@@ -16,6 +17,7 @@
 #include <linux/bio.h>
 #include <linux/prefetch.h>
 #include <linux/uio.h>
+
 #include <linux/cleancache.h>
 #include <linux/sched/signal.h>
 
@@ -148,6 +150,7 @@ static bool try_merge_bio_encrypted(struct bio *bio, u64 dun, void *ci, bool enc
 	return true;
 }
 
+
 static inline void set_fio_inline_encrypted(struct f2fs_io_info *fio, int set)
 {
 	/* DO NOTHING */
@@ -165,6 +168,7 @@ static void __read_end_io(struct bio *bio)
 
 		/* PG_error was set if any post_read step failed */
 		if (bio->bi_status || PageError(page)) {
+
 			ClearPageUptodate(page);
 			/* will re-read again later */
 			ClearPageError(page);
@@ -319,6 +323,7 @@ int f2fs_target_device_index(struct f2fs_sb_info *sbi, block_t blkaddr)
 {
 	int i;
 
+
 	for (i = 0; i < sbi->s_ndevs; i++)
 		if (FDEV(i).start_blk <= blkaddr && FDEV(i).end_blk >= blkaddr)
 			return i;
@@ -364,6 +369,7 @@ static inline void __submit_bio(struct f2fs_sb_info *sbi,
 {
 	if (!is_read_io(bio_op(bio))) {
 		unsigned int start;
+
 
 		if (type != DATA && type != NODE)
 			goto submit_io;
@@ -470,6 +476,7 @@ static bool __has_merged_page(struct f2fs_bio_info *io, struct inode *inode,
 		else
 			target = fscrypt_control_page(bvec->bv_page);
 
+
 		if (inode && inode == target->mapping->host)
 			return true;
 		if (page && page == target)
@@ -480,6 +487,7 @@ static bool __has_merged_page(struct f2fs_bio_info *io, struct inode *inode,
 
 	return false;
 }
+
 
 static void __f2fs_submit_merged_write(struct f2fs_sb_info *sbi,
 				enum page_type type, enum temp_type temp)
@@ -639,6 +647,7 @@ alloc_new:
 	if (io->bio == NULL) {
 		if ((fio->type == DATA || fio->type == NODE) &&
 				fio->new_blkaddr & F2FS_IO_SIZE_MASK(sbi)) {
+
 			dec_page_count(sbi, WB_DATA_TYPE(bio_page));
 			fio->retry = true;
 			set_fio_inline_encrypted(fio, false);
@@ -673,12 +682,14 @@ out:
 				f2fs_is_checkpoint_ready(sbi))
 		__submit_merged_bio(io);
 	up_write(&io->io_rwsem);
+
 }
 
 static struct bio *f2fs_grab_read_bio(struct inode *inode, block_t blkaddr,
 					unsigned nr_pages, unsigned op_flag)
 {
 	struct f2fs_sb_info *sbi = F2FS_I_SB(inode);
+
 	struct bio *bio;
 	struct bio_post_read_ctx *ctx;
 	unsigned int post_read_steps = 0;
@@ -689,6 +700,7 @@ static struct bio *f2fs_grab_read_bio(struct inode *inode, block_t blkaddr,
 	bio = f2fs_bio_alloc(sbi, min_t(int, nr_pages, BIO_MAX_PAGES), false);
 	if (!bio)
 		return ERR_PTR(-ENOMEM);
+
 	f2fs_target_device(sbi, blkaddr, bio);
 	bio->bi_end_io = f2fs_read_end_io;
 	bio_set_op_attrs(bio, REQ_OP_READ, op_flag);
@@ -1040,6 +1052,7 @@ static int __allocate_data_block(struct dnode_of_data *dn, int seg_type)
 		return err;
 
 alloc:
+
 	set_summary(&sum, dn->nid, dn->ofs_in_node, ni.version);
 	old_blkaddr = dn->data_blkaddr;
 	f2fs_allocate_data_block(sbi, NULL, old_blkaddr, &dn->data_blkaddr,
@@ -1055,6 +1068,7 @@ alloc:
 	 */
 	return 0;
 }
+
 
 int f2fs_preallocate_blocks(struct kiocb *iocb, struct iov_iter *from)
 {
@@ -1548,6 +1562,7 @@ int f2fs_fiemap(struct inode *inode, struct fiemap_extent_info *fieinfo,
 
 	if (fieinfo->fi_flags & FIEMAP_FLAG_CACHE) {
 		ret = f2fs_precache_extents(inode);
+
 		if (ret)
 			return ret;
 	}
@@ -1563,11 +1578,13 @@ int f2fs_fiemap(struct inode *inode, struct fiemap_extent_info *fieinfo,
 		goto out;
 	}
 
+
 	if (f2fs_has_inline_data(inode)) {
 		ret = f2fs_inline_data_fiemap(inode, fieinfo, start, len);
 		if (ret != -EAGAIN)
 			goto out;
 	}
+
 
 	if (logical_to_blk(inode, len) == 0)
 		len = blk_to_logical(inode, 1);
@@ -1643,6 +1660,7 @@ static int f2fs_mpage_readpages(struct address_space *mapping,
 			unsigned nr_pages, bool is_readahead)
 {
 	struct bio *bio = NULL;
+
 	sector_t last_block_in_bio = 0;
 	struct inode *inode = mapping->host;
 	const unsigned blkbits = inode->i_blkbits;
@@ -1833,6 +1851,7 @@ static int encrypt_one_page(struct f2fs_io_info *fio)
 
 retry_encrypt:
 	if (fscrypt_inline_encrypted(inode))
+
 		return 0;
 
 	fio->encrypted_page = fscrypt_encrypt_page(inode, fio->page,
@@ -2128,6 +2147,7 @@ write:
 			f2fs_available_free_memory(sbi, BASE_CHECK))))
 		goto redirty_out;
 
+
 	/* Dentry blocks are controlled by checkpoint */
 	if (S_ISDIR(inode->i_mode)) {
 		fio.need_lock = LOCK_DONE;
@@ -2236,6 +2256,7 @@ static int f2fs_write_cache_pages(struct address_space *mapping,
 	pgoff_t index;
 	pgoff_t end;		/* Inclusive */
 	pgoff_t done_index;
+
 	int cycled;
 	int range_whole = 0;
 	int tag;
@@ -2313,6 +2334,7 @@ continue_unlock:
 				else
 					goto continue_unlock;
 			}
+
 
 			if (!clear_page_dirty_for_io(page))
 				goto continue_unlock;
@@ -2930,6 +2952,7 @@ int f2fs_release_page(struct page *page, gfp_t wait)
 	f2fs_clear_page_private(page);
 	return 1;
 }
+
 
 static int f2fs_set_data_page_dirty(struct page *page)
 {

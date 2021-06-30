@@ -56,6 +56,7 @@ extern int dwc3_gadget_get_cmply_link_state(struct usb_gadget *g);
 
 #define CHIPID_SIZE	(16)
 
+
 int check_user_usb_string(const char *name,
 		struct usb_gadget_strings *stringtab_dev)
 {
@@ -208,6 +209,7 @@ static int usb_string_copy(const char *s, char **s_copy)
 
 	if (str[ret - 1] == '\n')
 		str[ret - 1] = '\0';
+
 	*s_copy = str;
 	return 0;
 }
@@ -1917,6 +1919,7 @@ static void android_disconnect(struct usb_gadget *gadget)
 }
 #endif
 
+
 static const struct usb_gadget_driver configfs_driver_template = {
 	.bind           = configfs_composite_bind,
 	.unbind         = configfs_composite_unbind,
@@ -2326,6 +2329,7 @@ static int __init gadget_cfs_init(void)
 	if (IS_ERR(android_class))
 		return PTR_ERR(android_class);
 #endif
+
 	return ret;
 }
 module_init(gadget_cfs_init);

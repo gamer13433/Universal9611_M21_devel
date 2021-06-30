@@ -24,6 +24,8 @@
 
 unsigned long boosted_cpu_util(int cpu);
 
+unsigned long boosted_cpu_util(int cpu);
+
 #define SUGOV_KTHREAD_PRIORITY	50
 
 struct sugov_tunables {
@@ -190,6 +192,7 @@ static bool sugov_should_update_freq(struct sugov_policy *sg_policy, u64 time)
 	    !cpufreq_can_do_remote_dvfs(sg_policy->policy))
 		return false;
 
+
 	if (unlikely(sg_policy->need_freq_update)) {
 		sg_policy->need_freq_update = false;
 		/*
@@ -335,6 +338,7 @@ static void sugov_get_util(unsigned long *util, unsigned long *max, int cpu)
 {
 	unsigned long max_cap;
 
+
 	max_cap = arch_scale_cpu_capacity(NULL, cpu);
 
 	*util = boosted_cpu_util(cpu);
@@ -394,6 +398,59 @@ static void sugov_iowait_boost(struct sugov_cpu *sg_cpu, unsigned long *util,
 		*util = boost_util;
 		*max = boost_max;
 	}
+}
+
+#ifdef CONFIG_NO_HZ_COMMON
+static bool sugov_cpu_is_busy(struct sugov_cpu *sg_cpu)
+{
+	unsigned long idle_calls = tick_nohz_get_idle_calls_cpu(sg_cpu->cpu);
+	bool ret = idle_calls == sg_cpu->saved_idle_calls;
+
+	sg_cpu->saved_idle_calls = idle_calls;
+	return ret;
+}
+#else
+static inline bool sugov_cpu_is_busy(struct sugov_cpu *sg_cpu) { return false; }
+#endif /* CONFIG_NO_HZ_COMMON */
+
+static void sugov_update_single(struct update_util_data *hook, u64 time,
+				unsigned int flags)
+{
+	struct sugov_cpu *sg_cpu = container_of(hook, struct sugov_cpu, update_util);
+	struct sugov_policy *sg_policy = sg_cpu->sg_policy;
+	struct cpufreq_policy *policy = sg_policy->policy;
+	unsigned long util, max;
+	unsigned int next_f;
+	bool busy;
+
+	sugov_set_iowait_boost(sg_cpu, time, flags);
+	sg_cpu->last_update = time;
+
+	if (!sugov_should_update_freq(sg_policy, time))
+		return;
+
+	busy = sugov_cpu_is_busy(sg_cpu);
+
+	if (flags & SCHED_CPUFREQ_DL) {
+		next_f = policy->cpuinfo.max_freq;
+	} else {
+		sugov_get_util(&util, &max, sg_cpu->cpu);
+		sugov_iowait_boost(sg_cpu, &util, &max);
+		next_f = get_next_freq(sg_policy, util, max);
+		/*
+		 * Do not reduce the frequency if the CPU has not been idle
+		 * recently, as the reduction is likely to be premature then.
+		 */
+		if (busy && next_f < sg_policy->next_freq &&
+		    sg_policy->next_freq != UINT_MAX) {
+			next_f = sg_policy->next_freq;
+
+			/* Reset cached freq as next_freq has changed */
+			sg_policy->cached_raw_freq = 0;
+		}
+	}
+
+	sugov_update_commit(sg_policy, time, next_f);
 }
 
 static unsigned int sugov_next_freq_shared(struct sugov_cpu *sg_cpu, u64 time)
@@ -801,11 +858,13 @@ out:
 	return 0;
 
 fail:
+	kobject_put(&tunables->attr_set.kobj);
 	policy->governor_data = NULL;
 	sugov_tunables_free(tunables);
 
 stop_kthread:
 	sugov_kthread_stop(sg_policy);
+
 
 free_sg_policy:
 	mutex_unlock(&global_tunables_lock);
@@ -875,6 +934,7 @@ static int sugov_start(struct cpufreq_policy *policy)
 
 		cpufreq_add_update_util_hook(cpu, &sg_cpu->update_util,
 							sugov_update_shared);
+
 	}
 	return 0;
 }
@@ -893,6 +953,7 @@ static void sugov_stop(struct cpufreq_policy *policy)
 
 	if (!policy->fast_switch_enabled) {
 		irq_work_sync(&sg_policy->irq_work);
+
 	}
 }
 

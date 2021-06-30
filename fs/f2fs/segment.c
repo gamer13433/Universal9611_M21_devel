@@ -4,6 +4,7 @@
  *
  * Copyright (c) 2012 Samsung Electronics Co., Ltd.
  *             http://www.samsung.com/
+
  */
 #include <linux/fs.h>
 #include <linux/f2fs_fs.h>
@@ -416,6 +417,7 @@ static int __f2fs_commit_inmem_pages(struct inode *inode)
 			f2fs_wait_on_page_writeback(page, DATA, true, true);
 
 			set_page_dirty(page);
+
 			if (clear_page_dirty_for_io(page)) {
 				inode_dec_dirty_pages(inode);
 				f2fs_remove_dirty_inode(inode);
@@ -473,9 +475,12 @@ int f2fs_commit_inmem_pages(struct inode *inode)
 {
 	struct f2fs_sb_info *sbi = F2FS_I_SB(inode);
 	struct f2fs_inode_info *fi = F2FS_I(inode);
+
 	int err;
 
+
 	f2fs_balance_fs(sbi, true);
+
 
 	down_write(&fi->i_gc_rwsem[WRITE]);
 
@@ -505,10 +510,12 @@ int f2fs_commit_inmem_pages(struct inode *inode)
  */
 void f2fs_balance_fs(struct f2fs_sb_info *sbi, bool need)
 {
+
 	if (time_to_inject(sbi, FAULT_CHECKPOINT)) {
 		f2fs_show_injection_info(FAULT_CHECKPOINT);
 		f2fs_stop_checkpoint(sbi, false);
 	}
+
 
 	/* balance_fs_bg is able to be pending */
 	if (need && excess_cached_nats(sbi))
@@ -1392,6 +1399,7 @@ static void __update_discard_tree_range(struct f2fs_sb_info *sbi,
 		node = rb_next(&prev_dc->rb_node);
 		next_dc = rb_entry_safe(node, struct discard_cmd, rb_node);
 	}
+
 }
 
 static int __queue_discard_cmd(struct f2fs_sb_info *sbi,
@@ -1434,6 +1442,7 @@ static unsigned int __issue_discard_cmd_orderly(struct f2fs_sb_info *sbi,
 		dc = next_dc;
 
 	blk_start_plug(&plug);
+
 
 	while (dc) {
 		struct rb_node *node;
@@ -2032,6 +2041,7 @@ find_next:
 
 			f2fs_issue_discard(sbi, entry->start_blkaddr + cur_pos,
 									len);
+
 			total_len += len;
 		} else {
 			next_pos = find_next_bit_le(entry->discard_map,
@@ -2046,6 +2056,7 @@ skip:
 
 		release_discard_addr(entry);
 		dcc->nr_discards -= total_len;
+
 	}
 
 	wake_up_discard_thread(sbi, false);
@@ -2070,6 +2081,7 @@ static int create_discard_cmd_control(struct f2fs_sb_info *sbi)
 	INIT_LIST_HEAD(&dcc->entry_list);
 	for (i = 0; i < MAX_PLIST_NUM; i++)
 		INIT_LIST_HEAD(&dcc->pend_list[i]);
+
 	INIT_LIST_HEAD(&dcc->wait_list);
 	INIT_LIST_HEAD(&dcc->fstrim_list);
 	mutex_init(&dcc->cmd_lock);
@@ -2434,6 +2446,7 @@ find_other_zone:
 	}
 	secno = left_start;
 skip_left:
+
 	segno = GET_SEG_FROM_SEC(sbi, secno);
 	zoneno = GET_ZONE_FROM_SEC(sbi, secno);
 
@@ -3098,6 +3111,7 @@ void f2fs_allocate_data_block(struct f2fs_sb_info *sbi, struct page *page,
 	if (GET_SEGNO(sbi, old_blkaddr) != NULL_SEGNO)
 		update_sit_entry(sbi, old_blkaddr, -1);
 
+
 	if (!__has_curseg_space(sbi, type))
 		sit_i->s_ops->allocate_segment(sbi, type, false);
 
@@ -3226,6 +3240,7 @@ void f2fs_outplace_write_data(struct dnode_of_data *dn,
 {
 	struct f2fs_sb_info *sbi = fio->sbi;
 	struct f2fs_summary sum;
+
 
 	f2fs_bug_on(sbi, dn->data_blkaddr == NULL_ADDR);
 	set_summary(&sum, dn->nid, dn->ofs_in_node, fio->version);
@@ -3441,6 +3456,7 @@ static int read_compacted_summaries(struct f2fs_sb_info *sbi)
 		seg_i = CURSEG_I(sbi, i);
 		segno = le32_to_cpu(ckpt->cur_data_segno[i]);
 		blk_off = le16_to_cpu(ckpt->cur_data_blkoff[i]);
+
 		seg_i->next_segno = segno;
 		reset_curseg(sbi, i, 0);
 		seg_i->alloc_type = ckpt->alloc_type[i];
@@ -3702,6 +3718,7 @@ static struct page *get_next_sit_page(struct f2fs_sb_info *sbi,
 	struct sit_info *sit_i = SIT_I(sbi);
 	struct page *page;
 	pgoff_t src_off, dst_off;
+
 
 	src_off = current_sit_addr(sbi, start);
 	dst_off = next_sit_addr(sbi, src_off);

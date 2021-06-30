@@ -615,6 +615,7 @@ static int uid_io_show(struct seq_file *m, void *v)
 				uid_entry->io[UID_STATE_BACKGROUND].write_bytes,
 				uid_entry->io[UID_STATE_FOREGROUND].fsync,
 				uid_entry->io[UID_STATE_BACKGROUND].fsync);
+
 		show_io_uid_tasks(m, uid_entry);
 	}
 

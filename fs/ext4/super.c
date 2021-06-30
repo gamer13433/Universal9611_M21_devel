@@ -1369,6 +1369,7 @@ static const struct fscrypt_operations ext4_cryptops = {
 	.set_knox_context	= ext4_set_knox_context,
 #endif
 	.dummy_context		= ext4_dummy_context,
+
 	.empty_dir		= ext4_empty_dir,
 	.max_namelen		= EXT4_NAME_LEN,
 };
@@ -3536,6 +3537,7 @@ int ext4_calculate_overhead(struct super_block *sb)
 	return 0;
 }
 
+
 static void ext4_set_resv_clusters(struct super_block *sb)
 {
 	ext4_fsblk_t resv_clusters;
@@ -5256,6 +5258,7 @@ static int ext4_remount(struct super_block *sb, int *flags, char *data)
 		err = -EINVAL;
 		goto restore_opts;
 	}
+
 
 	if ((old_opts.s_mount_opt & EXT4_MOUNT_JOURNAL_CHECKSUM) ^
 	    test_opt(sb, JOURNAL_CHECKSUM)) {

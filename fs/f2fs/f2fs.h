@@ -4,6 +4,7 @@
  *
  * Copyright (c) 2012 Samsung Electronics Co., Ltd.
  *             http://www.samsung.com/
+
  */
 #ifndef _LINUX_F2FS_H
 #define _LINUX_F2FS_H
@@ -22,6 +23,7 @@
 #include <linux/bio.h>
 #include <linux/blkdev.h>
 #include <linux/quotaops.h>
+
 #include <crypto/hash.h>
 #include <linux/overflow.h>
 #include <linux/android_aid.h>
@@ -59,6 +61,8 @@ extern void (*ufs_debug_func)(void *);
 			}							\
 		}								\
 	} while (0)
+
+
 
 enum {
 	FAULT_KMALLOC,
@@ -208,6 +212,7 @@ enum {
 #define CP_TRIMMED	0x00000020
 #define CP_PAUSE	0x00000040
 
+
 #define MAX_DISCARD_BLOCKS(sbi)		BLKS_PER_SEC(sbi)
 #define DEF_MAX_DISCARD_REQUEST		8	/* issue 8 discards per round */
 #define DEF_MIN_DISCARD_ISSUE_TIME	50	/* 50 ms, if exists */
@@ -227,6 +232,7 @@ struct cp_control {
 	__u64 trim_start;
 	__u64 trim_end;
 	__u64 trim_minlen;
+
 };
 
 /*
@@ -348,6 +354,7 @@ struct discard_cmd_control {
 	struct task_struct *f2fs_issue_discard;	/* discard thread */
 	struct list_head entry_list;		/* 4KB discard entry list */
 	struct list_head pend_list[MAX_PLIST_NUM];/* store pending entries */
+
 	struct list_head wait_list;		/* store on-flushing entries */
 	struct list_head fstrim_list;		/* in-flight discard from fstrim */
 	wait_queue_head_t discard_wait_queue;	/* waiting queue for wake-up */
@@ -571,6 +578,7 @@ enum {
 #define F2FS_LINK_MAX	0xffffffff	/* maximum link count per file */
 
 #define MAX_DIR_RA_PAGES	4	/* maximum ra pages of dir */
+
 
 /* for in-memory extent cache entry */
 #define F2FS_MIN_EXTENT_LEN	64	/* minimum extent length */
@@ -1369,6 +1377,7 @@ struct f2fs_sb_info {
 	unsigned int total_node_count;		/* total node block count */
 	unsigned int total_valid_node_count;	/* valid node block count */
 	loff_t max_file_blocks;			/* max block index of file */
+
 	int dir_level;				/* directory level */
 	int readdir_ra;				/* readahead inode in readdir */
 
@@ -1471,6 +1480,7 @@ struct f2fs_sb_info {
 	/* Precomputed FS UUID checksum for seeding other checksums */
 	__u32 s_chksum_seed;
 
+
 	struct f2fs_sec_stat_info sec_stat;
 	struct f2fs_sec_fsck_info sec_fsck_stat;
 
@@ -1521,6 +1531,7 @@ static inline bool time_to_inject(struct f2fs_sb_info *sbi, int type)
 	return false;
 }
 #endif
+
 
 /* For write statistics. Suppose sector size is 512 bytes,
  * and the return value is in kbytes. s is of struct f2fs_sb_info.
@@ -1900,6 +1911,7 @@ static inline int inc_valid_block_count(struct f2fs_sb_info *sbi,
 	if (ret)
 		return ret;
 
+
 	if (time_to_inject(sbi, FAULT_BLOCK)) {
 		f2fs_show_injection_info(FAULT_BLOCK);
 		release = *count;
@@ -1931,6 +1943,7 @@ static inline int inc_valid_block_count(struct f2fs_sb_info *sbi,
 		sbi->total_valid_block_count -= diff;
 		if (!*count) {
 			spin_unlock(&sbi->stat_lock);
+
 			goto enospc;
 		}
 	}
@@ -1949,6 +1962,7 @@ enospc:
 	return -ENOSPC;
 }
 
+
 static inline void dec_valid_block_count(struct f2fs_sb_info *sbi,
 						struct inode *inode,
 						block_t count)
@@ -1964,6 +1978,7 @@ static inline void dec_valid_block_count(struct f2fs_sb_info *sbi,
 		sbi->current_reserved_blocks = min(sbi->reserved_blocks,
 					sbi->current_reserved_blocks + count);
 	spin_unlock(&sbi->stat_lock);
+
 	f2fs_i_blocks_write(inode, count, false, true);
 }
 
@@ -2220,6 +2235,7 @@ static inline s64 valid_inode_count(struct f2fs_sb_info *sbi)
 static inline struct page *f2fs_grab_cache_page(struct address_space *mapping,
 						pgoff_t index, bool for_write)
 {
+
 	struct page *page;
 
 	if (IS_ENABLED(CONFIG_F2FS_FAULT_INJECTION)) {
@@ -2827,6 +2843,7 @@ static inline int f2fs_has_inline_dentry(struct inode *inode)
 	return is_inode_flag_set(inode, FI_INLINE_DENTRY);
 }
 
+
 static inline int is_file(struct inode *inode, int type)
 {
 	return F2FS_I(inode)->i_advise & type;
@@ -2850,6 +2867,7 @@ static inline bool f2fs_skip_inode_update(struct inode *inode, int dsync)
 
 	if (dsync) {
 		struct f2fs_sb_info *sbi = F2FS_I_SB(inode);
+
 
 		spin_lock(&sbi->inode_lock[DIRTY_META]);
 		ret = list_empty(&F2FS_I(inode)->gdirty_list);

@@ -527,6 +527,7 @@ static unsigned long shrink_slab(gfp_t gfp_mask, int nid,
 			sc.nid = 0;
 
 		freed += do_shrink_slab(&sc, shrinker, nr_scanned, nr_eligible);
+
 	}
 
 	up_read(&shrinker_rwsem);
@@ -3080,6 +3081,7 @@ static void snapshot_refaults(struct mem_cgroup *root_memcg, pg_data_t *pgdat)
 			refaults = node_page_state(pgdat, WORKINGSET_ACTIVATE);
 
 		lruvec = mem_cgroup_lruvec(pgdat, memcg);
+
 		lruvec->refaults = refaults;
 	} while ((memcg = mem_cgroup_iter(root_memcg, memcg, NULL)));
 }

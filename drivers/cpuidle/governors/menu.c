@@ -133,6 +133,7 @@ struct menu_device {
 	int		interval_ptr;
 };
 
+
 static inline int get_loadavg(unsigned long load)
 {
 	return LOAD_INT(load) * 10 + LOAD_FRAC(load) / 10;

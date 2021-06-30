@@ -599,6 +599,7 @@ int suspend_devices_and_enter(suspend_state_t state)
 	dbg_snapshot_suspend("resume_console", resume_console,
 				NULL, state, DSS_FLAG_OUT);
 	trace_suspend_resume(TPS("resume_console"), state, false);
+
  Close:
 	platform_resume_end(state);
 	pm_suspend_target_state = PM_SUSPEND_ON;
@@ -657,6 +658,7 @@ static int enter_state(suspend_state_t state)
 
 	if (state == PM_SUSPEND_TO_IDLE)
 		s2idle_begin();
+
 
 	pm_pr_dbg("Preparing system for sleep (%s)\n", mem_sleep_labels[state]);
 	pm_suspend_clear_flags();

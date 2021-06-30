@@ -211,6 +211,7 @@ config GENERIC_CSUM
 config GENERIC_CALIBRATE_DELAY
 	def_bool y
 
+
 config HAVE_GENERIC_GUP
 	def_bool y
 
@@ -1159,6 +1160,20 @@ config DMI
 	  However, even with this option, the resultant kernel should
 	  continue to boot on existing non-UEFI platforms.
 
+
+config BUILD_ARM64_APPENDED_KERNEL_IMAGE_NAME
+	string
+	depends on BUILD_ARM64_APPENDED_DTB_IMAGE
+	default "Image.gz-dtb" if IMG_GZ_DTB
+	default "Image-dtb" if IMG_DTB
+
+config BUILD_ARM64_APPENDED_DTB_IMAGE_NAMES
+	string "Default dtb names"
+	depends on BUILD_ARM64_APPENDED_DTB_IMAGE
+	help
+	  Space separated list of names of dtbs to append when
+	  building a concatenated Image.gz-dtb.
+
 config BUILD_ARM64_APPENDED_DTB_IMAGE
 	bool "Build a concatenated Image.gz/dtb by default"
 	depends on OF
@@ -1180,19 +1195,6 @@ choice
 	config IMG_DTB
 		bool "Image-dtb"
 endchoice
-
-config BUILD_ARM64_APPENDED_KERNEL_IMAGE_NAME
-	string
-	depends on BUILD_ARM64_APPENDED_DTB_IMAGE
-	default "Image.gz-dtb" if IMG_GZ_DTB
-	default "Image-dtb" if IMG_DTB
-
-config BUILD_ARM64_APPENDED_DTB_IMAGE_NAMES
-	string "Default dtb names"
-	depends on BUILD_ARM64_APPENDED_DTB_IMAGE
-	help
-	  Space separated list of names of dtbs to append when
-	  building a concatenated Image.gz-dtb.
 
 config UH
 	bool "Enable micro hypervisor feature"
@@ -1357,4 +1359,3 @@ config FPSIMD_CORRUPTION_DETECT
 	default n
 	help
 	  If FPSIMD has corruption, use this feature for detect problem.
-

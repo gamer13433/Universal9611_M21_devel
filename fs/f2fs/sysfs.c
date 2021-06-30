@@ -5,6 +5,7 @@
  * Copyright (c) 2012 Samsung Electronics Co., Ltd.
  *             http://www.samsung.com/
  * Copyright (c) 2017 Chao Yu <chao@kernel.org>
+
  */
 #include <linux/compiler.h>
 #include <linux/proc_fs.h>
@@ -637,6 +638,7 @@ out:
 	}
 
 	if (!strcmp(a->attr.name, "discard_granularity")) {
+
 		if (t == 0 || t > MAX_PLIST_NUM)
 			return -EINVAL;
 		if (t == *ui)
@@ -676,6 +678,7 @@ out:
 			sbi->gc_mode = GC_NORMAL;
 		return count;
 	}
+
 
 
 	if (!strcmp(a->attr.name, "iostat_enable")) {

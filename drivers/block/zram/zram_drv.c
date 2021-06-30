@@ -156,6 +156,7 @@ static inline bool is_partial_io(struct bio_vec *bvec)
 }
 #endif
 
+
 /*
  * Check if request is within bounds and aligned on zram logical blocks.
  */
@@ -520,6 +521,7 @@ static ssize_t backing_dev_store(struct device *dev,
 
 	reset_bdev(zram);
 
+
 	zram->old_block_size = old_block_size;
 	zram->bdev = bdev;
 	zram->backing_dev = backing_dev;
@@ -568,6 +570,7 @@ retry:
 	blk_idx = find_next_zero_bit(zram->bitmap, zram->nr_pages, blk_idx);
 	if (blk_idx == zram->nr_pages)
 		return 0;
+
 
 	if (test_and_set_bit(blk_idx, zram->bitmap))
 		goto retry;
@@ -823,6 +826,7 @@ struct zram_work {
 	struct zram *zram;
 	unsigned long entry;
 	struct bio *bio;
+
 };
 
 #if PAGE_SIZE != 4096
@@ -846,6 +850,7 @@ static int read_from_bdev_sync(struct zram *zram, struct bio_vec *bvec,
 				unsigned long entry, struct bio *bio)
 {
 	struct zram_work work;
+
 
 	work.zram = zram;
 	work.entry = entry;
@@ -1183,6 +1188,7 @@ static void zram_debugfs_register(struct zram *zram) {};
 static void zram_debugfs_unregister(struct zram *zram) {};
 #endif
 
+
 /*
  * We switched to per-cpu streams and this attr is not needed anymore.
  * However, we will keep it around for some time, because:
@@ -1320,10 +1326,12 @@ static ssize_t mm_stat_show(struct device *dev,
 			pool_stats.pages_compacted,
 			(u64)atomic64_read(&zram->stats.huge_pages), idle);
 
+
 	up_read(&zram->init_lock);
 
 	return ret;
 }
+
 
 #ifdef CONFIG_ZRAM_WRITEBACK
 #define FOUR_K(x) ((x) * (1 << (PAGE_SHIFT - 12)))
@@ -1370,6 +1378,7 @@ static DEVICE_ATTR_RO(mm_stat);
 static DEVICE_ATTR_RO(bd_stat);
 #endif
 static DEVICE_ATTR_RO(debug_stat);
+
 
 static void zram_meta_free(struct zram *zram, u64 disksize)
 {
@@ -1436,6 +1445,7 @@ static void zram_free_page(struct zram *zram, size_t index)
 	 */
 	if (zram_test_flag(zram, index, ZRAM_SAME)) {
 		zram_clear_flag(zram, index, ZRAM_SAME);
+
 		atomic64_dec(&zram->stats.same_pages);
 		goto out;
 	}
@@ -1450,6 +1460,7 @@ static void zram_free_page(struct zram *zram, size_t index)
 			&zram->stats.compr_data_size);
 out:
 	atomic64_dec(&zram->stats.pages_stored);
+
 	zram_set_handle(zram, index, 0);
 	zram_set_obj_size(zram, index, 0);
 	WARN_ON_ONCE(zram->table[index].flags &
@@ -1467,6 +1478,8 @@ static int __zram_bvec_read(struct zram *zram, struct page *page, u32 index,
 	zram_slot_lock(zram, index);
 	if (zram_test_flag(zram, index, ZRAM_WB)) {
 		struct bio_vec bvec;
+
+
 
 		bvec.bv_page = page;
 		bvec.bv_len = PAGE_SIZE;
@@ -1487,6 +1500,7 @@ static int __zram_bvec_read(struct zram *zram, struct page *page, u32 index,
 				zram_get_element(zram, index) >> (PAGE_SHIFT * 2),
 				bio, partial_io);
 	}
+
 
 	handle = zram_get_handle(zram, index);
 	if (!handle || zram_test_flag(zram, index, ZRAM_SAME)) {
@@ -1525,6 +1539,7 @@ static int __zram_bvec_read(struct zram *zram, struct page *page, u32 index,
 	}
 	zs_unmap_object(zram->mem_pool, handle);
 	zram_slot_unlock(zram, index);
+
 
 	return ret;
 }
@@ -1575,6 +1590,7 @@ static int __zram_bvec_write(struct zram *zram, struct bio_vec *bvec,
 	unsigned long element = 0;
 	enum zram_pageflags flags = 0;
 
+
 	mem = kmap_atomic(page);
 	if (page_same_filled(mem, &element)) {
 		kunmap_atomic(mem);
@@ -1600,6 +1616,7 @@ compress_again:
 
 	if (comp_len >= huge_class_size)
 		comp_len = PAGE_SIZE;
+
 	/*
 	 * handle allocation has 2 paths:
 	 * a) fast path is executed with preemption disabled (for
@@ -2126,6 +2143,7 @@ static void zram_slot_free_notify(struct block_device *bdev,
 
 	zram_free_page(zram, index);
 	zram_slot_unlock(zram, index);
+
 }
 
 static int zram_rw_page(struct block_device *bdev, sector_t sector,

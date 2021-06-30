@@ -4,6 +4,7 @@
  *
  * Copyright (c) 2012 Samsung Electronics Co., Ltd.
  *             http://www.samsung.com/
+
  */
 #include <linux/fs.h>
 #include <linux/f2fs_fs.h>
@@ -405,6 +406,7 @@ static int __recover_dot_dentries(struct inode *dir, nid_t pino)
 
 	de = f2fs_find_entry(dir, &dot, &page);
 	if (de) {
+
 		f2fs_put_page(page, 0);
 	} else if (IS_ERR(page)) {
 		err = PTR_ERR(page);
@@ -462,6 +464,8 @@ static struct dentry *f2fs_lookup(struct inode *dir, struct dentry *dentry,
 	}
 
 	ino = le32_to_cpu(de->ino);
+
+
 
 	inode = f2fs_iget(dir->i_sb, ino);
 	if (IS_ERR(inode)) {
@@ -546,6 +550,7 @@ static int f2fs_unlink(struct inode *dir, struct dentry *dentry)
 	err = f2fs_acquire_orphan_inode(sbi);
 	if (err) {
 		f2fs_unlock_op(sbi);
+
 		f2fs_put_page(page, 0);
 		goto fail;
 	}
@@ -619,6 +624,7 @@ static int f2fs_symlink(struct inode *dir, struct dentry *dentry,
 	if (err)
 		goto err_out;
 
+
 	err = page_symlink(inode, disk_link.name, disk_link.len);
 
 err_out:
@@ -642,6 +648,7 @@ err_out:
 	} else {
 		f2fs_unlink(dir, dentry);
 	}
+
 
 	f2fs_balance_fs(sbi, true);
 	goto out_free_encrypted_link;
@@ -1000,6 +1007,7 @@ static int f2fs_rename(struct inode *old_dir, struct dentry *old_dentry,
 						old_dir_page, new_dir);
 		else
 			f2fs_put_page(old_dir_page, 0);
+
 		f2fs_i_links_write(old_dir, false);
 	}
 	if (F2FS_OPTION(sbi).fsync_mode == FSYNC_MODE_STRICT) {
@@ -1021,13 +1029,16 @@ put_out_dir:
 	f2fs_unlock_op(sbi);
 	if (new_page)
 		f2fs_put_page(new_page, 0);
+
 out_whiteout:
 	if (whiteout)
 		iput(whiteout);
 out_dir:
 	if (old_dir_entry)
 		f2fs_put_page(old_dir_page, 0);
+
 out_old:
+
 	f2fs_put_page(old_page, 0);
 out:
 	return err;
@@ -1177,15 +1188,19 @@ static int f2fs_cross_rename(struct inode *old_dir, struct dentry *old_dentry,
 	return 0;
 out_new_dir:
 	if (new_dir_entry) {
+
 		f2fs_put_page(new_dir_page, 0);
 	}
 out_old_dir:
 	if (old_dir_entry) {
+
 		f2fs_put_page(old_dir_page, 0);
 	}
 out_new:
+
 	f2fs_put_page(new_page, 0);
 out_old:
+
 	f2fs_put_page(old_page, 0);
 out:
 	return err;

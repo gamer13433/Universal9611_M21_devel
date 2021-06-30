@@ -73,6 +73,7 @@ extern struct page *fscrypt_encrypt_page(const struct inode *, struct page *,
 extern int fscrypt_decrypt_page(const struct inode *, struct page *, unsigned int,
 				unsigned int, u64);
 
+
 static inline struct page *fscrypt_control_page(struct page *page)
 {
 	return ((struct fscrypt_ctx *)page_private(page))->w.control_page;
@@ -106,11 +107,13 @@ static inline void fscrypt_free_filename(struct fscrypt_name *fname)
 	kfree(fname->crypto_buf.name);
 }
 
+
 extern int fscrypt_fname_alloc_buffer(const struct inode *, u32,
 				struct fscrypt_str *);
 extern void fscrypt_fname_free_buffer(struct fscrypt_str *);
 extern int fscrypt_fname_disk_to_usr(struct inode *, u32, u32,
 			const struct fscrypt_str *, struct fscrypt_str *);
+
 
 #define FSCRYPT_FNAME_MAX_UNDIGESTED_SIZE	32
 

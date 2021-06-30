@@ -818,6 +818,7 @@ void init_entity_runnable_average(struct sched_entity *se)
 	if (entity_is_task(se))
 		sa->load_avg = scale_load_down(se->load.weight);
 	sa->load_sum = sa->load_avg * LOAD_AVG_MAX;
+
 	/* when this task enqueue'ed, it will contribute to its cfs_rq's load_avg */
 
 	ontime_new_entity_load(current, se);
@@ -1546,6 +1547,7 @@ static unsigned long weighted_cpuload(struct rq *rq);
 static unsigned long source_load(int cpu, int type);
 static unsigned long target_load(int cpu, int type);
 
+
 /* Cached statistics for all CPUs within a node */
 struct numa_stats {
 	unsigned long nr_running;
@@ -2139,6 +2141,7 @@ static u64 numa_get_avg_runtime(struct task_struct *p, u64 *period)
 	if (p->last_task_numa_placement) {
 		delta = runtime - p->last_sum_exec_runtime;
 		*period = now - p->last_task_numa_placement;
+
 	} else {
 		delta = p->se.avg.load_sum / p->se.load.weight;
 		*period = LOAD_AVG_MAX;
@@ -2473,6 +2476,7 @@ void task_numa_free(struct task_struct *p)
 	void *numa_faults = p->numa_faults;
 	unsigned long flags;
 	int i;
+
 
 	if (grp) {
 		spin_lock_irqsave(&grp->lock, flags);
@@ -3238,6 +3242,7 @@ __update_load_avg_cfs_rq(u64 now, int cpu, struct cfs_rq *cfs_rq)
 			cfs_rq->curr != NULL, cfs_rq, NULL);
 }
 
+
 #ifdef CONFIG_FAIR_GROUP_SCHED
 /**
  * update_tg_load_avg - update the tg's load avg
@@ -3486,6 +3491,7 @@ static inline int propagate_entity_load_avg(struct sched_entity *se)
 static inline void set_tg_cfs_propagate(struct cfs_rq *cfs_rq) {}
 
 #endif /* CONFIG_FAIR_GROUP_SCHED */
+
 
 /**
  * update_cfs_rq_load_avg - update the cfs_rq's load/util averages
@@ -5067,6 +5073,7 @@ static enum hrtimer_restart sched_cfs_slack_timer(struct hrtimer *timer)
 	return HRTIMER_NORESTART;
 }
 
+
 static enum hrtimer_restart sched_cfs_period_timer(struct hrtimer *timer)
 {
 	struct cfs_bandwidth *cfs_b =
@@ -5074,11 +5081,13 @@ static enum hrtimer_restart sched_cfs_period_timer(struct hrtimer *timer)
 	int overrun;
 	int idle = 0;
 
+
 	raw_spin_lock(&cfs_b->lock);
 	for (;;) {
 		overrun = hrtimer_forward_now(timer, cfs_b->period);
 		if (!overrun)
 			break;
+
 
 		idle = do_sched_cfs_period_timer(cfs_b, overrun);
 	}
@@ -5794,6 +5803,7 @@ static unsigned long target_load(int cpu, int type)
 
 	return max(rq->cpu_load[type-1], total);
 }
+
 
 static unsigned long cpu_avg_load_per_task(int cpu)
 {
@@ -6612,6 +6622,7 @@ int select_energy_cpu_idx(struct energy_env *eenv)
 }
 
 /*
+
  * Detect M:N waker/wakee relationships via a switching-frequency heuristic.
  *
  * A waker of many should wake a different task than the one last awakened
@@ -8034,6 +8045,7 @@ select_task_rq_fair(struct task_struct *p, int prev_cpu, int sd_flag, int wake_f
 
 	rcu_read_lock();
 
+
 	if (sd_flag & SD_BALANCE_WAKE) {
 		record_wakee(p);
 		want_energy = wake_energy(p, prev_cpu, sd_flag, wake_flags);
@@ -8042,6 +8054,7 @@ select_task_rq_fair(struct task_struct *p, int prev_cpu, int sd_flag, int wake_f
 			      !wake_cap(p, cpu, prev_cpu) &&
 			      cpumask_test_cpu(cpu, &p->cpus_allowed);
 	}
+
 
 	for_each_domain(cpu, tmp) {
 		if (!(tmp->flags & SD_LOAD_BALANCE))
@@ -8109,6 +8122,7 @@ pick_cpu:
 		if (!energy_sd || (energy_sd && new_cpu == -1))
 			new_cpu = find_idlest_cpu(sd, p, cpu, prev_cpu, sd_flag);
 	}
+
 
 	rcu_read_unlock();
 
@@ -9228,6 +9242,7 @@ static unsigned long task_h_load(struct task_struct *p)
 
 /********** Helpers for find_busiest_group ************************/
 
+
 /*
  * sg_lb_stats - stats of a sched_group required for load_balancing
  */
@@ -9378,6 +9393,7 @@ static void update_cpu_capacity(struct sched_domain *sd, int cpu)
 	raw_spin_unlock_irqrestore(&mcc->lock, flags);
 
 skip_unlock: __attribute__ ((unused));
+
 	capacity *= scale_rt_capacity(cpu);
 	capacity >>= SCHED_CAPACITY_SHIFT;
 
@@ -11044,6 +11060,7 @@ static inline int on_null_domain(struct rq *rq)
  *   load balancing for all the idle CPUs.
  */
 
+
 static inline int find_new_ilb(void)
 {
 	int ilb = cpumask_first(nohz.idle_cpus_mask);
@@ -11198,6 +11215,7 @@ static void rebalance_domains(struct rq *rq, enum cpu_idle_type idle)
 	int update_next_balance = 0;
 	int need_serialize, need_decay = 0;
 	u64 max_cost = 0;
+
 
 	rcu_read_lock();
 	for_each_domain(cpu, sd) {

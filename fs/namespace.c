@@ -1338,6 +1338,7 @@ vfs_kern_mount(struct file_system_type *type, int flags, const char *name, void 
 	root = mount_fs(type, flags, name, &mnt->mnt, data);
 #endif
 
+
 	if (IS_ERR(root)) {
 		mnt_free_id(mnt);
 		free_vfsmnt(mnt);

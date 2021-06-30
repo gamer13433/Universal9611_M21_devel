@@ -571,8 +571,10 @@ static void tick_nohz_stop_idle(struct tick_sched *ts, ktime_t now)
 static void tick_nohz_start_idle(struct tick_sched *ts)
 {
 	ts->idle_entrytime = ktime_get();
+
 	ts->idle_active = 1;
 	sched_clock_idle_sleep_event();
+
 }
 
 /**
@@ -682,9 +684,12 @@ static inline bool local_timer_softirq_pending(void)
 }
 
 static ktime_t tick_nohz_next_event(struct tick_sched *ts, int cpu)
+
 {
+
 	u64 basemono, next_tick, next_tmr, next_rcu, delta, expires;
 	unsigned long seq, basejiff;
+
 
 	/* Read jiffies and the time when jiffies were updated last */
 	do {
@@ -746,12 +751,15 @@ static ktime_t tick_nohz_next_event(struct tick_sched *ts, int cpu)
 	/*
 	 * If this CPU is the one which had the do_timer() duty last, we limit
 	 * the sleep time to the timekeeping max_deferment value.
+
 	 * Otherwise we can sleep as long as we want.
 	 */
 	delta = timekeeping_max_deferment();
 	if (cpu != tick_do_timer_cpu &&
 	    (tick_do_timer_cpu != TICK_DO_TIMER_NONE || !ts->do_timer_last))
+
 		delta = KTIME_MAX;
+
 
 #ifdef CONFIG_NO_HZ_FULL
 	/* Limit the tick delta to the maximum scheduler deferment */
@@ -921,7 +929,9 @@ static bool can_stop_idle_tick(int cpu, struct tick_sched *ts)
 	}
 
 	if (unlikely(ts->nohz_mode == NOHZ_MODE_INACTIVE))
+
 		return false;
+
 
 	if (need_resched())
 		return false;
@@ -974,6 +984,7 @@ static void __tick_nohz_idle_stop_tick(struct tick_sched *ts)
 
 	ts->idle_calls++;
 
+
 	if (expires > 0LL) {
 		int was_stopped = ts->tick_stopped;
 
@@ -981,6 +992,7 @@ static void __tick_nohz_idle_stop_tick(struct tick_sched *ts)
 
 		ts->idle_sleeps++;
 		ts->idle_expires = expires;
+
 
 		if (!was_stopped && ts->tick_stopped) {
 			ts->idle_jiffies = ts->last_jiffies;
@@ -1015,6 +1027,7 @@ void tick_nohz_idle_retain_tick(void)
  * tick_nohz_idle_enter - prepare for entering idle on the current CPU
  *
  * Called when we start the idle loop.
+
  */
 void tick_nohz_idle_enter(void)
 {
@@ -1201,6 +1214,7 @@ void tick_nohz_idle_exit(void)
 	if (ts->tick_stopped)
 		__tick_nohz_idle_restart_tick(ts, now);
 
+
 	local_irq_enable();
 }
 
@@ -1312,6 +1326,9 @@ static enum hrtimer_restart tick_sched_timer(struct hrtimer *timer)
 		container_of(timer, struct tick_sched, sched_timer);
 	struct pt_regs *regs = get_irq_regs();
 	ktime_t now = ktime_get();
+
+	if (ts->inidle)
+		ts->inidle = 2;
 
 	if (ts->inidle)
 		ts->inidle = 2;

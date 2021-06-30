@@ -6496,6 +6496,7 @@ static void cpu_cgroup_attach(struct cgroup_taskset *tset)
 static int cpu_shares_write_u64(struct cgroup_subsys_state *css,
 				struct cftype *cftype, u64 shareval)
 {
+
 	return sched_group_set_shares(css_tg(css), scale_load(shareval));
 }
 
@@ -6601,6 +6602,7 @@ int tg_set_cfs_quota(struct task_group *tg, long cfs_quota_us)
 	else
 		quota = (u64)cfs_quota_us * NSEC_PER_USEC;
 
+
 	return tg_set_cfs_bandwidth(tg, period, quota);
 }
 
@@ -6620,6 +6622,7 @@ long tg_get_cfs_quota(struct task_group *tg)
 int tg_set_cfs_period(struct task_group *tg, long cfs_period_us)
 {
 	u64 quota, period;
+
 
 	period = (u64)cfs_period_us * NSEC_PER_USEC;
 	quota = tg->cfs_bandwidth.quota;

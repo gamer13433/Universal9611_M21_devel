@@ -40,6 +40,7 @@ void arch_set_freq_scale(struct cpumask *cpus, unsigned long cur_freq,
 		per_cpu(freq_scale, i) = scale;
 		per_cpu(max_cpu_freq, i) = max_freq;
 	}
+
 }
 
 void arch_set_max_freq_scale(struct cpumask *cpus,
@@ -403,6 +404,7 @@ void topology_normalize_cpu_scale(void)
 	pr_debug("cpu_capacity: capacity_scale=%u\n", capacity_scale);
 	mutex_lock(&cpu_scale_mutex);
 	for_each_possible_cpu(cpu) {
+
 		capacity = (raw_capacity[cpu] << SCHED_CAPACITY_SHIFT)
 			/ capacity_scale;
 		topology_set_cpu_scale(cpu, capacity);

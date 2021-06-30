@@ -1294,6 +1294,7 @@ static int acc_setup(void)
 	INIT_DELAYED_WORK(&dev->start_work, acc_start_work);
 	INIT_WORK(&dev->hid_work, acc_hid_work);
 
+
 	ret = misc_register(&acc_device);
 	if (ret)
 		goto err;
