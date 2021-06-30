@@ -451,6 +451,7 @@ do {									\
 ({									\
 	int __gu_err;							\
 	__inttype(*(ptr)) __gu_val;					\
+
 	__uaccess_begin_nospec();					\
 	__get_user_size(__gu_val, (ptr), (size), __gu_err, -EFAULT);	\
 	__uaccess_end();						\
@@ -740,4 +741,3 @@ do {										\
 } while (0)
 
 #endif /* _ASM_X86_UACCESS_H */
-

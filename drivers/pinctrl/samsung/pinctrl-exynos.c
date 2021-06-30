@@ -266,6 +266,7 @@ struct exynos_eint_gpio_save {
 	u32 eint_con;
 	u32 eint_fltcon0;
 	u32 eint_fltcon1;
+
 };
 
 static void exynos_eint_flt_config(int en, int sel, int width,
@@ -516,6 +517,7 @@ int exynos_eint_wkup_init(struct samsung_pinctrl_drv_data *d)
 				sizeof(*irq_chip), GFP_KERNEL);
 			if (!irq_chip)
 				return -ENOMEM;
+
 			wkup_np = np;
 			break;
 		}
@@ -620,10 +622,12 @@ static void exynos_pinctrl_suspend_bank(
 		save->eint_fltcon1 = readl(regs + EXYNOS_GPIO_EFLTCON_OFFSET
 							+ bank->fltcon_offset + 4);
 
+
 	pr_debug("%s: save     con %#010x\n", bank->name, save->eint_con);
 	pr_debug("%s: save fltcon0 %#010x\n", bank->name, save->eint_fltcon0);
 	if (bank->nr_pins > 4)
 		pr_debug("%s: save fltcon1 %#010x\n", bank->name, save->eint_fltcon1);
+
 }
 
 void exynos_pinctrl_suspend(struct samsung_pinctrl_drv_data *drvdata)
@@ -662,6 +666,7 @@ static void exynos_pinctrl_resume_bank(
 				+ bank->fltcon_offset + 4), save->eint_fltcon1);
 	}
 
+
 	writel(save->eint_con, regs + EXYNOS_GPIO_ECON_OFFSET
 						+ bank->eint_offset);
 	writel(save->eint_fltcon0, regs + EXYNOS_GPIO_EFLTCON_OFFSET
@@ -670,6 +675,7 @@ static void exynos_pinctrl_resume_bank(
 	writel(save->eint_fltcon1, regs + EXYNOS_GPIO_EFLTCON_OFFSET
 							+ bank->fltcon_offset + 4);
 	}
+
 }
 
 void exynos_pinctrl_resume(struct samsung_pinctrl_drv_data *drvdata)

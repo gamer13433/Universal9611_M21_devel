@@ -219,4 +219,3 @@ void selinux_nlmsg_init(void)
 	else
 		nlmsg_set_getlink_perm(NETLINK_ROUTE_SOCKET__NLMSG_READ);
 }
-

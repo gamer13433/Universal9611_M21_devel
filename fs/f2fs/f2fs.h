@@ -1533,6 +1533,7 @@ static inline bool time_to_inject(struct f2fs_sb_info *sbi, int type)
 #endif
 
 
+
 /* For write statistics. Suppose sector size is 512 bytes,
  * and the return value is in kbytes. s is of struct f2fs_sb_info.
  */
@@ -1978,6 +1979,7 @@ static inline void dec_valid_block_count(struct f2fs_sb_info *sbi,
 		sbi->current_reserved_blocks = min(sbi->reserved_blocks,
 					sbi->current_reserved_blocks + count);
 	spin_unlock(&sbi->stat_lock);
+
 
 	f2fs_i_blocks_write(inode, count, false, true);
 }
@@ -3887,3 +3889,6 @@ static inline bool is_journalled_quota(struct f2fs_sb_info *sbi)
 }
 
 #endif
+
+#define EFSBADCRC	EBADMSG		/* Bad CRC detected */
+#define EFSCORRUPTED	EUCLEAN		/* Filesystem is corrupted */

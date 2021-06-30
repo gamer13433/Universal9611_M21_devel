@@ -437,6 +437,7 @@ static int dwc3_core_soft_reset(struct dwc3 *dwc)
 	if (ret < 0)
 		goto err_usb2phy_init;
 
+
 	/*
 	 * We're resetting only the device side because, if we're in host mode,
 	 * XHCI driver will reset the host block. If dwc3 was configured for
@@ -637,6 +638,7 @@ void dwc3_event_buffers_cleanup(struct dwc3 *dwc)
 
 	evt->lpos = 0;
 
+
 	dwc3_writel(dwc->regs, DWC3_GEVNTSIZ(0), DWC3_GEVNTSIZ_INTMASK
 			| DWC3_GEVNTSIZ_SIZE(0));
 
@@ -754,6 +756,7 @@ static void dwc3_cache_hwparams(struct dwc3 *dwc)
 	parms->hwparams8 = dwc3_readl(dwc->regs, DWC3_GHWPARAMS8);
 }
 
+
 /**
  * dwc3_phy_setup - Configure USB PHY Interface of DWC3 Core
  * @dwc: Pointer to our controller context structure
@@ -772,6 +775,7 @@ int dwc3_phy_setup(struct dwc3 *dwc)
 	if (dwc->ux_exit_in_px_quirk)
 		reg |= DWC3_GUSB3PIPECTL_UX_EXIT_PX;
 	else
+
 		reg &= ~DWC3_GUSB3PIPECTL_UX_EXIT_PX;
 
 	/*
@@ -1010,6 +1014,7 @@ static void dwc3_core_setup_global_control(struct dwc3 *dwc)
 
 static int dwc3_core_get_phy(struct dwc3 *dwc);
 
+
 /**
  * dwc3_core_init - Low-level initialization of DWC3 Core
  * @dwc: Pointer to our controller context structure
@@ -1053,9 +1058,12 @@ int dwc3_core_init(struct dwc3 *dwc)
 	if (ret)
 		goto err0;
 
+
 	ret = dwc3_phy_setup(dwc);
+
 	if (ret)
 		goto err0;
+
 
 	if (dotg) {
 		phy_tune(dwc->usb2_generic_phy, dotg->otg.state);
@@ -1083,6 +1091,7 @@ int dwc3_core_init(struct dwc3 *dwc)
 
 	usb_phy_set_suspend(dwc->usb2_phy, 0);
 	usb_phy_set_suspend(dwc->usb3_phy, 0);
+
 
 	ret = dwc3_event_buffers_setup(dwc);
 	if (ret) {
@@ -1113,6 +1122,9 @@ int dwc3_core_init(struct dwc3 *dwc)
 
 		if (dwc->dis_tx_ipgap_linecheck_quirk)
 			reg |= DWC3_GUCTL1_TX_IPGAP_LINECHECK_DIS;
+
+		if (dwc->parkmode_disable_ss_quirk)
+			reg |= DWC3_GUCTL1_PARKMODE_DISABLE_SS;
 
 		dwc3_writel(dwc->regs, DWC3_GUCTL1, reg);
 	}
@@ -1330,6 +1342,9 @@ static void dwc3_core_exit_mode(struct dwc3 *dwc)
 		/* do nothing */
 		break;
 	}
+
+	/* de-assert DRVVBUS for HOST and OTG mode */
+	dwc3_set_prtcap(dwc, DWC3_GCTL_PRTCAP_DEVICE);
 }
 
 static int dwc3_get_option(struct dwc3 *dwc)
@@ -1444,6 +1459,8 @@ static void dwc3_get_properties(struct dwc3 *dwc)
 				"snps,dis-del-phy-power-chg-quirk");
 	dwc->dis_tx_ipgap_linecheck_quirk = device_property_read_bool(dev,
 				"snps,dis-tx-ipgap-linecheck-quirk");
+	dwc->parkmode_disable_ss_quirk = device_property_read_bool(dev,
+				"snps,parkmode-disable-ss-quirk");
 
 	dwc->tx_de_emphasis_quirk = device_property_read_bool(dev,
 				"snps,tx_de_emphasis_quirk");
@@ -1582,6 +1599,7 @@ static int dwc3_probe(struct platform_device *pdev)
 	spin_lock_init(&dwc->lock);
 	init_completion(&dwc->disconnect);
 
+
 	ret = dwc3_alloc_event_buffers(dwc, DWC3_EVENT_BUFFERS_SIZE);
 	if (ret) {
 		dev_err(dwc->dev, "failed to allocate event buffers\n");
@@ -1612,7 +1630,8 @@ static int dwc3_probe(struct platform_device *pdev)
 
 	ret = dwc3_core_init(dwc);
 	if (ret) {
-		dev_err(dev, "failed to initialize core\n");
+		if (ret != -EPROBE_DEFER)
+			dev_err(dev, "failed to initialize core: %d\n", ret);
 		goto err4;
 	}
 
@@ -1634,6 +1653,18 @@ static int dwc3_probe(struct platform_device *pdev)
 
 err5:
 	dwc3_event_buffers_cleanup(dwc);
+
+	usb_phy_shutdown(dwc->usb2_phy);
+	usb_phy_shutdown(dwc->usb3_phy);
+	phy_exit(dwc->usb2_generic_phy);
+	phy_exit(dwc->usb3_generic_phy);
+
+	usb_phy_set_suspend(dwc->usb2_phy, 1);
+	usb_phy_set_suspend(dwc->usb3_phy, 1);
+	phy_power_off(dwc->usb2_generic_phy);
+	phy_power_off(dwc->usb3_generic_phy);
+
+
 
 err4:
 	dwc3_free_scratch_buffers(dwc);
@@ -1680,9 +1711,11 @@ static int dwc3_remove(struct platform_device *pdev)
 	dwc3_ulpi_exit(dwc);
 
 	if (dwc->dr_mode != USB_DR_MODE_OTG)
-		pm_runtime_put_sync(&pdev->dev);
-	pm_runtime_allow(&pdev->dev);
+
+
 	pm_runtime_disable(&pdev->dev);
+	pm_runtime_put_noidle(&pdev->dev);
+	pm_runtime_set_suspended(&pdev->dev);
 
 	dwc3_free_event_buffers(dwc);
 	dwc3_free_scratch_buffers(dwc);
@@ -1700,6 +1733,7 @@ static int dwc3_suspend_common(struct dwc3 *dwc)
 
 	switch (dwc->dr_mode) {
 	case USB_DR_MODE_PERIPHERAL:
+
 		spin_lock_irqsave(&dwc->lock, flags);
 		dwc3_gadget_suspend(dwc);
 		spin_unlock_irqrestore(&dwc->lock, flags);
@@ -1720,12 +1754,14 @@ static int dwc3_suspend_common(struct dwc3 *dwc)
 		break;
 	}
 
+
 	return 0;
 }
 
 static int dwc3_resume_common(struct dwc3 *dwc)
 {
 	unsigned long	flags;
+
 
 	/* executing phy_init() twice caused 'ep0out' enable failure in resume.
 	*	don't call dwc3_core_init
@@ -1735,19 +1771,24 @@ static int dwc3_resume_common(struct dwc3 *dwc)
 
 	switch (dwc->dr_mode) {
 	case USB_DR_MODE_PERIPHERAL:
+
 		spin_lock_irqsave(&dwc->lock, flags);
 		dwc3_gadget_resume(dwc);
 		spin_unlock_irqrestore(&dwc->lock, flags);
+
 		break;
 	/* Applying KC OTG and Role switch driver patch  - e40c2ae,
 		it's difficult to apply the patch because dwc3_resume func was changed in Kernel4.9 */
+
 	case USB_DR_MODE_OTG:
+
 		break;
 	case USB_DR_MODE_HOST:
 	default:
 		/* do nothing */
 		break;
 	}
+
 
 	return 0;
 }

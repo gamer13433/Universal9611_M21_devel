@@ -33,6 +33,7 @@ LIBSUBCMD		= $(LIBSUBCMD_OUTPUT)libsubcmd.a
 OBJTOOL    := $(OUTPUT)objtool
 OBJTOOL_IN := $(OBJTOOL)-in.o
 
+
 all: $(OBJTOOL)
 
 INCLUDES := -I$(srctree)/tools/include \
