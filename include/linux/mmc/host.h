@@ -457,6 +457,7 @@ struct mmc_host {
 	bool			cqe_enabled;
 	bool			cqe_on;
 
+
 #ifdef CONFIG_MMC_EMBEDDED_SDIO
 	struct {
 		struct sdio_cis			*cis;

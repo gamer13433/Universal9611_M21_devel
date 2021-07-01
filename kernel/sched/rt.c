@@ -1891,6 +1891,7 @@ static void yield_task_rt(struct rq *rq)
 #ifdef CONFIG_SMP
 
 
+
 /* TODO:
  * attach/detach/migrate_task_rt_rq() for load tracking
  */
@@ -2372,6 +2373,7 @@ static void put_prev_task_rt(struct rq *rq, struct task_struct *p)
 	u64 now = rq_clock_task(rq);
 
 	update_curr_rt(rq);
+
 
 
 	/*
@@ -3584,6 +3586,7 @@ static void task_tick_rt(struct rq *rq, struct task_struct *p, int queued)
 	update_curr_rt(rq);
 
 
+
 	for_each_sched_rt_entity(rt_se)
 		update_rt_load_avg(now, rt_se);
 
@@ -3677,6 +3680,9 @@ const struct sched_class rt_sched_class = {
 	.update_curr		= update_curr_rt,
 #ifdef CONFIG_RT_GROUP_SCHED
 	.task_change_group	= task_change_group_rt,
+#endif
+#ifdef CONFIG_SCHED_WALT
+	.fixup_cumulative_runnable_avg = walt_fixup_cumulative_runnable_avg,
 #endif
 };
 
@@ -3835,6 +3841,7 @@ int sched_group_set_rt_runtime(struct task_group *tg, long rt_runtime_us)
 		rt_runtime = RUNTIME_INF;
 
 
+
 	return tg_set_rt_bandwidth(tg, rt_period, rt_runtime);
 }
 
@@ -3853,6 +3860,7 @@ long sched_group_rt_runtime(struct task_group *tg)
 int sched_group_set_rt_period(struct task_group *tg, u64 rt_period_us)
 {
 	u64 rt_runtime, rt_period;
+
 
 
 	rt_period = rt_period_us * NSEC_PER_USEC;

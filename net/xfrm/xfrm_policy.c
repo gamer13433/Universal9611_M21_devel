@@ -45,6 +45,7 @@ struct xfrm_flo {
 	u8 flags;
 };
 
+
 static DEFINE_SPINLOCK(xfrm_if_cb_lock);
 static struct xfrm_if_cb const __rcu *xfrm_if_cb __read_mostly;
 

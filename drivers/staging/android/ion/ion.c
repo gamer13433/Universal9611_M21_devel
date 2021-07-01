@@ -44,6 +44,7 @@
 
 static struct ion_device *internal_dev;
 static int heap_id;
+static atomic_long_t total_heap_bytes;
 
 bool ion_buffer_cached(struct ion_buffer *buffer)
 {
@@ -90,6 +91,7 @@ static struct ion_buffer *ion_buffer_create(struct ion_heap *heap,
 					    unsigned long flags)
 {
 	struct ion_buffer *buffer;
+
 	int ret;
 	long nr_alloc_cur, nr_alloc_peak;
 
@@ -118,10 +120,12 @@ static struct ion_buffer *ion_buffer_create(struct ion_heap *heap,
 		goto err1;
 	}
 
+
 	buffer->dev = dev;
 	buffer->size = len;
 
 	INIT_LIST_HEAD(&buffer->iovas);
+
 	mutex_init(&buffer->lock);
 	mutex_lock(&dev->buffer_lock);
 	ret = exynos_ion_alloc_fixup(dev, buffer);
@@ -173,6 +177,7 @@ static void _ion_buffer_destroy(struct ion_buffer *buffer)
 	mutex_lock(&dev->buffer_lock);
 	rb_erase(&buffer->node, &dev->buffers);
 	mutex_unlock(&dev->buffer_lock);
+	atomic_long_sub(buffer->size, &total_heap_bytes);
 
 	if (heap->flags & ION_HEAP_FLAG_DEFER_FREE)
 		ion_heap_freelist_add(heap, buffer);
@@ -249,17 +254,23 @@ static void free_duped_table(struct sg_table *table)
 	kfree(table);
 }
 
+
 static int ion_dma_buf_attach(struct dma_buf *dmabuf, struct device *dev,
 			      struct dma_buf_attachment *attachment)
 {
+
 	struct sg_table *table;
 	struct ion_buffer *buffer = dmabuf->priv;
 
+
 	table = dup_sg_table(buffer->sg_table);
 	if (IS_ERR(table))
+
 		return -ENOMEM;
 
+
 	attachment->priv = table;
+
 
 	return 0;
 }
@@ -268,6 +279,7 @@ static void ion_dma_buf_detatch(struct dma_buf *dmabuf,
 				struct dma_buf_attachment *attachment)
 {
 	free_duped_table(attachment->priv);
+
 }
 
 static struct sg_table *ion_map_dma_buf(struct dma_buf_attachment *attachment,
@@ -309,6 +321,7 @@ static int ion_mmap(struct dma_buf *dmabuf, struct vm_area_struct *vma)
 
 	if (!buffer->heap->ops->map_user) {
 		perrfn("this heap does not define a method for mapping to userspace");
+
 		return -EINVAL;
 	}
 
@@ -529,6 +542,7 @@ struct dma_buf *__ion_alloc(size_t len, unsigned int heap_id_mask,
 	if (IS_ERR(dmabuf)) {
 		perrfn("failed to export dmabuf (err %ld)", -PTR_ERR(dmabuf));
 		_ion_buffer_destroy(buffer);
+
 	}
 
 	ion_event_end(ION_EVENT_TYPE_ALLOC, buffer);
@@ -560,6 +574,7 @@ int ion_query_heaps(struct ion_heap_query *query)
 	int ret = -EINVAL, cnt = 0, max_cnt;
 	struct ion_heap *heap;
 	struct ion_heap_data hdata;
+
 
 	down_read(&dev->lock);
 	if (!buffer) {
@@ -672,6 +687,7 @@ void ion_device_add_heap(struct ion_heap *heap)
 	if (!heap->ops->allocate || !heap->ops->free)
 		perrfn("can not add heap with invalid ops struct.");
 
+
 	spin_lock_init(&heap->free_lock);
 	heap->free_list_size = 0;
 
@@ -714,6 +730,56 @@ void ion_device_add_heap(struct ion_heap *heap)
 }
 EXPORT_SYMBOL(ion_device_add_heap);
 
+static ssize_t
+total_heaps_kb_show(struct kobject *kobj, struct kobj_attribute *attr,
+		    char *buf)
+{
+	u64 size_in_bytes = atomic_long_read(&total_heap_bytes);
+
+	return sprintf(buf, "%llu\n", div_u64(size_in_bytes, 1024));
+}
+
+static ssize_t
+total_pools_kb_show(struct kobject *kobj, struct kobj_attribute *attr,
+		    char *buf)
+{
+	u64 size_in_bytes = ion_page_pool_nr_pages() * PAGE_SIZE;
+
+	return sprintf(buf, "%llu\n", div_u64(size_in_bytes, 1024));
+}
+
+static struct kobj_attribute total_heaps_kb_attr =
+	__ATTR_RO(total_heaps_kb);
+
+static struct kobj_attribute total_pools_kb_attr =
+	__ATTR_RO(total_pools_kb);
+
+static struct attribute *ion_device_attrs[] = {
+	&total_heaps_kb_attr.attr,
+	&total_pools_kb_attr.attr,
+	NULL,
+};
+
+ATTRIBUTE_GROUPS(ion_device);
+
+static int ion_init_sysfs(void)
+{
+	struct kobject *ion_kobj;
+	int ret;
+
+	ion_kobj = kobject_create_and_add("ion", kernel_kobj);
+	if (!ion_kobj)
+		return -ENOMEM;
+
+	ret = sysfs_create_groups(ion_kobj, ion_device_groups);
+	if (ret) {
+		kobject_put(ion_kobj);
+		return ret;
+	}
+
+	return 0;
+}
+
 static int ion_device_create(void)
 {
 	struct ion_device *idev;
@@ -730,8 +796,13 @@ static int ion_device_create(void)
 	ret = misc_register(&idev->dev);
 	if (ret) {
 		perr("ion: failed to register misc device.");
-		kfree(idev);
-		return ret;
+		goto err_reg;
+	}
+
+	ret = ion_init_sysfs();
+	if (ret) {
+		pr_err("ion: failed to add sysfs attributes.\n");
+		goto err_sysfs;
 	}
 
 	idev->debug_root = debugfs_create_dir("ion", NULL);
@@ -750,5 +821,11 @@ debugfs_done:
 	plist_head_init(&idev->heaps);
 	internal_dev = idev;
 	return 0;
+
+err_sysfs:
+	misc_deregister(&idev->dev);
+err_reg:
+	kfree(idev);
+	return ret;
 }
 subsys_initcall(ion_device_create);

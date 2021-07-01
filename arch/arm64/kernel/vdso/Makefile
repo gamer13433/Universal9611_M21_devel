@@ -17,6 +17,7 @@ ldflags-y := -shared -nostdlib -soname=linux-vdso.so.1  --hash-style=sysv \
 
 ccflags-y += $(DISABLE_LTO)
 
+
 # Disable gcov profiling for VDSO code
 GCOV_PROFILE := n
 
