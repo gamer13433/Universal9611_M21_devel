@@ -33,7 +33,7 @@ config ANDROID_LOW_MEMORY_KILLER
 	  The registered process will kill according to the priorities in android init
 	  scripts (/init.rc), and it defines priority values with minimum free memory size
 	  for each priority.
-
+	  
 config ANDROID_LOW_MEMORY_KILLER_AUTODETECT_OOM_ADJ_VALUES
 	bool "Android Low Memory Killer: detect oom_adj values"
 	depends on ANDROID_LOW_MEMORY_KILLER
@@ -42,7 +42,7 @@ config ANDROID_LOW_MEMORY_KILLER_AUTODETECT_OOM_ADJ_VALUES
 	  Detect oom_adj values written to
 	  /sys/module/lowmemorykiller/parameters/adj and convert them
 	  to oom_score_adj values.
-
+	  
 config SAMSUNG_LMKD_DEBUG
 	bool "record lmkd kill history"
 	default n
@@ -56,8 +56,6 @@ config SAMSUNG_FREECESS
 	  thraw frozen process when recv sig.
 
 source "drivers/staging/android/ion/Kconfig"
-
-
 
 endif # if ANDROID
 
