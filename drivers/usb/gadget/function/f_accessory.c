@@ -872,11 +872,12 @@ static int acc_open(struct inode *ip, struct file *fp)
 
 	if (atomic_xchg(&dev->open_excl, 1)) {
 		put_acc_dev(dev);
-		return -EBUSY;
+
 	}
-	printk(KERN_INFO "usb: acc_open\n");
+
 	dev->disconnected = 0;
 	fp->private_data = dev;
+
 	return 0;
 }
 
@@ -886,6 +887,8 @@ static int acc_release(struct inode *ip, struct file *fp)
 
 	if (!dev)
 		return -ENOENT;
+
+
 
 
 	/* indicate that we are disconnected
@@ -965,6 +968,7 @@ int acc_ctrlrequest(struct usb_composite_dev *cdev,
 	/*
 	 * If instance is not created which is the case in power off charging
 	 * mode, dev will be NULL. Hence return error if it is the case.
+
 
 	 */
 	if (!dev)
@@ -1138,6 +1142,7 @@ kill_all_hid_devices(struct acc_dev *dev)
 	struct acc_hid_dev *hid;
 	struct list_head *entry, *temp;
 	unsigned long flags;
+
 
 
 	spin_lock_irqsave(&dev->lock, flags);
@@ -1379,6 +1384,8 @@ static int acc_setup(void)
 
 	kref_init(&ref->kref);
 
+
+	kref_init(&ref->kref);
 	return 0;
 
 err_zap_ptr:
@@ -1508,6 +1515,7 @@ int acc_ctrlrequest_configfs(struct usb_function *f,
 static struct usb_function *acc_alloc(struct usb_function_instance *fi)
 {
 	struct acc_dev *dev = get_acc_dev();
+
 
 
 	dev->function.name = "accessory";

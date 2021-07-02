@@ -32,16 +32,15 @@
 #include <asm/intel-family.h>
 #include <asm/e820/api.h>
 
-#include "cpu.h"
 
 static void __init spectre_v1_select_mitigation(void);
+
 static void __init spectre_v2_select_mitigation(void);
 static void __init ssb_select_mitigation(void);
 static void __init l1tf_select_mitigation(void);
 static void __init mds_select_mitigation(void);
-static void __init mds_print_mitigation(void);
-static void __init taa_select_mitigation(void);
-static void __init srbds_select_mitigation(void);
+
+
 
 /* The base value of the SPEC_CTRL MSR that always has to be preserved. */
 u64 x86_spec_ctrl_base;
@@ -105,20 +104,17 @@ void __init check_bugs(void)
 	/* Select the proper CPU mitigations before patching alternatives: */
 	spectre_v1_select_mitigation();
 	spectre_v2_select_mitigation();
+
+
+
+
 	ssb_select_mitigation();
+
 	l1tf_select_mitigation();
 	mds_select_mitigation();
-	taa_select_mitigation();
-	srbds_select_mitigation();
 
-	/*
-	 * As MDS and TAA mitigations are inter-related, print MDS
-	 * mitigation until after TAA mitigation selection is done.
-	 */
-	mds_print_mitigation();
 
 	arch_smt_update();
-
 
 #ifdef CONFIG_X86_32
 	/*
@@ -255,12 +251,7 @@ static void __init mds_select_mitigation(void)
 		    (mds_nosmt || cpu_mitigations_auto_nosmt()))
 			cpu_smt_disable(false);
 	}
-}
 
-static void __init mds_print_mitigation(void)
-{
-	if (!boot_cpu_has_bug(X86_BUG_MDS) || cpu_mitigations_off())
-		return;
 
 	pr_info("%s\n", mds_strings[mds_mitigation]);
 }
@@ -287,204 +278,7 @@ static int __init mds_cmdline(char *str)
 early_param("mds", mds_cmdline);
 
 #undef pr_fmt
-#define pr_fmt(fmt)	"TAA: " fmt
 
-/* Default mitigation for TAA-affected CPUs */
-static enum taa_mitigations taa_mitigation __ro_after_init = TAA_MITIGATION_VERW;
-static bool taa_nosmt __ro_after_init;
-
-static const char * const taa_strings[] = {
-	[TAA_MITIGATION_OFF]		= "Vulnerable",
-	[TAA_MITIGATION_UCODE_NEEDED]	= "Vulnerable: Clear CPU buffers attempted, no microcode",
-	[TAA_MITIGATION_VERW]		= "Mitigation: Clear CPU buffers",
-	[TAA_MITIGATION_TSX_DISABLED]	= "Mitigation: TSX disabled",
-};
-
-static void __init taa_select_mitigation(void)
-{
-	u64 ia32_cap;
-
-	if (!boot_cpu_has_bug(X86_BUG_TAA)) {
-		taa_mitigation = TAA_MITIGATION_OFF;
-		return;
-	}
-
-	/* TSX previously disabled by tsx=off */
-	if (!boot_cpu_has(X86_FEATURE_RTM)) {
-		taa_mitigation = TAA_MITIGATION_TSX_DISABLED;
-		goto out;
-	}
-
-	if (cpu_mitigations_off()) {
-		taa_mitigation = TAA_MITIGATION_OFF;
-		return;
-	}
-
-	/*
-	 * TAA mitigation via VERW is turned off if both
-	 * tsx_async_abort=off and mds=off are specified.
-	 */
-	if (taa_mitigation == TAA_MITIGATION_OFF &&
-	    mds_mitigation == MDS_MITIGATION_OFF)
-		goto out;
-
-	if (boot_cpu_has(X86_FEATURE_MD_CLEAR))
-		taa_mitigation = TAA_MITIGATION_VERW;
-	else
-		taa_mitigation = TAA_MITIGATION_UCODE_NEEDED;
-
-	/*
-	 * VERW doesn't clear the CPU buffers when MD_CLEAR=1 and MDS_NO=1.
-	 * A microcode update fixes this behavior to clear CPU buffers. It also
-	 * adds support for MSR_IA32_TSX_CTRL which is enumerated by the
-	 * ARCH_CAP_TSX_CTRL_MSR bit.
-	 *
-	 * On MDS_NO=1 CPUs if ARCH_CAP_TSX_CTRL_MSR is not set, microcode
-	 * update is required.
-	 */
-	ia32_cap = x86_read_arch_cap_msr();
-	if ( (ia32_cap & ARCH_CAP_MDS_NO) &&
-	    !(ia32_cap & ARCH_CAP_TSX_CTRL_MSR))
-		taa_mitigation = TAA_MITIGATION_UCODE_NEEDED;
-
-	/*
-	 * TSX is enabled, select alternate mitigation for TAA which is
-	 * the same as MDS. Enable MDS static branch to clear CPU buffers.
-	 *
-	 * For guests that can't determine whether the correct microcode is
-	 * present on host, enable the mitigation for UCODE_NEEDED as well.
-	 */
-	static_branch_enable(&mds_user_clear);
-
-	if (taa_nosmt || cpu_mitigations_auto_nosmt())
-		cpu_smt_disable(false);
-
-	/*
-	 * Update MDS mitigation, if necessary, as the mds_user_clear is
-	 * now enabled for TAA mitigation.
-	 */
-	if (mds_mitigation == MDS_MITIGATION_OFF &&
-	    boot_cpu_has_bug(X86_BUG_MDS)) {
-		mds_mitigation = MDS_MITIGATION_FULL;
-		mds_select_mitigation();
-	}
-out:
-	pr_info("%s\n", taa_strings[taa_mitigation]);
-}
-
-static int __init tsx_async_abort_parse_cmdline(char *str)
-{
-	if (!boot_cpu_has_bug(X86_BUG_TAA))
-		return 0;
-
-	if (!str)
-		return -EINVAL;
-
-	if (!strcmp(str, "off")) {
-		taa_mitigation = TAA_MITIGATION_OFF;
-	} else if (!strcmp(str, "full")) {
-		taa_mitigation = TAA_MITIGATION_VERW;
-	} else if (!strcmp(str, "full,nosmt")) {
-		taa_mitigation = TAA_MITIGATION_VERW;
-		taa_nosmt = true;
-	}
-
-	return 0;
-}
-early_param("tsx_async_abort", tsx_async_abort_parse_cmdline);
-
-#undef pr_fmt
-#define pr_fmt(fmt)	"SRBDS: " fmt
-
-enum srbds_mitigations {
-	SRBDS_MITIGATION_OFF,
-	SRBDS_MITIGATION_UCODE_NEEDED,
-	SRBDS_MITIGATION_FULL,
-	SRBDS_MITIGATION_TSX_OFF,
-	SRBDS_MITIGATION_HYPERVISOR,
-};
-
-static enum srbds_mitigations srbds_mitigation __ro_after_init = SRBDS_MITIGATION_FULL;
-
-static const char * const srbds_strings[] = {
-	[SRBDS_MITIGATION_OFF]		= "Vulnerable",
-	[SRBDS_MITIGATION_UCODE_NEEDED]	= "Vulnerable: No microcode",
-	[SRBDS_MITIGATION_FULL]		= "Mitigation: Microcode",
-	[SRBDS_MITIGATION_TSX_OFF]	= "Mitigation: TSX disabled",
-	[SRBDS_MITIGATION_HYPERVISOR]	= "Unknown: Dependent on hypervisor status",
-};
-
-static bool srbds_off;
-
-void update_srbds_msr(void)
-{
-	u64 mcu_ctrl;
-
-	if (!boot_cpu_has_bug(X86_BUG_SRBDS))
-		return;
-
-	if (boot_cpu_has(X86_FEATURE_HYPERVISOR))
-		return;
-
-	if (srbds_mitigation == SRBDS_MITIGATION_UCODE_NEEDED)
-		return;
-
-	rdmsrl(MSR_IA32_MCU_OPT_CTRL, mcu_ctrl);
-
-	switch (srbds_mitigation) {
-	case SRBDS_MITIGATION_OFF:
-	case SRBDS_MITIGATION_TSX_OFF:
-		mcu_ctrl |= RNGDS_MITG_DIS;
-		break;
-	case SRBDS_MITIGATION_FULL:
-		mcu_ctrl &= ~RNGDS_MITG_DIS;
-		break;
-	default:
-		break;
-	}
-
-	wrmsrl(MSR_IA32_MCU_OPT_CTRL, mcu_ctrl);
-}
-
-static void __init srbds_select_mitigation(void)
-{
-	u64 ia32_cap;
-
-	if (!boot_cpu_has_bug(X86_BUG_SRBDS))
-		return;
-
-	/*
-	 * Check to see if this is one of the MDS_NO systems supporting
-	 * TSX that are only exposed to SRBDS when TSX is enabled.
-	 */
-	ia32_cap = x86_read_arch_cap_msr();
-	if ((ia32_cap & ARCH_CAP_MDS_NO) && !boot_cpu_has(X86_FEATURE_RTM))
-		srbds_mitigation = SRBDS_MITIGATION_TSX_OFF;
-	else if (boot_cpu_has(X86_FEATURE_HYPERVISOR))
-		srbds_mitigation = SRBDS_MITIGATION_HYPERVISOR;
-	else if (!boot_cpu_has(X86_FEATURE_SRBDS_CTRL))
-		srbds_mitigation = SRBDS_MITIGATION_UCODE_NEEDED;
-	else if (cpu_mitigations_off() || srbds_off)
-		srbds_mitigation = SRBDS_MITIGATION_OFF;
-
-	update_srbds_msr();
-	pr_info("%s\n", srbds_strings[srbds_mitigation]);
-}
-
-static int __init srbds_parse_cmdline(char *str)
-{
-	if (!str)
-		return -EINVAL;
-
-	if (!boot_cpu_has_bug(X86_BUG_SRBDS))
-		return 0;
-
-	srbds_off = !strcmp(str, "off");
-	return 0;
-}
-early_param("srbds", srbds_parse_cmdline);
-
-#undef pr_fmt
 #define pr_fmt(fmt)     "Spectre V1 : " fmt
 
 enum spectre_v1_mitigation {
@@ -577,6 +371,7 @@ static int __init nospectre_v1_cmdline(char *str)
 early_param("nospectre_v1", nospectre_v1_cmdline);
 
 #undef pr_fmt
+
 #define pr_fmt(fmt)     "Spectre V2 : " fmt
 
 static enum spectre_v2_mitigation spectre_v2_enabled __ro_after_init =
@@ -734,13 +529,13 @@ spectre_v2_user_select_mitigation(enum spectre_v2_mitigation_cmd v2_cmd)
 	if (boot_cpu_has(X86_FEATURE_IBPB)) {
 		setup_force_cpu_cap(X86_FEATURE_USE_IBPB);
 
-		spectre_v2_user_ibpb = mode;
+
 		switch (cmd) {
 		case SPECTRE_V2_USER_CMD_FORCE:
 		case SPECTRE_V2_USER_CMD_PRCTL_IBPB:
 		case SPECTRE_V2_USER_CMD_SECCOMP_IBPB:
 			static_branch_enable(&switch_mm_always_ibpb);
-			spectre_v2_user_ibpb = SPECTRE_V2_USER_STRICT;
+
 			break;
 		case SPECTRE_V2_USER_CMD_PRCTL:
 		case SPECTRE_V2_USER_CMD_AUTO:
@@ -755,6 +550,7 @@ spectre_v2_user_select_mitigation(enum spectre_v2_mitigation_cmd v2_cmd)
 			static_key_enabled(&switch_mm_always_ibpb) ?
 			"always-on" : "conditional");
 
+		spectre_v2_user_ibpb = mode;
 	}
 
 	/*
@@ -989,8 +785,6 @@ static void update_indir_branch_cond(void)
 
 /* Update the static key controlling the MDS CPU buffer clear in idle */
 static void update_mds_branch_idle(void)
-
-
 {
 	/*
 	 * Enable the idle clearing if SMT is active on CPUs which are
@@ -1010,10 +804,15 @@ static void update_mds_branch_idle(void)
 }
 
 #define MDS_MSG_SMT "MDS CPU bug present and SMT on, data leak possible. See https://www.kernel.org/doc/html/latest/admin-guide/hw-vuln/mds.html for more details.\n"
-#define TAA_MSG_SMT "TAA CPU bug present and SMT on, data leak possible. See https://www.kernel.org/doc/html/latest/admin-guide/hw-vuln/tsx_async_abort.html for more details.\n"
+
 
 void arch_smt_update(void)
 {
+	/* Enhanced IBRS implies STIBP. No update required. */
+	if (spectre_v2_enabled == SPECTRE_V2_IBRS_ENHANCED)
+		return;
+
+
 	mutex_lock(&spec_ctrl_mutex);
 
 	switch (spectre_v2_user_stibp) {
@@ -1040,16 +839,7 @@ void arch_smt_update(void)
 		break;
 	}
 
-	switch (taa_mitigation) {
-	case TAA_MITIGATION_VERW:
-	case TAA_MITIGATION_UCODE_NEEDED:
-		if (sched_smt_active())
-			pr_warn_once(TAA_MSG_SMT);
-		break;
-	case TAA_MITIGATION_TSX_DISABLED:
-	case TAA_MITIGATION_OFF:
-		break;
-	}
+
 
 	mutex_unlock(&spec_ctrl_mutex);
 }
@@ -1246,13 +1036,7 @@ static int ssb_prctl_set(struct task_struct *task, unsigned long ctrl)
 	return 0;
 }
 
-static bool is_spec_ib_user_controlled(void)
-{
-	return spectre_v2_user_ibpb == SPECTRE_V2_USER_PRCTL ||
-		spectre_v2_user_ibpb == SPECTRE_V2_USER_SECCOMP ||
-		spectre_v2_user_stibp == SPECTRE_V2_USER_PRCTL ||
-		spectre_v2_user_stibp == SPECTRE_V2_USER_SECCOMP;
-}
+
 
 static int ib_prctl_set(struct task_struct *task, unsigned long ctrl)
 {
@@ -1263,23 +1047,12 @@ static int ib_prctl_set(struct task_struct *task, unsigned long ctrl)
 			return 0;
 
 		/*
-		 * With strict mode for both IBPB and STIBP, the instruction
-		 * code paths avoid checking this task flag and instead,
-		 * unconditionally run the instruction. However, STIBP and IBPB
-		 * are independent and either can be set to conditionally
-		 * enabled regardless of the mode of the other.
-		 *
-		 * If either is set to conditional, allow the task flag to be
-		 * updated, unless it was force-disabled by a previous prctl
-		 * call. Currently, this is possible on an AMD CPU which has the
-		 * feature X86_FEATURE_AMD_STIBP_ALWAYS_ON. In this case, if the
-		 * kernel is booted with 'spectre_v2_user=seccomp', then
-		 * spectre_v2_user_ibpb == SPECTRE_V2_USER_SECCOMP and
-		 * spectre_v2_user_stibp == SPECTRE_V2_USER_STRICT_PREFERRED.
+		 * Indirect branch speculation is always disabled in strict
+		 * mode.
 		 */
-		if (!is_spec_ib_user_controlled() ||
-		    task_spec_ib_force_disable(task))
-
+		if (spectre_v2_user_ibpb == SPECTRE_V2_USER_STRICT ||
+		    spectre_v2_user_stibp == SPECTRE_V2_USER_STRICT ||
+		    spectre_v2_user_stibp == SPECTRE_V2_USER_STRICT_PREFERRED)
 			return -EPERM;
 
 		task_clear_spec_ib_disable(task);
@@ -1294,9 +1067,9 @@ static int ib_prctl_set(struct task_struct *task, unsigned long ctrl)
 		if (spectre_v2_user_ibpb == SPECTRE_V2_USER_NONE &&
 		    spectre_v2_user_stibp == SPECTRE_V2_USER_NONE)
 			return -EPERM;
-
-		if (!is_spec_ib_user_controlled())
-
+		if (spectre_v2_user_ibpb == SPECTRE_V2_USER_STRICT ||
+		    spectre_v2_user_stibp == SPECTRE_V2_USER_STRICT ||
+		    spectre_v2_user_stibp == SPECTRE_V2_USER_STRICT_PREFERRED)
 			return 0;
 
 		task_set_spec_ib_disable(task);
@@ -1361,18 +1134,24 @@ static int ib_prctl_get(struct task_struct *task)
 	if (spectre_v2_user_ibpb == SPECTRE_V2_USER_NONE &&
 	    spectre_v2_user_stibp == SPECTRE_V2_USER_NONE)
 		return PR_SPEC_ENABLE;
-	else if (is_spec_ib_user_controlled()) {
-
+	else if (spectre_v2_user_ibpb == SPECTRE_V2_USER_STRICT ||
+	    spectre_v2_user_stibp == SPECTRE_V2_USER_STRICT ||
+	    spectre_v2_user_stibp == SPECTRE_V2_USER_STRICT_PREFERRED)
+		return PR_SPEC_DISABLE;
+	else if (spectre_v2_user_ibpb == SPECTRE_V2_USER_PRCTL ||
+	    spectre_v2_user_ibpb == SPECTRE_V2_USER_SECCOMP ||
+	    spectre_v2_user_stibp == SPECTRE_V2_USER_PRCTL ||
+	    spectre_v2_user_stibp == SPECTRE_V2_USER_SECCOMP) {
 		if (task_spec_ib_force_disable(task))
 			return PR_SPEC_PRCTL | PR_SPEC_FORCE_DISABLE;
 		if (task_spec_ib_disable(task))
 			return PR_SPEC_PRCTL | PR_SPEC_DISABLE;
 		return PR_SPEC_PRCTL | PR_SPEC_ENABLE;
-	} else if (spectre_v2_user_ibpb == SPECTRE_V2_USER_STRICT ||
-	    spectre_v2_user_stibp == SPECTRE_V2_USER_STRICT ||
-	    spectre_v2_user_stibp == SPECTRE_V2_USER_STRICT_PREFERRED)
-		return PR_SPEC_DISABLE;
-	else
+	} else
+
+
+
+
 		return PR_SPEC_NOT_AFFECTED;
 }
 
@@ -1397,8 +1176,7 @@ void x86_spec_ctrl_setup_ap(void)
 		x86_amd_ssb_disable();
 }
 
-bool itlb_multihit_kvm_mitigation;
-EXPORT_SYMBOL_GPL(itlb_multihit_kvm_mitigation);
+
 
 #undef pr_fmt
 #define pr_fmt(fmt)	"L1TF: " fmt
@@ -1556,23 +1334,14 @@ static ssize_t l1tf_show_state(char *buf)
 		       sched_smt_active() ? "vulnerable" : "disabled");
 }
 
-static ssize_t itlb_multihit_show_state(char *buf)
-{
-	if (itlb_multihit_kvm_mitigation)
-		return sprintf(buf, "KVM: Mitigation: Split huge pages\n");
-	else
-		return sprintf(buf, "KVM: Vulnerable\n");
-}
+
 #else
 static ssize_t l1tf_show_state(char *buf)
 {
 	return sprintf(buf, "%s\n", L1TF_DEFAULT_MSG);
 }
 
-static ssize_t itlb_multihit_show_state(char *buf)
-{
-	return sprintf(buf, "Processor vulnerable\n");
-}
+
 #endif
 
 static ssize_t mds_show_state(char *buf)
@@ -1592,20 +1361,7 @@ static ssize_t mds_show_state(char *buf)
 		       sched_smt_active() ? "vulnerable" : "disabled");
 }
 
-static ssize_t tsx_async_abort_show_state(char *buf)
-{
-	if ((taa_mitigation == TAA_MITIGATION_TSX_DISABLED) ||
-	    (taa_mitigation == TAA_MITIGATION_OFF))
-		return sprintf(buf, "%s\n", taa_strings[taa_mitigation]);
 
-	if (boot_cpu_has(X86_FEATURE_HYPERVISOR)) {
-		return sprintf(buf, "%s; SMT Host state unknown\n",
-			       taa_strings[taa_mitigation]);
-	}
-
-	return sprintf(buf, "%s; SMT %s\n", taa_strings[taa_mitigation],
-		       sched_smt_active() ? "vulnerable" : "disabled");
-}
 
 static char *stibp_state(void)
 {
@@ -1639,10 +1395,7 @@ static char *ibpb_state(void)
 	return "";
 }
 
-static ssize_t srbds_show_state(char *buf)
-{
-	return sprintf(buf, "%s\n", srbds_strings[srbds_mitigation]);
-}
+
 
 static ssize_t cpu_show_common(struct device *dev, struct device_attribute *attr,
 			       char *buf, unsigned int bug)
@@ -1679,14 +1432,7 @@ static ssize_t cpu_show_common(struct device *dev, struct device_attribute *attr
 	case X86_BUG_MDS:
 		return mds_show_state(buf);
 
-	case X86_BUG_TAA:
-		return tsx_async_abort_show_state(buf);
 
-	case X86_BUG_ITLB_MULTIHIT:
-		return itlb_multihit_show_state(buf);
-
-	case X86_BUG_SRBDS:
-		return srbds_show_state(buf);
 
 	default:
 		break;
@@ -1723,20 +1469,7 @@ ssize_t cpu_show_l1tf(struct device *dev, struct device_attribute *attr, char *b
 ssize_t cpu_show_mds(struct device *dev, struct device_attribute *attr, char *buf)
 {
 	return cpu_show_common(dev, attr, buf, X86_BUG_MDS);
-}
 
-ssize_t cpu_show_tsx_async_abort(struct device *dev, struct device_attribute *attr, char *buf)
-{
-	return cpu_show_common(dev, attr, buf, X86_BUG_TAA);
-}
 
-ssize_t cpu_show_itlb_multihit(struct device *dev, struct device_attribute *attr, char *buf)
-{
-	return cpu_show_common(dev, attr, buf, X86_BUG_ITLB_MULTIHIT);
-}
-
-ssize_t cpu_show_srbds(struct device *dev, struct device_attribute *attr, char *buf)
-{
-	return cpu_show_common(dev, attr, buf, X86_BUG_SRBDS);
 }
 #endif

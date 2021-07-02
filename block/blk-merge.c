@@ -303,6 +303,7 @@ void blk_recount_segments(struct request_queue *q, struct bio *bio)
 
 
 
+
 	if (test_bit(QUEUE_FLAG_NO_SG_MERGE, &q->queue_flags) &&
 			(seg_cnt < queue_max_segments(q)))
 		bio->bi_phys_segments = seg_cnt;
@@ -508,6 +509,8 @@ int ll_back_merge_fn(struct request_queue *q, struct request *req,
 		req_set_nomerge(q, req);
 		return 0;
 	}
+	if (!bio_crypt_ctx_mergeable(req->bio, blk_rq_bytes(req), bio))
+		return 0;
 	if (!bio_flagged(req->biotail, BIO_SEG_VALID))
 		blk_recount_segments(q, req->biotail);
 	if (!bio_flagged(bio, BIO_SEG_VALID))
@@ -532,6 +535,8 @@ int ll_front_merge_fn(struct request_queue *q, struct request *req,
 		req_set_nomerge(q, req);
 		return 0;
 	}
+	if (!bio_crypt_ctx_mergeable(bio, bio->bi_iter.bi_size, req->bio))
+		return 0;
 	if (!bio_flagged(bio, BIO_SEG_VALID))
 		blk_recount_segments(q, bio);
 	if (!bio_flagged(req->bio, BIO_SEG_VALID))
@@ -606,6 +611,9 @@ static int ll_merge_requests_fn(struct request_queue *q, struct request *req,
 		return 0;
 
 	if (blk_integrity_merge_rq(q, req, next) == false)
+		return 0;
+
+	if (!bio_crypt_ctx_mergeable(req->bio, blk_rq_bytes(req), next->bio))
 		return 0;
 
 	/* Merge is OK... */
@@ -737,10 +745,10 @@ static struct request *attempt_merge(struct request_queue *q,
 		break;
 	case ELEVATOR_BACK_MERGE:
 		if (!ll_merge_requests_fn(q, req, next))
-
 			return NULL;
 		break;
 	default:
+
 		return NULL;
 	}
 
@@ -860,6 +868,10 @@ bool blk_rq_merge_ok(struct request *rq, struct bio *bio)
 	 * non-hint IO.
 	 */
 	if (rq->write_hint != bio->bi_write_hint)
+		return false;
+
+	/* Only merge if the crypt contexts are compatible */
+	if (!bio_crypt_ctx_compatible(bio, rq->bio))
 		return false;
 
 	return true;

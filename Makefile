@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-2.0
 VERSION = 4
 PATCHLEVEL = 14
-SUBLEVEL = 237
+SUBLEVEL = 238
 EXTRAVERSION =
 NAME = Petit Gorille
 
@@ -455,6 +455,7 @@ KBUILD_CFLAGS   := -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs \
 		   -fno-strict-aliasing -fno-common -fshort-wchar \
 		   -Werror-implicit-function-declaration \
 		   -Wno-format-security \
+
 		   -std=gnu89
 		   
 KBUILD_CPPFLAGS := -D__KERNEL__
@@ -539,13 +540,16 @@ endif
 
 ifeq ($(cc-name),clang)
 ifneq ($(CROSS_COMPILE),)
+
 CLANG_TRIPLE	?= $(CROSS_COMPILE)
 CLANG_FLAGS	+= --target=$(notdir $(CLANG_TRIPLE:%-=%))
 ifeq ($(shell $(srctree)/scripts/clang-android.sh $(CC) $(CLANG_FLAGS)), y)
 $(error "Clang with Android --target detected. Did you specify CLANG_TRIPLE?")
 endif
+
 GCC_TOOLCHAIN_DIR := $(dir $(shell which $(CROSS_COMPILE)elfedit))
 CLANG_FLAGS	+= --prefix=$(GCC_TOOLCHAIN_DIR)$(notdir $(CROSS_COMPILE))
+
 GCC_TOOLCHAIN	:= $(realpath $(GCC_TOOLCHAIN_DIR)/..)
 endif
 ifneq ($(GCC_TOOLCHAIN),)
@@ -563,7 +567,10 @@ endif
 KBUILD_CFLAGS	+= $(CLANG_FLAGS)
 KBUILD_AFLAGS	+= $(CLANG_FLAGS)
 export CLANG_FLAGS
-
+ifeq ($(ld-name),lld)
+KBUILD_CFLAGS += -fuse-ld=lld
+endif
+KBUILD_CPPFLAGS += -Qunused-arguments
 endif
 
 
@@ -659,7 +666,7 @@ ifeq ($(dot-config),1)
 -include include/config/auto.conf
 
 ifeq ($(KBUILD_EXTMOD),)
-
+include/config/auto.conf.cmd: check-clang-specific-options
 
 # Read in dependencies to all Kconfig* files, make sure to run
 # oldconfig if changes are detected.
@@ -715,15 +722,14 @@ all: vmlinux
 
 KBUILD_CFLAGS	+= $(call cc-option,-fno-PIE)
 KBUILD_AFLAGS	+= $(call cc-option,-fno-PIE)
-CFLAGS_GCOV	:= -fprofile-arcs -ftest-coverage -fno-tree-loop-im $(call cc-disable-warning,maybe-uninitialized,)
-
-CFLAGS_KCOV	:= $(call cc-option,-fsanitize-coverage=trace-pc,)
-export CFLAGS_GCOV CFLAGS_KCOV
+CFLAGS_GCOV	:= -fprofile-arcs -ftest-coverage \
+	$(call cc-option,-fno-tree-loop-im) \
+	$(call cc-disable-warning,maybe-uninitialized,)
+export CFLAGS_GCOV
 
 
 # Make toolchain changes before including arch/$(SRCARCH)/Makefile to ensure
 # ar/cc/ld-* macros return correct values.
-
 
 
 
@@ -794,7 +800,7 @@ ifeq ($(call shell-cached,$(CONFIG_SHELL) $(srctree)/scripts/gcc-goto.sh $(CC) $
 	KBUILD_AFLAGS += -DCC_HAVE_ASM_GOTO
 endif
 
-
+include scripts/Makefile.kcov
 include scripts/Makefile.gcc-plugins
 
 ifdef CONFIG_READABLE_ASM
@@ -834,9 +840,10 @@ endif
 KBUILD_CFLAGS += $(stackp-flag)
 
 ifeq ($(cc-name),clang)
-KBUILD_CPPFLAGS += $(call cc-option,-Qunused-arguments,)
+
 KBUILD_CFLAGS += $(call cc-disable-warning, format-invalid-specifier)
 KBUILD_CFLAGS += $(call cc-disable-warning, gnu)
+
 KBUILD_CFLAGS += $(call cc-disable-warning, duplicate-decl-specifier)
 
 
@@ -863,9 +870,9 @@ else
 KBUILD_CFLAGS += $(call cc-disable-warning, unused-but-set-variable)
 endif
 
-
-
-
+ifeq ($(ld-name),lld)
+LDFLAGS += -O3
+endif
 
 KBUILD_CFLAGS += $(call cc-disable-warning, unused-const-variable)
 ifdef CONFIG_FRAME_POINTER
@@ -879,6 +886,24 @@ else
 ifndef CONFIG_FUNCTION_TRACER
 KBUILD_CFLAGS	+= -fomit-frame-pointer
 endif
+endif
+# Initialize all stack variables with a 0xAA pattern.
+ifdef CONFIG_INIT_STACK_ALL_PATTERN
+KBUILD_CFLAGS	+= -ftrivial-auto-var-init=pattern
+endif
+
+# Initialize all stack variables with a zero value.
+ifdef CONFIG_INIT_STACK_ALL_ZERO
+# Future support for zero initialization is still being debated, see
+# https://bugs.llvm.org/show_bug.cgi?id=45497. These flags are subject to being
+# renamed or dropped.
+KBUILD_CFLAGS  += -ftrivial-auto-var-init=zero
+KBUILD_CFLAGS  += -enable-trivial-auto-var-init-zero-knowing-it-will-be-removed-from-clang
+endif
+
+# Initialize all stack variables with a pattern, if desired.
+ifdef CONFIG_INIT_STACK_ALL
+KBUILD_CFLAGS	+= -ftrivial-auto-var-init=pattern
 endif
 
 ifneq ($(LLVM_IAS),1)
@@ -957,17 +982,18 @@ lto-clang-flags += -fvisibility=default $(call cc-option, -fsplit-lto-unit)
 
 KBUILD_LDS_MODULE += $(srctree)/scripts/module-lto.lds
 
+
 # allow disabling only clang LTO where needed
 DISABLE_LTO_CLANG := -fno-lto
 export DISABLE_LTO_CLANG
 endif
 
 ifdef CONFIG_LTO
-lto-flags	:= $(lto-clang-flags)
-KBUILD_CFLAGS	+= $(lto-flags)
+LTO_CFLAGS	:= $(lto-clang-flags)
+KBUILD_CFLAGS	+= $(LTO_CFLAGS)
 
 DISABLE_LTO	:= $(DISABLE_LTO_CLANG)
-export DISABLE_LTO
+export LTO_CFLAGS DISABLE_LTO
 
 # LDFINAL_vmlinux and LDFLAGS_FINAL_vmlinux can be set to override
 # the linker and flags for vmlinux_link.
@@ -975,7 +1001,7 @@ export LDFINAL_vmlinux LDFLAGS_FINAL_vmlinux
 endif
 
 ifdef CONFIG_CFI_CLANG
-cfi-clang-flags	+= -fsanitize=cfi
+cfi-clang-flags	+= -fsanitize=cfi -fno-sanitize-cfi-canonical-jump-tables
 DISABLE_CFI_CLANG := -fno-sanitize=cfi
 ifdef CONFIG_MODULES
 cfi-clang-flags	+= -fsanitize-cfi-cross-dso
@@ -993,12 +1019,18 @@ endif
 
 ifdef CONFIG_CFI
 # cfi-flags are re-tested in prepare-compiler-check
-cfi-flags	:= $(cfi-clang-flags)
-KBUILD_CFLAGS	+= $(cfi-flags)
+CFI_CFLAGS	:= $(cfi-clang-flags)
+KBUILD_CFLAGS	+= $(CFI_CFLAGS)
 
 DISABLE_CFI	:= $(DISABLE_CFI_CLANG)
 DISABLE_LTO	+= $(DISABLE_CFI)
-export DISABLE_CFI
+export CFI_CFLAGS DISABLE_CFI
+endif
+
+ifdef CONFIG_SHADOW_CALL_STACK
+CC_FLAGS_SCS	:= -fsanitize=shadow-call-stack
+KBUILD_CFLAGS	+= $(CC_FLAGS_SCS)
+export CC_FLAGS_SCS
 endif
 
 
@@ -1071,6 +1103,7 @@ KBUILD_CFLAGS	+= $(call cc-option,-fmacro-prefix-map=$(srctree)/=)
 
 
 
+
 # use the deterministic mode of AR if available
 KBUILD_ARFLAGS := $(call ar-option,D)
 
@@ -1085,8 +1118,8 @@ KBUILD_AFLAGS   += $(ARCH_AFLAGS)   $(KAFLAGS)
 KBUILD_CFLAGS   += $(ARCH_CFLAGS)   $(KCFLAGS)
 
 # Use --build-id when available.
-LDFLAGS_BUILD_ID := $(patsubst -Wl$(comma)%,%,\
-			      $(call cc-ldoption, -Wl$(comma)--build-id,))
+LDFLAGS_BUILD_ID := $(call ld-option, --build-id)
+
 KBUILD_LDFLAGS_MODULE += $(LDFLAGS_BUILD_ID)
 LDFLAGS_vmlinux += $(LDFLAGS_BUILD_ID)
 
@@ -1363,22 +1396,21 @@ else
 endif
 endif
 
+# Disable clang-specific config options when using a different compiler
+clang-specific-configs := LTO_CLANG CFI_CLANG SHADOW_CALL_STACK INIT_STACK_ALL_ZERO
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+PHONY += check-clang-specific-options
+check-clang-specific-options: $(KCONFIG_CONFIG) FORCE
+ifneq ($(cc-name),clang)
+ifneq ($(findstring y,$(shell $(CONFIG_SHELL) \
+	$(srctree)/scripts/config --file $(KCONFIG_CONFIG) \
+		$(foreach c,$(clang-specific-configs),-s $(c)))),)
+	@echo WARNING: Disabling clang-specific options with $(cc-name) >&2
+	$(Q)$(srctree)/scripts/config --file $(KCONFIG_CONFIG) \
+		$(foreach c,$(clang-specific-configs),-d $(c)) && \
+	$(MAKE) -f $(srctree)/Makefile olddefconfig
+endif
+endif
 
 
 # Check for CONFIG flags that require compiler support. Abort the build
@@ -1397,9 +1429,9 @@ ifdef CONFIG_LTO_CLANG
 	@echo Cannot use CONFIG_LTO_CLANG: requires clang 5.0 or later >&2 && exit 1
   endif
   ifneq ($(ld-name), lld)
-  ifneq ($(call gold-ifversion, -ge, 112000000, y), y)
+    ifneq ($(call gold-ifversion, -ge, 112000000, y), y)
 	@echo Cannot use CONFIG_LTO_CLANG: requires LLD or GNU gold 1.12 or later >&2 && exit 1
-  endif
+    endif
   endif
 endif
 
@@ -1445,8 +1477,8 @@ else
 endif
 define filechk_utsrelease.h
 	if [ `echo -n "$(UTS_RELEASE)" | wc -c ` -gt $(uts_len) ]; then \
-	  echo '"$(UTS_RELEASE)" exceeds $(uts_len) characters' >&2;    \
-	  exit 1;                                                       \
+		echo '"$(UTS_RELEASE)" exceeds $(uts_len) characters' >&2;    \
+		exit 1;                                                       \
 	fi;                                                             \
 	(echo \#define UTS_RELEASE \"$(UTS_RELEASE)\";)
 endef

@@ -295,6 +295,7 @@ static void bbr_set_pacing_rate(struct sock *sk, u32 bw, int gain)
 }
 
 static u32 bbr_min_tso_segs(struct sock *sk)
+
 {
 	return sk->sk_pacing_rate < (bbr_min_tso_rate >> 3) ? 1 : 2;
 }
@@ -328,7 +329,9 @@ static u32 bbr_tso_segs_goal(struct sock *sk)
 	struct tcp_sock *tp = tcp_sk(sk);
 
 
+
 	return  bbr_tso_segs_generic(sk, tp->mss_cache, GSO_MAX_SIZE);
+
 }
 
 /* Save "last known good" cwnd so we can restore it after losses or PROBE_RTT */
@@ -363,6 +366,7 @@ static void bbr_cwnd_event(struct sock *sk, enum tcp_ca_event event)
 }
 
 /* Calculate bdp based on min RTT and the estimated bottleneck bandwidth:
+
  *
  * bdp = bw * min_rtt * gain
  *
@@ -370,6 +374,7 @@ static void bbr_cwnd_event(struct sock *sk, enum tcp_ca_event event)
  * builds a smaller queue, it becomes more vulnerable to noise in RTT
  * measurements (e.g., delayed ACKs or other ACK compression effects). This
  * noise may cause BBR to under-estimate the rate.
+
 
  */
 static u32 bbr_bdp(struct sock *sk, u32 bw, int gain)
@@ -486,6 +491,7 @@ static bool bbr_set_cwnd_to_recover_or_restore(
 	bbr->prev_ca_state = state;
 
 
+
 	if (bbr->packet_conservation) {
 		*new_cwnd = max(cwnd, tcp_packets_in_flight(tp) + acked);
 		return true;	/* yes, using packet conservation */
@@ -578,6 +584,7 @@ static void bbr_advance_cycle_phase(struct sock *sk)
 	bbr->cycle_idx = (bbr->cycle_idx + 1) & (CYCLE_LEN - 1);
 	bbr->cycle_mstamp = tp->delivered_mstamp;
 
+
 }
 
 /* Gain cycling: cycle pacing gain to converge to fair share of available bw. */
@@ -596,6 +603,7 @@ static void bbr_reset_startup_mode(struct sock *sk)
 
 	bbr->mode = BBR_STARTUP;
 
+
 }
 
 static void bbr_reset_probe_bw_mode(struct sock *sk)
@@ -603,6 +611,7 @@ static void bbr_reset_probe_bw_mode(struct sock *sk)
 	struct bbr *bbr = inet_csk_ca(sk);
 
 	bbr->mode = BBR_PROBE_BW;
+
 
 	bbr->cycle_idx = CYCLE_LEN - 1 - prandom_u32_max(bbr_cycle_rand);
 	bbr_advance_cycle_phase(sk);	/* flip to next phase of gain cycle */
@@ -768,6 +777,7 @@ static void bbr_update_bw(struct sock *sk, const struct rate_sample *rs)
 	 * ratio will be <<1 for most connections. So delivered is first scaled.
 	 */
 	bw = div64_long((u64)rs->delivered * BW_UNIT, rs->interval_us);
+
 
 	/* If this sample is application-limited, it is likely to have a very
 	 * low delivered count that represents application behavior rather than
@@ -943,6 +953,7 @@ static void bbr_update_min_rtt(struct sock *sk, const struct rate_sample *rs)
 	    !bbr->idle_restart && bbr->mode != BBR_PROBE_RTT) {
 		bbr->mode = BBR_PROBE_RTT;  /* dip, drain queue */
 
+
 		bbr_save_cwnd(sk);  /* note cwnd so we can restore it */
 		bbr->probe_rtt_done_stamp = 0;
 	}
@@ -963,6 +974,7 @@ static void bbr_update_min_rtt(struct sock *sk, const struct rate_sample *rs)
 				bbr->probe_rtt_round_done = 1;
 			if (bbr->probe_rtt_round_done)
 				bbr_check_probe_rtt_done(sk);
+
 		}
 	}
 	/* Restart after idle ends only once we process a new S/ACK for data */

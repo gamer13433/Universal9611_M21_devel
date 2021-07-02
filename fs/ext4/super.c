@@ -1203,6 +1203,8 @@ static struct inode *ext4_nfs_get_inode(struct super_block *sb,
 	/*
 
 
+
+
 	 * Currently we don't know the generation for parent directory, so
 	 * a generation of 0 means "accept any"
 	 */
@@ -3970,6 +3972,7 @@ static int ext4_fill_super(struct super_block *sb, void *data, int silent)
 
 
 
+
 	if (le32_to_cpu(es->s_log_block_size) >
 	    (EXT4_MAX_BLOCK_LOG_SIZE - EXT4_MIN_BLOCK_LOG_SIZE)) {
 		ext4_msg(sb, KERN_ERR,
@@ -5006,6 +5009,7 @@ static int ext4_commit_super(struct super_block *sb, int sync)
 		return -EINVAL;
 	if (block_device_ejected(sb))
 		return -ENODEV;
+
 
 
 

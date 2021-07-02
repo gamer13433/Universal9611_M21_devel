@@ -95,6 +95,8 @@ static int sm_disk_set_count(struct dm_space_map *sm, dm_block_t b,
 	if (!r) {
 		smd->nr_allocated_this_transaction += nr_allocations;
 
+
+
 	}
 
 	return r;
@@ -111,6 +113,7 @@ static int sm_disk_inc_blocks(struct dm_space_map *sm, dm_block_t b, dm_block_t 
 		smd->nr_allocated_this_transaction += nr_allocations;
 
 
+
 	return r;
 }
 
@@ -124,6 +127,7 @@ static int sm_disk_dec_blocks(struct dm_space_map *sm, dm_block_t b, dm_block_t 
 	r = sm_ll_dec(&smd->ll, b, e, &nr_allocations);
 	if (!r)
 		smd->nr_allocated_this_transaction += nr_allocations;
+
 
 
 	return r;

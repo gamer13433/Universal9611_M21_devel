@@ -248,6 +248,8 @@ static void timer_update_keys(struct work_struct *work)
 	mutex_unlock(&timer_keys_mutex);
 
 
+
+
 }
 
 void timers_update_nohz(void)
@@ -930,6 +932,7 @@ static inline void forward_timer_base(struct timer_base *base)
 		base->clk = jnow;
 	else
 		base->clk = base->next_expiry;
+
 
 
 

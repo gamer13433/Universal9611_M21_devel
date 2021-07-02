@@ -201,14 +201,6 @@ static inline void tcp_event_ack_sent(struct sock *sk, unsigned int pkts,
 	inet_csk_clear_xmit_timer(sk, ICSK_TIME_DACK);
 }
 
-
-
-
-
-
-
-
-
 /* Determine a window scaling and initial window to offer.
  * Based on the assumption that the given amount of space
  * will be offered. Store the results in the tp structure.
@@ -216,7 +208,7 @@ static inline void tcp_event_ack_sent(struct sock *sk, unsigned int pkts,
  * be a multiple of mss if possible. We assume here that mss >= 1.
  * This MUST be enforced by all callers.
  */
-void tcp_select_initial_window(int __space, __u32 mss,
+void tcp_select_initial_window(struct net *net, int __space, __u32 mss,
 			       __u32 *rcv_wnd, __u32 *window_clamp,
 			       int wscale_ok, __u8 *rcv_wscale,
 			       __u32 init_rcv_wnd)
@@ -259,6 +251,7 @@ void tcp_select_initial_window(int __space, __u32 mss,
 			(*rcv_wscale)++;
 		}
 	}
+
 
 
 
@@ -961,6 +954,7 @@ enum hrtimer_restart tcp_pace_kick(struct hrtimer *timer)
 
 
 
+
 static void tcp_internal_pacing(struct sock *sk, const struct sk_buff *skb)
 {
 	u64 len_ns;
@@ -971,6 +965,7 @@ static void tcp_internal_pacing(struct sock *sk, const struct sk_buff *skb)
 	rate = sk->sk_pacing_rate;
 	if (!rate || rate == ~0U)
 		return;
+
 
 
 
@@ -2448,7 +2443,6 @@ repair:
 		if (push_one != 2)
 			tcp_schedule_loss_probe(sk, false);
 
-
 		return false;
 	}
 	return !tp->packets_out && tcp_send_head(sk);
@@ -3014,6 +3008,7 @@ int tcp_retransmit_skb(struct sock *sk, struct sk_buff *skb, int segs)
  * we've sent it all or the congestion window limit is reached.
 
 
+
  */
 void tcp_xmit_retransmit_queue(struct sock *sk)
 {
@@ -3389,7 +3384,7 @@ static void tcp_connect_init(struct sock *sk)
 	if (rcv_wnd == 0)
 		rcv_wnd = dst_metric(dst, RTAX_INITRWND);
 
-	tcp_select_initial_window(tcp_full_space(sk),
+	tcp_select_initial_window(sock_net(sk), tcp_full_space(sk),
 				  tp->advmss - (tp->rx_opt.ts_recent_stamp ? tp->tcp_header_len - sizeof(struct tcphdr) : 0),
 				  &tp->rcv_wnd,
 				  &tp->window_clamp,

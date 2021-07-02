@@ -293,6 +293,7 @@ static struct kmem_cache *pwq_cache __read_mostly;
 
 
 
+
 /*
  * List of files with newly added links, where we may need to limit the number
  * of emanating paths. Protected by the epmutex.
@@ -1397,13 +1398,13 @@ static int ep_create_wakeup_source(struct epitem *epi)
 	struct wakeup_source *ws;
 
 	if (!epi->ep->ws) {
-		epi->ep->ws = wakeup_source_register("eventpoll");
+		epi->ep->ws = wakeup_source_register(NULL, "eventpoll");
 		if (!epi->ep->ws)
 			return -ENOMEM;
 	}
 
 	take_dentry_name_snapshot(&n, epi->ffd.file->f_path.dentry);
-	ws = wakeup_source_register(n.name);
+	ws = wakeup_source_register(NULL, n.name);
 	release_dentry_name_snapshot(&n);
 
 	if (!ws)
@@ -1540,6 +1541,7 @@ error_remove_epi:
 	spin_unlock(&tfile->f_lock);
 
 	rb_erase_cached(&epi->rbn, &ep->rbr);
+
 
 
 
@@ -1935,7 +1937,9 @@ static int ep_loop_check(struct eventpoll *ep, struct file *file)
 	return ep_call_nested(&poll_loop_ncalls, EP_MAX_NESTS,
 
 
+
 			      ep_loop_check_proc, file, ep, current);
+
 
 
 }

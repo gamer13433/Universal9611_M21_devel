@@ -2016,7 +2016,6 @@ static ssize_t fuse_dev_splice_write(struct pipe_inode_info *pipe,
 		goto out_free;
 
 
-
 	rem = len;
 	while (rem) {
 		struct pipe_buffer *ibuf;

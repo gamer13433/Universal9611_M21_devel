@@ -1480,9 +1480,10 @@ struct f2fs_sb_info {
 	/* Precomputed FS UUID checksum for seeding other checksums */
 	__u32 s_chksum_seed;
 
-	unsigned int sec_hqm_preserve;
+
 	struct f2fs_sec_stat_info sec_stat;
 	struct f2fs_sec_fsck_info sec_fsck_stat;
+	unsigned int sec_hqm_preserve;
 
 	unsigned int s_sec_cond_fua_mode;
 
@@ -1968,15 +1969,17 @@ static inline void dec_valid_block_count(struct f2fs_sb_info *sbi,
 						struct inode *inode,
 						block_t count)
 {
+	blkcnt_t sectors = count << F2FS_LOG_SECTORS_PER_BLOCK;
 	spin_lock(&sbi->stat_lock);
 	f2fs_bug_on(sbi, sbi->total_valid_block_count < (block_t) count);
-
+	f2fs_bug_on(sbi, inode->i_blocks < sectors);
 	sbi->total_valid_block_count -= (block_t)count;
 	if (sbi->reserved_blocks &&
 		sbi->current_reserved_blocks < sbi->reserved_blocks)
 		sbi->current_reserved_blocks = min(sbi->reserved_blocks,
 					sbi->current_reserved_blocks + count);
 	spin_unlock(&sbi->stat_lock);
+
 
 	f2fs_i_blocks_write(inode, count, false, true);
 }

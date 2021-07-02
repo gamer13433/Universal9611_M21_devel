@@ -36,6 +36,8 @@
  * changed without any system call invocations.
  */
 
+
+
 /*
  * selinux_kernel_status_page
  *
@@ -57,6 +59,9 @@ struct page *selinux_kernel_status_page(struct selinux_state *state)
 			status->version = SELINUX_KERNEL_STATUS_VERSION;
 			status->sequence = 0;
 			status->enforcing = enforcing_enabled(state);
+
+
+
 			/*
 			 * NOTE: the next policyload event shall set
 			 * a positive value on the status->policyload,

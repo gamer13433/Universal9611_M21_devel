@@ -3073,6 +3073,7 @@ int clk_notifier_unregister(struct clk *clk, struct notifier_block *nb)
 	list_for_each_entry(cn, &clk_notifier_list, node) {
 
 
+
 		if (cn->clk == clk) {
 			ret = srcu_notifier_chain_unregister(&cn->notifier_head, nb);
 
@@ -3086,6 +3087,7 @@ int clk_notifier_unregister(struct clk *clk, struct notifier_block *nb)
 			}
 			break;
 		}
+
 
 
 	}

@@ -52,6 +52,7 @@ struct ieee80211_local;
 #define IEEE80211_ENCRYPT_HEADROOM 8
 #define IEEE80211_ENCRYPT_TAILROOM 18
 
+
 /* power level hasn't been configured (or set to automatic) */
 #define IEEE80211_UNSET_POWER_LEVEL	INT_MIN
 
@@ -83,6 +84,7 @@ extern const u8 ieee80211_ac_to_qos_mask[IEEE80211_NUM_ACS];
 #define IEEE80211_DEAUTH_FRAME_LEN	(24 /* hdr */ + 2 /* reason */)
 
 #define IEEE80211_MAX_NAN_INSTANCE_ID 255
+
 
 struct ieee80211_bss {
 	u32 device_ts_beacon, device_ts_presp;
@@ -872,6 +874,7 @@ struct ieee80211_sub_if_data {
 
 	struct ieee80211_fragment_cache frags;
 
+
 	/* TID bitmap for NoAck policy */
 	u16 noack_map;
 
@@ -1393,7 +1396,7 @@ ieee80211_get_sband(struct ieee80211_sub_if_data *sdata)
 	rcu_read_lock();
 	chanctx_conf = rcu_dereference(sdata->vif.chanctx_conf);
 
-	if (WARN_ON_ONCE(!chanctx_conf)) {
+	if (!chanctx_conf) {
 		rcu_read_unlock();
 		return NULL;
 	}

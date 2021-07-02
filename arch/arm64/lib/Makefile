@@ -8,4 +8,12 @@ lib-y		:= clear_user.o delay.o copy_from_user.o		\
 		   strchr.o strrchr.o tishift.o
 
 
+ifeq ($(ld-name),lld)
+# https://bugs.llvm.org/show_bug.cgi?id=35841
+obj-$(CONFIG_ARM64_LSE_ATOMICS) += atomic_ll_sc.o
+else
+
+endif
+
+
 lib-$(CONFIG_ARCH_HAS_UACCESS_FLUSHCACHE) += uaccess_flushcache.o

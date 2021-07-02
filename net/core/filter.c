@@ -2284,6 +2284,7 @@ static int bpf_skb_net_shrink(struct sk_buff *skb, u32 len_diff)
 #define BPF_SKB_MAX_LEN SKB_MAX_ALLOC
 
 
+
 static int bpf_skb_adjust_net(struct sk_buff *skb, s32 len_diff)
 {
 	bool trans_same = skb->transport_header == skb->network_header;

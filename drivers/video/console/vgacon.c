@@ -177,6 +177,7 @@ static void vgacon_scrolldelta(struct vc_data *c, int lines)
 
 
 
+
 static const char *vgacon_startup(void)
 {
 	const char *display_desc = NULL;
@@ -358,6 +359,7 @@ static const char *vgacon_startup(void)
 
 	vgacon_xres = screen_info.orig_video_cols * VGA_FONTWIDTH;
 	vgacon_yres = vga_scan_lines;
+
 
 
 	vga_init_done = true;

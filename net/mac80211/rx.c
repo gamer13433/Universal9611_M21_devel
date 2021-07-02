@@ -1256,6 +1256,7 @@ ieee80211_rx_h_check_dup(struct ieee80211_rx_data *rx)
 
 	if (ieee80211_is_ctl(hdr->frame_control) ||
 	    ieee80211_is_any_nullfunc(hdr->frame_control) ||
+
 	    is_multicast_ether_addr(hdr->addr1))
 		return RX_CONTINUE;
 
@@ -1643,6 +1644,7 @@ ieee80211_rx_h_sta_process(struct ieee80211_rx_data *rx)
 	 * are used only to control station power saving mode.
 	 */
 	if (ieee80211_is_any_nullfunc(hdr->frame_control)) {
+
 		I802_DEBUG_INC(rx->local->rx_handlers_drop_nullfunc);
 
 		/*
@@ -1926,6 +1928,7 @@ ieee80211_reassemble_add(struct ieee80211_fragment_cache *cache,
 	if (cache->next >= IEEE80211_FRAGMENT_MAX)
 		cache->next = 0;
 
+
 	__skb_queue_purge(&entry->skb_list);
 
 	__skb_queue_tail(&entry->skb_list, *skb); /* no need for locking */
@@ -2014,16 +2017,18 @@ ieee80211_rx_h_defragment(struct ieee80211_rx_data *rx)
 	sc = le16_to_cpu(hdr->seq_ctrl);
 	frag = sc & IEEE80211_SCTL_FRAG;
 
-	if (is_multicast_ether_addr(hdr->addr1)) {
-		I802_DEBUG_INC(rx->local->dot11MulticastReceivedFrameCount);
-		goto out_no_led;
-	}
+	if (rx->sta)
+		cache = &rx->sta->frags;
+
 
 	if (rx->sta)
 		cache = &rx->sta->frags;
 
 	if (likely(!ieee80211_has_morefrags(fc) && frag == 0))
 		goto out;
+
+	if (is_multicast_ether_addr(hdr->addr1))
+		return RX_DROP_MONITOR;
 
 	I802_DEBUG_INC(rx->local->rx_handlers_fragments);
 
@@ -2043,6 +2048,7 @@ ieee80211_rx_h_defragment(struct ieee80211_rx_data *rx)
 		entry = ieee80211_reassemble_add(cache, frag, seq,
 						 rx->seqno_idx, &(rx->skb));
 		if (requires_sequential_pn(rx, fc)) {
+
 			int queue = rx->security_idx;
 
 			/* Store CCMP/GCMP PN so that we can verify that the
@@ -2090,7 +2096,9 @@ ieee80211_rx_h_defragment(struct ieee80211_rx_data *rx)
 		int i;
 		u8 pn[IEEE80211_CCMP_PN_LEN], *rpn;
 
+
 		if (!requires_sequential_pn(rx, fc))
+
 			return RX_DROP_UNUSABLE;
 
 		/* Prevent mixed key and fragment cache attacks */
@@ -2150,7 +2158,7 @@ ieee80211_rx_h_defragment(struct ieee80211_rx_data *rx)
 
  out:
 	ieee80211_led_rx(rx->local);
- out_no_led:
+
 	if (rx->sta)
 		rx->sta->rx_stats.packets++;
 	return RX_CONTINUE;
@@ -2314,6 +2322,7 @@ static bool ieee80211_frame_allowed(struct ieee80211_rx_data *rx, __le16 fc)
 	if (unlikely(ehdr->h_proto == rx->sdata->control_port_protocol))
 		return ether_addr_equal(ehdr->h_dest, rx->sdata->vif.addr) ||
 		       ether_addr_equal(ehdr->h_dest, pae_group_addr);
+
 
 	if (ieee80211_802_1x_port_control(rx) ||
 	    ieee80211_drop_unencrypted(rx, fc))
@@ -3349,6 +3358,7 @@ ieee80211_rx_h_mgmt(struct ieee80211_rx_data *rx)
 		break;
 	case cpu_to_le16(IEEE80211_STYPE_ASSOC_RESP):
 	case cpu_to_le16(IEEE80211_STYPE_REASSOC_RESP):
+
 	case cpu_to_le16(IEEE80211_STYPE_DISASSOC):
 		if (is_multicast_ether_addr(mgmt->da) &&
 		    !is_broadcast_ether_addr(mgmt->da))

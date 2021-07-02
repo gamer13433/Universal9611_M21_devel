@@ -242,7 +242,6 @@ void __put_cred(struct cred *cred)
 		put_cred_rcu(&cred->rcu);
 	else
 
-
 		call_rcu(&cred->rcu, put_cred_rcu);
 }
 EXPORT_SYMBOL(__put_cred);
@@ -836,6 +835,7 @@ const struct cred *override_creds(const struct cred *new)
 	 * on the validation in 'get_cred()'.
 	 */
 	get_new_cred((struct cred *)new);
+
 
 
 	alter_cred_subscribers(new, 1);

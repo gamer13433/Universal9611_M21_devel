@@ -3101,6 +3101,7 @@ static int ext4_unlink(struct inode *dir, struct dentry *dentry)
 
 
 
+
 	retval = ext4_delete_entry(handle, dir, de, bh);
 	if (retval)
 		goto end_unlink;
@@ -3776,6 +3777,7 @@ static int ext4_rename(struct inode *old_dir, struct dentry *old_dentry,
 	retval = 0;
 
 end_rename:
+
 
 
 	if (whiteout) {

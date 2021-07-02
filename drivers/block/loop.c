@@ -254,6 +254,7 @@ static void loop_set_size(struct loop_device *lo, loff_t size)
 	set_capacity(lo->lo_disk, size);
 	bd_set_size(bdev, size << 9);
 
+
 	/* let user-space know about the new size */
 	kobject_uevent(&disk_to_dev(bdev->bd_disk)->kobj, KOBJ_CHANGE);
 
@@ -1054,6 +1055,7 @@ static int loop_configure(struct loop_device *lo, fmode_t mode,
 		lo->lo_flags |= LO_FLAGS_READ_ONLY;
 
 
+
 	error = loop_prepare_queue(lo);
 	if (error)
 		goto out_putf;
@@ -1066,6 +1068,7 @@ static int loop_configure(struct loop_device *lo, fmode_t mode,
 	lo->lo_device = bdev;
 
 	lo->lo_backing_file = file;
+
 
 	lo->old_gfp_mask = mapping_gfp_mask(mapping);
 	mapping_set_gfp_mask(mapping, lo->old_gfp_mask & ~(__GFP_IO|__GFP_FS));
@@ -1084,6 +1087,7 @@ static int loop_configure(struct loop_device *lo, fmode_t mode,
 	}
 
 	loop_update_dio(lo);
+
 
 	loop_sysfs_init(lo);
 	loop_set_size(lo, size);
@@ -1239,6 +1243,7 @@ loop_set_status(struct loop_device *lo, const struct loop_info64 *info)
 			lo->lo_device->bd_inode->i_mapping->nrpages);
 		goto exit;
 	}
+
 
 
 	prev_lo_flags = lo->lo_flags;
@@ -1528,6 +1533,7 @@ static int lo_ioctl(struct block_device *bdev, fmode_t mode,
 		err = loop_configure(lo, mode, bdev, &config);
 		break;
 	}
+
 	case LOOP_CHANGE_FD:
 		err = loop_change_fd(lo, bdev, arg);
 		break;

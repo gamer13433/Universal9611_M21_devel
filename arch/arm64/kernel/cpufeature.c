@@ -892,6 +892,7 @@ static bool unmap_kernel_at_el0(const struct arm64_cpu_capabilities *entry,
 
 
 
+
 }
 
 #ifdef CONFIG_UNMAP_KERNEL_AT_EL0
@@ -908,7 +909,7 @@ kpti_install_ng_mappings(const struct arm64_cpu_capabilities *__unused)
 	if (kpti_applied)
 		return;
 
-	remap_fn = (void *)__pa_symbol(idmap_kpti_install_ng_mappings);
+	remap_fn = (void *)__pa_function(idmap_kpti_install_ng_mappings);
 
 	cpu_install_idmap();
 	remap_fn(cpu, num_online_cpus(), __pa_symbol(swapper_pg_dir));
@@ -940,6 +941,7 @@ static int __init parse_kpti(char *str)
 early_param("kpti", parse_kpti);
 
 
+
 #ifdef CONFIG_ARM64_VHE
 static bool runs_at_el2(const struct arm64_cpu_capabilities *entry, int __unused)
 {
@@ -960,7 +962,6 @@ static void cpu_copy_el2regs(const struct arm64_cpu_capabilities *__unused)
 		write_sysreg(read_sysreg(tpidr_el1), tpidr_el2);
 }
 #endif
-
 #ifdef CONFIG_ARM64_SSBD
 static int ssbs_emulation_handler(struct pt_regs *regs, u32 instr)
 {
@@ -973,7 +974,6 @@ static int ssbs_emulation_handler(struct pt_regs *regs, u32 instr)
 		regs->pstate &= ~PSR_SSBS_BIT;
 
 	arm64_skip_faulting_instruction(regs, 4);
-
 	return 0;
 }
 
@@ -1151,7 +1151,7 @@ static const struct arm64_cpu_capabilities arm64_features[] = {
 		.field_pos = field,				\
 		.sign = s,					\
 		.min_field_value = min_value,			\
-		
+
 #define __HWCAP_CAP(name, cap_type, cap)			\
 		.desc = name,					\
 		.type = ARM64_CPUCAP_SYSTEM_FEATURE,		\
@@ -1584,7 +1584,6 @@ void __init setup_cpu_features(void)
 	int cls;
 
 	setup_system_capabilities();
-
 
 	mark_const_caps_ready();
 	setup_elf_hwcaps(arm64_elf_hwcaps);

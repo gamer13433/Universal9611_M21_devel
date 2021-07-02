@@ -148,6 +148,7 @@ static int brb_peek(struct bop_ring_buffer *brb, struct block_op *result)
 	bop = brb->bops + brb->begin;
 	memcpy(result, bop, sizeof(*result));
 
+
 	return 0;
 }
 
@@ -740,6 +741,7 @@ static int sm_metadata_extend(struct dm_space_map *sm, dm_block_t extra_blocks)
 	do {
 		r = add_bop(smm, BOP_INC, old_len, smm->begin);
 
+
 		if (r)
 			goto out;
 
@@ -812,6 +814,7 @@ int dm_sm_metadata_create(struct dm_space_map *sm,
 	 * allocated blocks that they were built from.
 	 */
 	r = add_bop(smm, BOP_INC, superblock, smm->begin);
+
 
 	if (r)
 		return r;

@@ -95,7 +95,7 @@ int sysctl_tcp_min_rtt_wlen __read_mostly = 300;
 int sysctl_tcp_moderate_rcvbuf __read_mostly = 1;
 int sysctl_tcp_early_retrans __read_mostly = 3;
 int sysctl_tcp_invalid_ratelimit __read_mostly = HZ/2;
-int sysctl_tcp_default_init_rwnd __read_mostly = TCP_INIT_CWND * 2;
+
 
 #define FLAG_DATA		0x01 /* Incoming frame contained data.		*/
 #define FLAG_WIN_UPDATE		0x02 /* Incoming ACK was a window update.	*/
@@ -397,6 +397,7 @@ static void tcp_grow_window(struct sock *sk, const struct sk_buff *skb)
 
 	/* Check #1 */
 	if (room > 0 && !tcp_under_memory_pressure(sk)) {
+
 		int incr;
 
 		/* Check #2. Increase window, if skb with such overhead
@@ -410,6 +411,7 @@ static void tcp_grow_window(struct sock *sk, const struct sk_buff *skb)
 		if (incr) {
 			incr = max_t(int, incr, 2 * skb->len);
 			tp->rcv_ssthresh += min(room, incr);
+
 			inet_csk(sk)->icsk_ack.quick |= 1;
 		}
 	}
@@ -419,12 +421,17 @@ static void tcp_grow_window(struct sock *sk, const struct sk_buff *skb)
 
 
 
+
+
+
+
  *    established state.
  */
 void tcp_init_buffer_space(struct sock *sk)
 {
 	struct tcp_sock *tp = tcp_sk(sk);
 	int maxwin;
+
 
 
 	if (!(sk->sk_userlocks & SOCK_SNDBUF_LOCK))
@@ -858,6 +865,7 @@ __u32 tcp_init_cwnd(const struct tcp_sock *tp, const struct dst_entry *dst)
 	return min_t(__u32, cwnd, tp->snd_cwnd_clamp);
 }
 
+
 /* Take a notice that peer is sending D-SACKs */
 static void tcp_dsack_seen(struct tcp_sock *tp)
 {
@@ -884,6 +892,7 @@ static void tcp_update_reordering(struct sock *sk, const int metric,
 			 tp->sacked_out,
 			 tp->undo_marker ? tp->undo_retrans : 0);
 #endif
+
 	}
 
 	tp->rack.reord = 1;
@@ -893,6 +902,7 @@ static void tcp_update_reordering(struct sock *sk, const int metric,
 		mib_idx = LINUX_MIB_TCPTSREORDER;
 	else if (tcp_is_reno(tp))
 		mib_idx = LINUX_MIB_TCPRENOREORDER;
+
 	else
 		mib_idx = LINUX_MIB_TCPSACKREORDER;
 
@@ -977,6 +987,7 @@ void tcp_skb_mark_lost_uncond_verify(struct tcp_sock *tp, struct sk_buff *skb)
  * 3. Loss detection event of two flavors:
  *	A. Scoreboard estimator decided the packet is lost.
  *	   A'. Reno "three dupacks" marks head of queue lost.
+
  *	B. SACK arrives sacking SND.NXT at the moment, when the
  *	   segment was retransmitted.
  * 4. D-SACK added new rule: D-SACK changes any tag to S.
@@ -1531,6 +1542,7 @@ static struct sk_buff *tcp_shift_skb_data(struct sock *sk, struct sk_buff *skb,
 		pcount += next_pcount;
 		tcp_shifted_skb(sk, skb, state, next_pcount, len, mss, 0);
 	}
+
 out:
 	state->fack_count += pcount;
 	return prev;
@@ -2065,6 +2077,7 @@ static inline int tcp_fackets_out(const struct tcp_sock *tp)
  * counter when SACK is enabled (without SACK, sacked_out is used for
  * that purpose).
  *
+
  * With reordering, holes may still be in flight, so RFC3517 recovery
  * uses pure sacked_out (total number of SACKed segments) even though
  * it violates the RFC that uses duplicate ACKs, often these are equal
@@ -2142,6 +2155,7 @@ static inline int tcp_dupack_heuristics(const struct tcp_sock *tp)
  *		dynamically measured and adjusted. This is implemented in
  *		tcp_rack_mark_lost.
  *
+
  *		If the receiver does not support SACK:
  *
  *		NewReno (RFC6582): in Recovery we assume that one segment
@@ -2263,6 +2277,7 @@ static void tcp_update_scoreboard(struct sock *sk, int fast_rexmit)
 
 	if (tcp_is_reno(tp)) {
 		tcp_mark_head_lost(sk, 1, 1);
+
 	} else {
 		int sacked_upto = tp->sacked_out - tp->reordering;
 		if (sacked_upto >= 0)
@@ -3080,6 +3095,7 @@ static int tcp_clean_rtx_queue(struct sock *sk, int prior_fackets,
 	long ca_rtt_us = -1L;
 	struct sk_buff *skb;
 	u32 pkts_acked = 0;
+
 	bool rtt_update;
 	int flag = 0;
 
@@ -3117,6 +3133,7 @@ static int tcp_clean_rtx_queue(struct sock *sk, int prior_fackets,
 			WARN_ON_ONCE(last_ackt == 0);
 			if (!first_ackt)
 				first_ackt = last_ackt;
+
 
 			reord = min(pkts_acked, reord);
 			if (!after(scb->end_seq, tp->high_seq))
@@ -3220,6 +3237,7 @@ static int tcp_clean_rtx_queue(struct sock *sk, int prior_fackets,
 				tcp_update_reordering(sk, tp->fackets_out - reord, 0);
 
 			delta = prior_sacked - tp->sacked_out;
+
 			tp->lost_cnt_hint -= min(tp->lost_cnt_hint, delta);
 		}
 
@@ -3237,6 +3255,7 @@ static int tcp_clean_rtx_queue(struct sock *sk, int prior_fackets,
 	if (icsk->icsk_ca_ops->pkts_acked) {
 		struct ack_sample sample = { .pkts_acked = pkts_acked,
 					     .rtt_us = sack->rate->rtt_us };
+
 
 		sample.in_flight = tp->mss_cache *
 			(tp->delivered - sack->rate->prior_delivered);
@@ -3502,6 +3521,7 @@ static void tcp_replace_ts_recent(struct tcp_sock *tp, u32 seq)
 
 /* This routine deals with acks during a TLP episode and ends an episode by
  * resetting tlp_high_seq. Ref: TLP algorithm in draft-ietf-tcpm-rack
+
  */
 static void tcp_process_tlp_ack(struct sock *sk, u32 ack, int flag)
 {
@@ -3685,6 +3705,7 @@ static int tcp_ack(struct sock *sk, const struct sk_buff *skb, int flag)
 
 	if (tp->tlp_high_seq)
 		tcp_process_tlp_ack(sk, ack, flag);
+
 
 	if (tcp_ack_is_dubious(sk, flag)) {
 		is_dupack = !(flag & (FLAG_SND_UNA_ADVANCED | FLAG_NOT_DUP));
@@ -5809,6 +5830,7 @@ static int tcp_rcv_synsent_state_process(struct sock *sk, struct sk_buff *skb,
 		} else {
 			tp->tcp_header_len = sizeof(struct tcphdr);
 		}
+
 
 		tcp_mtup_init(sk);
 		tcp_sync_mss(sk, icsk->icsk_pmtu_cookie);

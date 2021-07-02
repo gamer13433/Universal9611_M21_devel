@@ -72,6 +72,7 @@ static size_t bitset_size(unsigned nr_bits)
 static int writeset_alloc(struct writeset *ws, dm_block_t nr_blocks)
 {
 
+
 	ws->bits = vzalloc(bitset_size(nr_blocks));
 	if (!ws->bits) {
 		DMERR("%s: couldn't allocate in memory bitset", __func__);

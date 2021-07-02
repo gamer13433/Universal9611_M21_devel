@@ -1071,7 +1071,6 @@ static inline bool arch_has_pfn_modify_check(void)
 
 
 
-
 #ifndef has_transparent_hugepage
 #ifdef CONFIG_TRANSPARENT_HUGEPAGE
 #define has_transparent_hugepage() 1

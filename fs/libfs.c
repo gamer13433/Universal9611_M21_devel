@@ -16,7 +16,7 @@
 #include <linux/exportfs.h>
 #include <linux/writeback.h>
 #include <linux/buffer_head.h> /* sync_mapping_buffers */
-
+#include <linux/unicode.h>
 #include <linux/uaccess.h>
 
 #include "internal.h"

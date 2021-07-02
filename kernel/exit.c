@@ -593,6 +593,7 @@ static struct task_struct *find_child_reaper(struct task_struct *father,
 
 
 
+
 	list_for_each_entry_safe(p, n, dead, ptrace_entry) {
 		list_del_init(&p->ptrace_entry);
 		release_task(p);
@@ -728,6 +729,7 @@ static void exit_notify(struct task_struct *tsk, int group_dead)
 	if (group_dead)
 		kill_orphaned_pgrp(tsk->group_leader, NULL);
 
+	tsk->exit_state = EXIT_ZOMBIE;
 	if (unlikely(tsk->ptrace)) {
 		int sig = thread_group_leader(tsk) &&
 				thread_group_empty(tsk) &&
@@ -838,12 +840,14 @@ void __noreturn do_exit(long code)
 		futex_exit_recursive(tsk);
 
 
+
 		set_current_state(TASK_UNINTERRUPTIBLE);
 		schedule();
 	}
 
 	exit_signals(tsk);  /* sets PF_EXITING */
 	sync_band(tsk, LEAVE_BAND);
+
 
 
 
@@ -926,6 +930,7 @@ void __noreturn do_exit(long code)
 	 * Make sure we are holding no locks:
 	 */
 	debug_check_no_locks_held();
+
 
 
 

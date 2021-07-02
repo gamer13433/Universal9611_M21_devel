@@ -300,6 +300,7 @@ static int propagate_one(struct mount *m)
 #endif
 
 
+
 	read_seqlock_excl(&mount_lock);
 	mnt_set_mountpoint(m, mp, child);
 	if (m->mnt_master != dest_master)

@@ -176,6 +176,7 @@ struct ufs_pm_lvl_states {
  * @lun: LUN of the command
  * @intr_cmd: Interrupt command (doesn't participate in interrupt aggregation)
  * @issue_time_stamp: time stamp for debug purposes
+
  * @req_abort_skip: skip request abort task flag
  */
 struct ufshcd_lrb {
@@ -199,6 +200,7 @@ struct ufshcd_lrb {
 	u8 lun; /* UPIU LUN id field is only 8-bit wide */
 	bool intr_cmd;
 	ktime_t issue_time_stamp;
+
 
 	bool req_abort_skip;
 };
@@ -293,6 +295,7 @@ struct ufs_pwr_mode_info {
 	struct ufs_pa_layer_attr info;
 };
 
+
 /**
  * struct ufs_hba_variant_ops - variant specific callbacks
  * @name: variant name
@@ -316,6 +319,7 @@ struct ufs_pwr_mode_info {
  * @resume: called during host controller PM callback
  * @dbg_register_dump: used to dump controller debug information
  * @phy_initialization: used to initialize phys
+
  */
 struct ufs_hba_variant_ops {
 	const char *name;
@@ -352,6 +356,7 @@ struct ufs_hba_variant_ops {
 					struct ufshcd_lrb *lrbp);
 	int	(*crypto_sec_cfg)(struct ufs_hba *hba, bool init);
 	int	(*access_control_abort)(struct ufs_hba *hba);
+
 
 };
 
@@ -594,6 +599,7 @@ struct SEC_UFS_counting {
  * @ufs_version: UFS Version to which controller complies
  * @vops: pointer to variant specific operations
  * @priv: pointer to variant specific private data
+
  * @irq: Irq number of the controller
  * @active_uic_cmd: handle of active UIC command
  * @uic_cmd_mutex: mutex for uic command
@@ -627,6 +633,7 @@ struct SEC_UFS_counting {
  * @urgent_bkops_lvl: keeps track of urgent bkops level for device
  * @is_urgent_bkops_lvl_checked: keeps track if the urgent bkops level for
  *  device is known or not.
+
  */
 struct ufs_hba {
 	void __iomem *mmio_base;
@@ -673,6 +680,7 @@ struct ufs_hba {
 	u32 ufs_version;
 	const struct ufs_hba_variant_ops *vops;
 	void *priv;
+
 	unsigned int irq;
 	bool is_irq_enabled;
 
@@ -814,6 +822,7 @@ struct ufs_hba {
 	 * the performance of ongoing read/write operations.
 	 */
 #define UFSHCD_CAP_KEEP_AUTO_BKOPS_ENABLED_EXCEPT_SUSPEND (1 << 5)
+
 
 	/* Allow only hibern8 without clk gating */
 #define UFSHCD_CAP_FAKE_CLK_GATING (1 << 6)

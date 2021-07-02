@@ -162,6 +162,7 @@ enum bug_trap_type report_bug(unsigned long bugaddr, struct pt_regs *regs)
 
 
 
+
 #ifdef CONFIG_DEBUG_BUGVERBOSE
 #ifndef CONFIG_GENERIC_BUG_RELATIVE_POINTERS
 	file = bug->file;

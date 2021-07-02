@@ -163,6 +163,11 @@ SECTIONS
 		__alt_instructions_end = .;
 	}
 
+	.altinstr_replacement : {
+		*(.altinstr_replacement)
+	}
+
+
 	. = ALIGN(PAGE_SIZE);
 	__inittext_end = .;
 	__initdata_begin = .;

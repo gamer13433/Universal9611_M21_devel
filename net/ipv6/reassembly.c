@@ -118,6 +118,7 @@ static int ip6_frag_queue(struct frag_queue *fq, struct sk_buff *skb,
 {
 
 
+
 	struct net *net = dev_net(skb_dst(skb)->dev);
 	int offset, end, fragsize;
 	struct sk_buff *prev_tail;
@@ -138,6 +139,8 @@ static int ip6_frag_queue(struct frag_queue *fq, struct sk_buff *skb,
 		/* note that if prob_offset is set, the skb is freed elsewhere,
 		 * we do not free it here.
 		 */
+
+
 		return -1;
 	}
 
@@ -209,8 +212,8 @@ static int ip6_frag_queue(struct frag_queue *fq, struct sk_buff *skb,
 		goto insert_error;
 
 
-
 	if (dev)
+
 
 		fq->iif = dev->ifindex;
 
@@ -295,6 +298,9 @@ static int ip6_frag_reasm(struct frag_queue *fq, struct sk_buff *skb,
 
 
 
+
+
+
 		goto out_oom;
 
 	payload_len = ((skb->data - skb_network_header(skb)) -
@@ -323,13 +329,14 @@ static int ip6_frag_reasm(struct frag_queue *fq, struct sk_buff *skb,
 
 
 
+
+
+
+
+
 	skb_reset_transport_header(skb);
 
 	inet_frag_reasm_finish(&fq->q, skb, reasm_data);
-
-
-
-
 	skb->dev = dev;
 	ipv6_hdr(skb)->payload_len = htons(payload_len);
 	ipv6_change_dsfield(ipv6_hdr(skb), 0xff, ecn);

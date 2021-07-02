@@ -161,9 +161,8 @@ EXPORT_SYMBOL(strlcpy);
  * Copy the string, or as much of it as fits, into the dest buffer.  The
  * behavior is undefined if the string buffers overlap.  The destination
  * buffer is always NUL terminated, unless it's zero-sized.
-
-
  *
+
  * Preferred to strlcpy() since the API doesn't require reading memory
  * from the src string beyond the specified "count" bytes, and since
  * the return value is easier to error-check than strlcpy()'s.
@@ -761,6 +760,7 @@ void *memset(void *s, int c, size_t count)
 }
 EXPORT_SYMBOL(memset);
 #endif
+
 
 
 #ifndef __HAVE_ARCH_MEMSET16

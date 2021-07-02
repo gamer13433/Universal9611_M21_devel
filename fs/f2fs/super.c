@@ -2711,8 +2711,6 @@ static int sanity_check_raw_super(struct f2fs_sb_info *sbi,
 
 
 
-
-
 	/* Currently, support only 4KB page cache size */
 	if (F2FS_BLKSIZE != PAGE_SIZE) {
 		f2fs_msg(sb, KERN_INFO,

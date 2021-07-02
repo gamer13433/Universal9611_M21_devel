@@ -1436,6 +1436,8 @@ do_fault:
 
 
 
+
+
 	if (copied + copied_syn)
 		goto out;
 out_err:
@@ -1981,6 +1983,7 @@ skip_copy:
 		}
 
 
+
 		if (TCP_SKB_CB(skb)->has_rxtstamp) {
 			tcp_update_recv_tstamps(skb, &tss);
 			has_tss = true;
@@ -2488,6 +2491,7 @@ static int tcp_repair_options_est(struct sock *sk,
 
 			tp->rx_opt.sack_ok |= TCP_SACK_SEEN;
 
+
 			break;
 		case TCPOPT_TIMESTAMP:
 			if (opt.opt_val != 0)
@@ -2768,6 +2772,7 @@ static int do_tcp_setsockopt(struct sock *sk, int level,
 	case TCP_MD5SIG_EXT:
 
 		err = tp->af_specific->md5_parse(sk, optname, optval, optlen);
+
 
 		break;
 #endif

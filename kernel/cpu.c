@@ -2533,7 +2533,6 @@ int cpuhp_smt_disable(enum cpuhp_smt_control ctrlval)
 	if (!ret)
 		cpu_smt_control = ctrlval;
 
-
 	cpu_maps_update_done();
 	return ret;
 }

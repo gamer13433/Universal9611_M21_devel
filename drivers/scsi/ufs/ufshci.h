@@ -90,6 +90,7 @@ enum {
 	MASK_64_ADDRESSING_SUPPORT		= 0x01000000,
 	MASK_OUT_OF_ORDER_DATA_DELIVERY_SUPPORT	= 0x02000000,
 	MASK_UIC_DME_TEST_MODE_SUPPORT		= 0x04000000,
+
 };
 
 #define UFS_MASK(mask, offset)		((mask) << (offset))
@@ -136,6 +137,7 @@ enum {
 #define DEVICE_FATAL_ERROR			UFS_BIT(11)
 #define CONTROLLER_FATAL_ERROR			UFS_BIT(16)
 #define SYSTEM_BUS_FATAL_ERROR			UFS_BIT(17)
+
 
 #define UFSHCD_UIC_PWR_MASK	(UIC_HIBERNATE_ENTER |\
 				UIC_HIBERNATE_EXIT |\
@@ -310,6 +312,7 @@ enum {
 	INTERRUPT_MASK_ALL_VER_21	= 0x71FFF,
 };
 
+
 /*
  * Request Descriptor Definitions
  */
@@ -331,6 +334,7 @@ enum {
 	UTP_NATIVE_UFS_COMMAND		= 0x10000000,
 	UTP_DEVICE_MANAGEMENT_FUNCTION	= 0x20000000,
 	UTP_REQ_DESC_INT_CMD		= 0x01000000,
+
 };
 
 /* UTP Transfer Request Data Direction (DD) */
@@ -350,6 +354,7 @@ enum {
 	OCS_PEER_COMM_FAILURE		= 0x5,
 	OCS_ABORTED			= 0x6,
 	OCS_FATAL_ERROR			= 0x7,
+
 	OCS_INVALID_COMMAND_STATUS	= 0x0F,
 	MASK_OCS			= 0x0F,
 };
@@ -414,6 +419,7 @@ struct utp_transfer_cmd_desc {
 	u8 response_upiu[ALIGNED_UPIU_SIZE];
 	struct ufshcd_sg_entry    prd_table[SG_ALL];
 };
+
 
 /**
  * struct request_desc_header - Descriptor Header common to both UTRD and UTMRD

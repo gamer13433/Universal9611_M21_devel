@@ -36,6 +36,7 @@ struct fscrypt_ctx;
 
 struct fscrypt_info;
 
+
 struct fscrypt_str {
 	unsigned char *name;
 	u32 len;
@@ -47,6 +48,7 @@ struct fscrypt_name {
 	u32 hash;
 	u32 minor_hash;
 	struct fscrypt_str crypto_buf;
+
 };
 
 #define FSTR_INIT(n, l)		{ .name = n, .len = l }
@@ -273,6 +275,7 @@ static inline int fscrypt_encrypt_symlink(struct inode *inode,
 	if (IS_ENCRYPTED(inode))
 		return __fscrypt_encrypt_symlink(inode, target, len, disk_link);
 	return 0;
+
 }
 
 /* inline.c */

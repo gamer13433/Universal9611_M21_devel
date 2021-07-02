@@ -113,6 +113,7 @@ struct disk_bitmap_header {
 } __attribute__ ((packed, aligned(8)));
 
 
+
 /*----------------------------------------------------------------*/
 
 int sm_ll_extend(struct ll_disk *ll, dm_block_t extra_blocks);

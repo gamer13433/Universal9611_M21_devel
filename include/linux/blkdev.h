@@ -44,6 +44,7 @@ struct pr_ops;
 struct rq_wb;
 struct blk_queue_stats;
 struct blk_stat_callback;
+struct keyslot_manager;
 
 
 #define BLKDEV_MIN_RQ	4
@@ -366,6 +367,7 @@ struct queue_limits {
 	unsigned int		discard_granularity;
 	unsigned int		discard_alignment;
 
+
 	unsigned short		max_segments;
 	unsigned short		max_integrity_segments;
 	unsigned short		max_discard_segments;
@@ -557,6 +559,10 @@ struct request_queue {
 	 */
 	unsigned int		request_fn_active;
 
+#ifdef CONFIG_BLK_INLINE_ENCRYPTION
+	/* Inline crypto capabilities */
+	struct keyslot_manager *ksm;
+#endif
 
 	unsigned int		rq_timeout;
 	int			poll_nsec;

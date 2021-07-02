@@ -1125,8 +1125,6 @@ mapped:
 	if (!bit)
 		return;
 
-		return;
-
 	if (device->driver->input_mapped &&
 	    device->driver->input_mapped(device, hidinput, field, usage,
 					 &bit, &max) < 0) {
@@ -1136,6 +1134,7 @@ mapped:
 		 */
 		return;
 	}
+
 
 	set_bit(usage->type, input->evbit);
 

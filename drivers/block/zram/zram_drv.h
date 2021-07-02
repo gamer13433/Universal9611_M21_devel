@@ -25,6 +25,7 @@
 
 
 
+
 #define SECTORS_PER_PAGE_SHIFT	(PAGE_SHIFT - SECTOR_SHIFT)
 #define SECTORS_PER_PAGE	(1 << SECTORS_PER_PAGE_SHIFT)
 #define ZRAM_LOGICAL_BLOCK_SHIFT 12
@@ -100,6 +101,7 @@ struct zram_stats {
 	atomic64_t bd_reads;		/* no. of reads from backing device */
 	atomic64_t bd_writes;		/* no. of writes from backing device */
 
+
 #endif
 	atomic64_t dup_data_size;	/*
 					 * compressed size of pages
@@ -112,6 +114,7 @@ struct zram_hash {
 	spinlock_t lock;
 	struct rb_root rb_root;
 };
+
 
 
 struct zram {

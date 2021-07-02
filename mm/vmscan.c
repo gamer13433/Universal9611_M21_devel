@@ -2242,6 +2242,7 @@ static bool inactive_list_is_low(struct lruvec *lruvec, bool file,
 	active = lruvec_lru_size(lruvec, active_lru, sc->reclaim_idx);
 
 
+
 	/*
 	 * When refaults are being observed, it means a new workingset
 	 * is being established. Disable active list protection to get
@@ -3084,6 +3085,7 @@ static void snapshot_refaults(struct mem_cgroup *root_memcg, pg_data_t *pgdat)
 		struct lruvec *lruvec;
 
 
+
 		lruvec = mem_cgroup_lruvec(pgdat, memcg);
 		refaults = lruvec_page_state(lruvec, WORKINGSET_ACTIVATE);
 		lruvec->refaults = refaults;
@@ -3718,6 +3720,7 @@ static enum zone_type kswapd_classzone_idx(pg_data_t *pgdat,
 					   enum zone_type prev_classzone_idx)
 {
 	enum zone_type curr_idx = READ_ONCE(pgdat->kswapd_classzone_idx);
+
 
 
 	return curr_idx == MAX_NR_ZONES ? prev_classzone_idx : curr_idx;

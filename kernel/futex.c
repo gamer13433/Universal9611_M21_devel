@@ -327,6 +327,7 @@ static int __init fail_futex_debugfs(void)
 	debugfs_create_bool("ignore-private", mode, dir,
 			    &fail_futex.ignore_private);
 
+
 	return 0;
 }
 
@@ -920,6 +921,7 @@ static void put_pi_state(struct futex_pi_state *pi_state)
 	 */
 	if (pi_state->owner) {
 		unsigned long flags;
+
 
 		raw_spin_lock_irqsave(&pi_state->pi_mutex.wait_lock, flags);
 		pi_state_update_owner(pi_state, NULL);
@@ -2524,6 +2526,9 @@ static int __fixup_pi_state_owner(u32 __user *uaddr, struct futex_q *q,
 	int err = 0;
 
 
+
+
+
 	oldowner = pi_state->owner;
 
 	/*
@@ -2752,12 +2757,14 @@ static int fixup_owner(u32 __user *uaddr, struct futex_q *q, int locked)
 		return fixup_pi_state_owner(uaddr, q, NULL);
 
 
+
 	/*
 	 * Paranoia check. If we did not take the lock, then we should not be
 	 * the owner of the rt_mutex. Warn and establish consistent state.
 	 */
 	if (WARN_ON_ONCE(rt_mutex_owner(&q->pi_state->pi_mutex) == current))
 		return fixup_pi_state_owner(uaddr, q, current);
+
 
 
 	return 0;
@@ -2893,7 +2900,10 @@ static int futex_wait(u32 __user *uaddr, unsigned int flags, u32 val,
 
 	to = futex_setup_timer(abs_time, &timeout, flags,
 
+
+
 			       current->timer_slack_ns);
+
 
 retry:
 	/*
@@ -2988,6 +2998,7 @@ static int futex_lock_pi(u32 __user *uaddr, unsigned int flags,
 		return -ENOMEM;
 
 	to = futex_setup_timer(time, &timeout, FLAGS_CLOCKRT, 0);
+
 
 
 retry:
@@ -3234,6 +3245,7 @@ retry:
 		if (ret == -EAGAIN)
 			goto pi_retry;
 
+
 		/*
 		 * wake_futex_pi has detected invalid state. Tell user
 		 * space.
@@ -3401,6 +3413,7 @@ static int futex_wait_requeue_pi(u32 __user *uaddr, unsigned int flags,
 
 	to = futex_setup_timer(abs_time, &timeout, flags,
 
+
 			       current->timer_slack_ns);
 
 
@@ -3463,6 +3476,7 @@ static int futex_wait_requeue_pi(u32 __user *uaddr, unsigned int flags,
 		if (q.pi_state && (q.pi_state->owner != current)) {
 			spin_lock(q.lock_ptr);
 			ret = fixup_pi_state_owner(uaddr2, &q, current);
+
 
 			/*
 			 * Drop the reference to the pi state which

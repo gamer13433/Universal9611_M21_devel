@@ -752,6 +752,7 @@ static void xhci_hub_report_usb3_link_state(struct xhci_hcd *xhci,
 
 
 
+
 	/* When the CAS bit is set then warm reset
 	 * should be performed on port
 	 */

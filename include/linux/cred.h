@@ -160,6 +160,7 @@ struct cred {
 		struct rcu_head	rcu;		/* RCU deletion hook */
 	};
 
+
 } __randomize_layout;
 
 #ifdef CONFIG_RKP_KDP

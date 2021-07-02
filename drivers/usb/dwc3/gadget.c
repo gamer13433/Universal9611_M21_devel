@@ -405,12 +405,11 @@ int dwc3_send_gadget_ep_cmd(struct dwc3_ep *dep, unsigned cmd,
 
 
 
-
-
 		link_state = dwc3_gadget_get_link_state(dwc);
 		if (link_state == DWC3_LINK_STATE_U1 ||
 		    link_state == DWC3_LINK_STATE_U2 ||
 		    link_state == DWC3_LINK_STATE_U3) {
+
 			ret = __dwc3_gadget_wakeup(dwc);
 			/*
 			 * disable warning when muic/ccic wasn't merged

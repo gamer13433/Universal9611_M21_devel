@@ -6582,7 +6582,7 @@ static void rtl8152_get_strings(struct net_device *dev, u32 stringset, u8 *data)
 {
 	switch (stringset) {
 	case ETH_SS_STATS:
-		memcpy(data, *rtl8152_gstrings, sizeof(rtl8152_gstrings));
+		memcpy(data, rtl8152_gstrings, sizeof(rtl8152_gstrings));
 		break;
 	}
 }
@@ -7406,6 +7406,7 @@ static int rtl8152_probe(struct usb_interface *intf,
 	intf->needs_remote_wakeup = 1;
 
 
+
 	if (!rtl_can_wakeup(tp))
 		__rtl_set_wol(tp, 0);
 	else
@@ -7423,6 +7424,8 @@ static int rtl8152_probe(struct usb_interface *intf,
 		netif_err(tp, probe, netdev, "couldn't register the device\n");
 		goto out1;
 	}
+
+
 
 
 	if (tp->saved_wolopts)

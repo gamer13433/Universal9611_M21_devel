@@ -449,6 +449,7 @@ static int menu_select(struct cpuidle_driver *drv, struct cpuidle_device *dev,
 		*stop_tick = false;
 
 		if (idx > 0 && drv->states[idx].target_residency > delta_next_us) {
+
 			/*
 			 * The tick is not going to be stopped and the target
 			 * residency of the state to be returned is not within

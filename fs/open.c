@@ -841,6 +841,7 @@ cleanup_file:
  * on it after finish_open().
  *
 
+
  * Returns zero on success or -errno if the open failed.
  */
 int finish_open(struct file *file, struct dentry *dentry,

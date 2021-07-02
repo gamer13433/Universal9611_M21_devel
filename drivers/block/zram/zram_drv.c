@@ -40,6 +40,7 @@
 #include "zram_drv.h"
 
 
+
 static DEFINE_IDR(zram_index_idr);
 /* idr index must be protected */
 static DEFINE_MUTEX(zram_index_mutex);
@@ -322,6 +323,7 @@ static ssize_t mem_used_max_store(struct device *dev,
 static int mark_idle(struct zram *zram, unsigned long long threshold)
 {
 
+
 	unsigned long nr_pages = zram->disksize >> PAGE_SHIFT;
 	int index, ret = 0;
 
@@ -350,7 +352,10 @@ static int mark_idle(struct zram *zram, unsigned long long threshold)
 	}
 
 
+
+
 	up_read(&zram->init_lock);
+
 
 
 	return ret;
@@ -371,6 +376,7 @@ static void reset_bdev(struct zram *zram)
 	filp_close(zram->backing_dev, NULL);
 	zram->backing_dev = NULL;
 
+
 	zram->bdev = NULL;
 	zram->disk->queue->backing_dev_info->capabilities |=
 				BDI_CAP_SYNCHRONOUS_IO;
@@ -390,6 +396,7 @@ static ssize_t backing_dev_show(struct device *dev,
 	down_read(&zram->init_lock);
 	file = zram->backing_dev;
 	if (!file) {
+
 		memcpy(buf, "none\n", 5);
 		up_read(&zram->init_lock);
 		return 5;
@@ -602,6 +609,7 @@ static int do_writeback(struct zram *zram)
 	unsigned long blk_idx = 0;
 
 
+
 	down_read(&zram->init_lock);
 	if (!init_done(zram)) {
 		ret = -EINVAL;
@@ -621,6 +629,7 @@ static int do_writeback(struct zram *zram)
 
 	for (; nr_pages != 0; index++, nr_pages--) {
 		struct bio_vec bvec;
+
 
 
 		if (!blk_idx) {
@@ -793,6 +802,8 @@ static int read_from_bdev(struct zram *zram, struct bio_vec *bvec,
 	else
 		return read_from_bdev_async(zram, bvec, entry, parent);
 }
+
+
 
 #else
 static inline void reset_bdev(struct zram *zram) {};
@@ -1069,6 +1080,7 @@ static ssize_t mm_stat_show(struct device *dev,
 	max_used = atomic_long_read(&zram->stats.max_used_pages);
 
 
+
 	ret = scnprintf(buf, PAGE_SIZE,
 			"%8llu %8llu %8llu %8lu %8ld %8llu %8lu %8llu %8llu\n",
 			(orig_size << PAGE_SHIFT) / 1048576,
@@ -1080,6 +1092,7 @@ static ssize_t mm_stat_show(struct device *dev,
 			(atomic_long_read(&pool_stats.pages_compacted)) / 256,
 			(zram_dedup_dup_size(zram)) / 1048576,
 			(zram_dedup_meta_size(zram)) / 1048576);
+
 
 	up_read(&zram->init_lock);
 
@@ -1294,6 +1307,7 @@ static int __zram_bvec_read(struct zram *zram, struct page *page, u32 index,
 		bvec.bv_len = PAGE_SIZE;
 		bvec.bv_offset = 0;
 
+
 		return read_from_bdev(zram, &bvec,
 				zram_get_element(zram, index),
 				bio, partial_io);
@@ -1325,6 +1339,7 @@ static int __zram_bvec_read(struct zram *zram, struct page *page, u32 index,
 		kunmap_atomic(dst);
 		ret = 0;
 	} else {
+
 
 		dst = kmap_atomic(page);
 		ret = zcomp_decompress(zstrm, src, size, dst);
@@ -1862,6 +1877,7 @@ error:
 }
 
 
+
 static void zram_slot_free_notify(struct block_device *bdev,
 				unsigned long index)
 {
@@ -2346,6 +2362,7 @@ static void destroy_devices(void)
 	unregister_blkdev(zram_major, "zram");
 	cpuhp_remove_multi_state(CPUHP_ZCOMP_PREPARE);
 }
+
 
 
 static int __init zram_init(void)

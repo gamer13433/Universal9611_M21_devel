@@ -154,6 +154,7 @@ int aarch32_setup_vectors_page(struct linux_binprm *bprm, int uses_interp)
 	}
 
 
+
 	ret = _install_special_mapping(mm, addr, PAGE_SIZE,
 				       VM_READ|VM_EXEC|
 				       VM_MAYREAD|VM_MAYWRITE|VM_MAYEXEC,
@@ -322,6 +323,7 @@ int aarch32_setup_vectors_page(struct linux_binprm *bprm, int uses_interp)
 	up_write(&mm->mmap_sem);
 
 
+
 	return PTR_ERR_OR_ZERO(ret);
 }
 #endif /* CONFIG_VDSO32 */
@@ -374,6 +376,7 @@ void update_vsyscall(struct timekeeper *tk)
 							tk->tkr_mono.shift;
 	vdso_data->wtm_clock_sec		= tk->wall_to_monotonic.tv_sec;
 	vdso_data->wtm_clock_nsec		= tk->wall_to_monotonic.tv_nsec;
+
 
 
 #ifdef USE_SYSCALL

@@ -1250,6 +1250,7 @@ static int fat_add_new_entries(struct inode *dir, void *slots, int nr_slots,
 			slots += copy;
 			size -= copy;
 
+
 			if (!size)
 				break;
 			n++;

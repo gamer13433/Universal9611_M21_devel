@@ -34,11 +34,13 @@ endif
 
 CFLAGS_REMOVE_vgettimeofday.o += $(CC_FLAGS_SCS)
 
+
 # Disable gcov profiling for VDSO code
 GCOV_PROFILE := n
 KASAN_SANITIZE := n
 UBSAN_SANITIZE := n
 KCOV_INSTRUMENT := n
+
 
 
 obj-y += vdso.o
