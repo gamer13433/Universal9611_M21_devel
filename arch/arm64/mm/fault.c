@@ -33,6 +33,7 @@
 #include <linux/preempt.h>
 #include <linux/hugetlb.h>
 #include <linux/debug-snapshot.h>
+#include <linux/mm_event.h>
 
 #include <asm/bug.h>
 #include <asm/cmpxchg.h>

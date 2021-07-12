@@ -226,6 +226,8 @@
 			compatible = "arm,cortex-a53", "arm,armv8";
 			reg = <0x0 0x0>;
 			enable-method = "psci";
+			sched-energy-costs = <&A53_CPU_COST &A53_COREGROUP_COST
+				&DSU_CLUSTER_COST>;
 			cpu-idle-states = <&BOOTCL_CPU_SLEEP>;
 			sched-energy-data = <&A53_ENERGY>;
 		};
@@ -234,6 +236,8 @@
 			compatible = "arm,cortex-a53", "arm,armv8";
 			reg = <0x0 0x1>;
 			enable-method = "psci";
+			sched-energy-costs = <&A53_CPU_COST &A53_COREGROUP_COST
+				&DSU_CLUSTER_COST>;
 			cpu-idle-states = <&BOOTCL_CPU_SLEEP>;
 			sched-energy-data = <&A53_ENERGY>;
 		};
@@ -242,6 +246,8 @@
 			compatible = "arm,cortex-a53", "arm,armv8";
 			reg = <0x0 0x2>;
 			enable-method = "psci";
+			sched-energy-costs = <&A53_CPU_COST &A53_COREGROUP_COST
+				&DSU_CLUSTER_COST>;
 			cpu-idle-states = <&BOOTCL_CPU_SLEEP>;
 			sched-energy-data = <&A53_ENERGY>;
 		};
@@ -250,6 +256,8 @@
 			compatible = "arm,cortex-a53", "arm,armv8";
 			reg = <0x0 0x3>;
 			enable-method = "psci";
+			sched-energy-costs = <&A53_CPU_COST &A53_COREGROUP_COST
+				&DSU_CLUSTER_COST>;
 			cpu-idle-states = <&BOOTCL_CPU_SLEEP>;
 			sched-energy-data = <&A53_ENERGY>;
 		};
@@ -258,6 +266,8 @@
 			compatible = "arm,cortex-a73", "arm,armv8";
 			reg = <0x0 0x100>;
 			enable-method = "psci";
+			sched-energy-costs = <&A73_CPU_COST &A73_COREGROUP_COST
+				&DSU_CLUSTER_COST>;
 			cpu-idle-states = <&NONBOOTCL_CPU_SLEEP>;
 			sched-energy-data = <&A73_ENERGY>;
 		};
@@ -266,6 +276,8 @@
 			compatible = "arm,cortex-a73", "arm,armv8";
 			reg = <0x0 0x101>;
 			enable-method = "psci";
+			sched-energy-costs = <&A73_CPU_COST &A73_COREGROUP_COST
+				&DSU_CLUSTER_COST>;
 			cpu-idle-states = <&NONBOOTCL_CPU_SLEEP>;
 			sched-energy-data = <&A73_ENERGY>;
 		};
@@ -274,6 +286,8 @@
 			compatible = "arm,cortex-a73", "arm,armv8";
 			reg = <0x0 0x102>;
 			enable-method = "psci";
+			sched-energy-costs = <&A73_CPU_COST &A73_COREGROUP_COST
+				&DSU_CLUSTER_COST>;
 			cpu-idle-states = <&NONBOOTCL_CPU_SLEEP>;
 			sched-energy-data = <&A73_ENERGY>;
 		};
@@ -282,6 +296,8 @@
 			compatible = "arm,cortex-a73", "arm,armv8";
 			reg = <0x0 0x103>;
 			enable-method = "psci";
+			sched-energy-costs = <&A73_CPU_COST &A73_COREGROUP_COST
+				&DSU_CLUSTER_COST>;
 			cpu-idle-states = <&NONBOOTCL_CPU_SLEEP>;
 			sched-energy-data = <&A73_ENERGY>;
 		};
@@ -320,7 +336,111 @@
 				power-coefficient = <870>;
 			};
 		};
-
+	         energy-costs {
+			A53_CPU_COST: core-core0 {
+				busy-cost-data = <
+					85 62
+                                        126 102
+					148 133
+					170 171
+					192 207
+					223 270
+					237 302
+					259 357
+					281 431
+					308 522
+					325 598
+					347 726
+					369 936
+				>;
+				idle-cost-data = <
+					1
+					1
+					0
+				>;
+			};
+			A73_CPU_COST: core-core1 {
+				busy-cost-data = <
+					414 344
+					460 403
+					506 469
+					552 541
+					598 638
+					644 747
+					667 812
+					736 1060
+					782 1193
+					839 1449
+					874 1674
+					920 1968
+					966 2482
+					977 2824
+					1024 3334
+				>;
+				idle-cost-data = <
+					4
+					4
+					0
+				>;
+			};
+			A53_COREGROUP_COST: coregroup-core0 {
+				busy-cost-data = <
+					85 62
+                                        126 102
+					148 133
+					170 171
+					192 207
+					223 270
+					237 302
+					259 357
+					281 431
+					308 522
+					325 598
+					347 726
+					369 936
+				>;
+				idle-cost-data = <
+					14
+					14
+					0
+				>;
+			};
+			A73_COREGROUP_COST: coregroup-core1 {
+				busy-cost-data = <
+					414 344
+					460 403
+					506 469
+					552 541
+					598 638
+					644 747
+					667 812
+					736 1060
+					782 1193
+					839 1449
+					874 1674
+					920 1968
+					966 2482
+					977 2824
+					1024 3334
+				>;
+				idle-cost-data = <
+					14
+					14
+					0
+				>;
+			};
+			DSU_CLUSTER_COST: cluster-core0 {
+				/* dummy energy table */
+				busy-cost-data = <
+					0	0
+				>;
+				idle-cost-data = <
+					0
+					0
+					0
+				>;
+			};
+		};	
 		ems {
 			/* Ontime Migration */
 			ontime {

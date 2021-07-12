@@ -21,6 +21,7 @@
 #include <linux/list.h>
 #include <linux/init.h>
 #include <linux/slab.h>
+#include <linux/mm_event.h>
 #include <linux/swap.h>
 
 #include <asm/cacheflush.h>

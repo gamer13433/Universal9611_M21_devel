@@ -101,6 +101,7 @@
 #include <asm/mmu_context.h>
 #include <asm/cacheflush.h>
 #include <asm/tlbflush.h>
+#include <linux/mm_event.h>
 
 #include <trace/events/sched.h>
 #include <linux/task_integrity.h>

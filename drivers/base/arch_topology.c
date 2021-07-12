@@ -202,12 +202,6 @@ int detect_share_cap_flag(void)
 			continue;
 		}
 
-		if (cpumask_equal(topology_cluster_cpumask(cpu),
-				  policy->related_cpus)) {
-			share_cap_level = share_cap_cluster;
-			continue;
-		}
-
 		if (cpumask_equal(cpu_cpu_mask(cpu),
 				  policy->related_cpus)) {
 			share_cap_level = share_cap_die;
@@ -264,36 +258,18 @@ int topology_detect_flags(void)
 
 check_core:
 		if (asym_level >= asym_core)
-			goto check_cluster;
-
+			goto check_die;
 		for_each_cpu(core, topology_core_cpumask(cpu)) {
 			capacity = topology_get_cpu_scale(NULL, core);
-
 			if (capacity > max_capacity) {
 				if (max_capacity != 0)
 					asym_level = asym_core;
-
-				max_capacity = capacity;
-			}
-		}
-check_cluster:
-		if (asym_level >= asym_cluster)
-			goto check_die;
-
-		for_each_cpu(core, topology_cluster_cpumask(cpu)) {
-			capacity = topology_get_cpu_scale(NULL, core);
-
-			if (capacity > max_capacity) {
-				if (max_capacity != 0)
-					asym_level = asym_cluster;
-
 				max_capacity = capacity;
 			}
 		}
 check_die:
 		for_each_possible_cpu(die_cpu) {
 			capacity = topology_get_cpu_scale(NULL, die_cpu);
-
 			if (capacity > max_capacity) {
 				if (max_capacity != 0) {
 					asym_level = asym_die;
@@ -302,7 +278,6 @@ check_die:
 			}
 		}
 	}
-
 done:
 	if (asym_cpucap != asym_level) {
 		asym_cpucap = asym_level;

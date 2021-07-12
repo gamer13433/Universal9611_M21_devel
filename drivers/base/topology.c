@@ -57,24 +57,15 @@ static ssize_t name##_list_show(struct device *dev,			\
 
 define_id_show_func(physical_package_id);
 static DEVICE_ATTR_RO(physical_package_id);
-
-define_id_show_func(coregroup_id);
-static DEVICE_ATTR_RO(coregroup_id);
-
 define_id_show_func(core_id);
 static DEVICE_ATTR_RO(core_id);
-
 define_siblings_show_func(thread_siblings, sibling_cpumask);
 static DEVICE_ATTR_RO(thread_siblings);
 static DEVICE_ATTR_RO(thread_siblings_list);
-
 define_siblings_show_func(core_siblings, core_cpumask);
 static DEVICE_ATTR_RO(core_siblings);
 static DEVICE_ATTR_RO(core_siblings_list);
 
-define_siblings_show_func(cluster_siblings, cluster_cpumask);
-static DEVICE_ATTR_RO(cluster_siblings);
-static DEVICE_ATTR_RO(cluster_siblings_list);
 
 #ifdef CONFIG_SCHED_BOOK
 define_id_show_func(book_id);
@@ -99,9 +90,6 @@ static struct attribute *default_attrs[] = {
 	&dev_attr_thread_siblings_list.attr,
 	&dev_attr_core_siblings.attr,
 	&dev_attr_core_siblings_list.attr,
-	&dev_attr_coregroup_id.attr,
-	&dev_attr_cluster_siblings.attr,
-	&dev_attr_cluster_siblings_list.attr,
 #ifdef CONFIG_SCHED_BOOK
 	&dev_attr_book_id.attr,
 	&dev_attr_book_siblings.attr,

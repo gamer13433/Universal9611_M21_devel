@@ -19,6 +19,7 @@
 #include <linux/kernel_stat.h>
 #include <linux/gfp.h>
 #include <linux/mm.h>
+#include <linux/mm_event.h>
 #include <linux/swap.h>
 #include <linux/mman.h>
 #include <linux/pagemap.h>

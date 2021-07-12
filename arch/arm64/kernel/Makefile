@@ -60,7 +60,7 @@ arm64-obj-$(CONFIG_CRASH_DUMP)		+= crash_dump.o
 arm64-obj-$(CONFIG_ARM64_SSBD)		+= ssbd.o
 arm64-obj-$(CONFIG_SHADOW_CALL_STACK)	+= scs.o
 
-ifndef CONFIG_ARCH_EXYNOS
+ifdef CONFIG_ARCH_EXYNOS
 arm64-obj-y					+= topology.o
 endif
 
