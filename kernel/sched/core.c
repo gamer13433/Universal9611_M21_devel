@@ -3980,7 +3980,7 @@ int idle_cpu(int cpu)
 	if (rq->curr != rq->idle)
 		return 0;
 
-	if (rq->nr_running)
+	if (rq->nr_running == 1)
 		return 0;
 
 #ifdef CONFIG_SMP
@@ -5476,7 +5476,8 @@ void idle_task_exit(void)
 		switch_mm(mm, &init_mm, current);
 		finish_arch_post_lock_switch();
 	}
-	mmdrop(mm);
+	
+	/* finish_cpu(), as ran on the BP, will clean up the active_mm state */
 }
 
 /*
