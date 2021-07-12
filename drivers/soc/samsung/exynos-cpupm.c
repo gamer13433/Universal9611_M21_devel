@@ -316,12 +316,12 @@ static int cpuhp_cpupm_online(unsigned int cpu)
 {
 	struct cpumask mask;
 
-	cpumask_and(&mask, cpu_coregroup_mask(cpu), cpu_online_mask);
+	cpumask_and(&mask, cpu_cluster_mask(cpu), cpu_online_mask);
 	if (cpumask_weight(&mask) == 0) {
 		cluster_enable(cpu_topology[cpu].cluster_id);
 		/* clear cpus of this cluster from cpuhp_last_mask */
 		cpumask_andnot(&cpuhp_last_mask,
-			&cpuhp_last_mask, cpu_coregroup_mask(cpu));
+			&cpuhp_last_mask, cpu_cluster_mask(cpu));
 	}
 
 	cpu_enable(cpu);
@@ -336,8 +336,8 @@ static int cpuhp_cpupm_offline(unsigned int cpu)
 	cpu_disable(cpu);
 
 	spin_lock(&cpupm_lock);
-	cpumask_and(&online_mask, cpu_coregroup_mask(cpu), cpu_online_mask);
-	cpumask_and(&last_mask, cpu_coregroup_mask(cpu), &cpuhp_last_mask);
+	cpumask_and(&online_mask, cpu_cluster_mask(cpu), cpu_online_mask);
+	cpumask_and(&last_mask, cpu_cluster_mask(cpu), &cpuhp_last_mask);
 	if ((cpumask_weight(&online_mask) == 0) && cpumask_empty(&last_mask)) {
 		/* set cpu cpuhp_last_mask */
 		cpumask_set_cpu(cpu, &cpuhp_last_mask);

@@ -25,6 +25,7 @@ void init_cpu_topology(void);
 void store_cpu_topology(unsigned int cpuid);
 void remove_cpu_topology(unsigned int cpuid);
 const struct cpumask *cpu_coregroup_mask(int cpu);
+const struct cpumask *cpu_cluster_mask(int cpu);
 #ifdef CONFIG_NUMA
 struct pci_bus;
 int pcibus_to_node(struct pci_bus *bus);
