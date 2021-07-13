@@ -368,6 +368,10 @@ alternative_else_nop_endif
 	ldr	lr, [sp, #S_LR]
 	.if	\el == 0
 	add	sp, sp, #S_FRAME_SIZE		// restore sp
+	/*
+	 * ARCH_HAS_MEMBARRIER_SYNC_CORE rely on eret context synchronization
+	 * when returning from IPI handler, and when returning to user-space.
+	 */
 	.else
 	add	sp, sp, #(S_FRAME_SIZE+PRESERVE_STACK_SIZE)
 	.endif /* \el == 0 */

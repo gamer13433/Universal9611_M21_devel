@@ -21,7 +21,6 @@
 #include <linux/of.h>
 #include <linux/sched.h>
 #include <linux/sched/topology.h>
-#include <linux/sched/energy.h>
 #include <linux/slab.h>
 #include <linux/string.h>
 
@@ -189,8 +188,6 @@ static int __init parse_dt_topology(void)
 		return 0;
 	}
 
-	init_sched_energy_costs();
-
 	cluster_id = 0;
 	do {
 		snprintf(name, sizeof(name), "cluster%d", cluster_id);
@@ -281,166 +278,39 @@ void remove_cpu_topology(unsigned int cpu)
 void store_cpu_topology(unsigned int cpuid)
 {
 	struct cpu_topology *cpuid_topo = &cpu_topology[cpuid];
+	u64 mpidr;
 
-	if (cpuid_topo->cluster_id == -1) {
-		pr_err("CPU topology isn't composed properly\n");
-		BUG_ON(cpuid_topo->cluster_id);
+	if (cpuid_topo->cluster_id != -1)
+		goto topology_populated;
+
+	mpidr = read_cpuid_mpidr();
+
+	/* Uniprocessor systems can rely on default topology values */
+	if (mpidr & MPIDR_UP_BITMASK)
+		return;
+
+	/* Create cpu topology mapping based on MPIDR. */
+	if (mpidr & MPIDR_MT_BITMASK) {
+		/* Multiprocessor system : Multi-threads per core */
+		cpuid_topo->thread_id  = MPIDR_AFFINITY_LEVEL(mpidr, 0);
+		cpuid_topo->core_id    = MPIDR_AFFINITY_LEVEL(mpidr, 1);
+		cpuid_topo->cluster_id = MPIDR_AFFINITY_LEVEL(mpidr, 2) |
+					 MPIDR_AFFINITY_LEVEL(mpidr, 3) << 8;
+	} else {
+		/* Multiprocessor system : Single-thread per core */
+		cpuid_topo->thread_id  = -1;
+		cpuid_topo->core_id    = MPIDR_AFFINITY_LEVEL(mpidr, 0);
+		cpuid_topo->cluster_id = MPIDR_AFFINITY_LEVEL(mpidr, 1) |
+					 MPIDR_AFFINITY_LEVEL(mpidr, 2) << 8 |
+					 MPIDR_AFFINITY_LEVEL(mpidr, 3) << 16;
 	}
 
-	pr_debug("CPU%u: cluster %d coregroup %d core %d\n", cpuid,
-			cpuid_topo->cluster_id, cpuid_topo->coregroup_id, cpuid_topo->core_id);
+	pr_debug("CPU%u: cluster %d core %d thread %d mpidr %#016llx\n",
+		 cpuid, cpuid_topo->cluster_id, cpuid_topo->core_id,
+		 cpuid_topo->thread_id, mpidr);
 
+topology_populated:
 	update_siblings_masks(cpuid);
-	topology_detect_flags();
-}
-
-static int core_flags(void)
-{
-	return cpu_core_flags() | topology_core_flags();
-}
-
-static int cluster_flags(void)
-{
-	return cpu_core_flags() | topology_cluster_flags();
-}
-
-static int cpu_flags(void)
-{
-	return topology_cpu_flags();
-}
-
-#ifdef CONFIG_SIMPLIFIED_ENERGY_MODEL
-#define use_simplified	1
-#else
-#define use_simplified	0
-#endif
-
-static inline
-const struct sched_group_energy * const cpu_core_energy(int cpu)
-{
-	struct sched_group_energy *sge;
-	unsigned long capacity;
-	int max_cap_idx;
-	int level = cpu_energy_level[cpu].core;
-
-	if (use_simplified)
-		return NULL;
-
-	if (level < 0)
-		return NULL;
-
-	sge = sge_array[cpu][level];
-	if (!sge) {
-		pr_warn("Invalid sched_group_energy for CPU%d\n", cpu);
-		return NULL;
-	}
-
-	max_cap_idx = sge->nr_cap_states - 1;
-	capacity = sge->cap_states[max_cap_idx].cap;
-
-	printk_deferred("cpu=%d set cpu scale %lu from energy model\n",
-			cpu, capacity);
-
-	topology_set_cpu_scale(cpu, capacity);
-
-	return sge;
-}
-
-static inline
-const struct sched_group_energy * const cpu_coregroup_energy(int cpu)
-{
-	struct sched_group_energy *sge;
-	int level = cpu_energy_level[cpu].coregroup;
-
-	if (use_simplified)
-		return NULL;
-
-	if (level < 0)
-		return NULL;
-
-	sge = sge_array[cpu][level];
-	if (!sge) {
-		pr_warn("Invalid sched_group_energy for Coregroup%d\n", cpu);
-		return NULL;
-	}
-
-	return sge;
-}
-
-static inline
-const struct sched_group_energy * const cpu_cluster_energy(int cpu)
-{
-	struct sched_group_energy *sge;
-	int level = cpu_energy_level[cpu].cluster;
-
-	if (use_simplified)
-		return NULL;
-
-	if (level < 0)
-		return NULL;
-
-	sge = sge_array[cpu][level];
-	if (!sge) {
-		pr_warn("Invalid sched_group_energy for Cluster%d\n", cpu);
-		return NULL;
-	}
-
-	return sge;
-}
-
-static struct sched_domain_topology_level exynos_topology[NR_SD_LEVELS];
-
-#ifdef CONFIG_SCHED_DEBUG
-#define sd_init_name(topology, type)	topology.name = #type
-#else
-#define sd_init_name(topology, type)
-#endif
-
-static void __init build_sched_topology(void)
-{
-	struct cpu_topology *cpuid_topo, *cpu_topo = &cpu_topology[0];
-	bool cluster_level = false;
-	bool coregroup_level = false;
-	bool core_level = false;
-	int cpu;
-	int level = 0;
-
-	for_each_possible_cpu(cpu) {
-		cpuid_topo = &cpu_topology[cpu];
-
-		if (cpuid_topo->cluster_id != cpu_topo->cluster_id)
-			cluster_level = true;
-		if (cpuid_topo->coregroup_id != cpu_topo->coregroup_id)
-			coregroup_level = true;
-		if (cpuid_topo->core_id != cpu_topo->core_id)
-			core_level = true;
-	}
-
-	if (core_level) {
-		exynos_topology[level].mask = cpu_coregroup_mask;
-		exynos_topology[level].sd_flags = core_flags;
-		exynos_topology[level].energy = cpu_core_energy;
-		sd_init_name(exynos_topology[level], MC);
-
-		level++;
-	}
-	if (coregroup_level) {
-		exynos_topology[level].mask = cpu_cluster_mask;
-		exynos_topology[level].sd_flags = cluster_flags;
-		exynos_topology[level].energy = cpu_coregroup_energy;
-		sd_init_name(exynos_topology[level], DSU);
-
-		level++;
-	}
-	if (cluster_level) {
-		exynos_topology[level].mask = cpu_cpu_mask;
-		exynos_topology[level].sd_flags = cpu_flags;
-		exynos_topology[level].energy = cpu_cluster_energy;
-		sd_init_name(exynos_topology[level], DIE);
-
-		level++;
-	}
-	exynos_topology[level].mask = NULL;
 }
 
 static void __init reset_cpu_topology(void)
@@ -478,8 +348,4 @@ void __init init_cpu_topology(void)
 	 */
 	if (of_have_populated_dt() && parse_dt_topology())
 		reset_cpu_topology();
-	else {
-		build_sched_topology();
-		set_sched_topology(exynos_topology);
-	}
 }

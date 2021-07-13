@@ -77,9 +77,10 @@
 #include <linux/pti.h>
 #include <linux/blkdev.h>
 #include <linux/elevator.h>
-#include <linux/sched_clock.h>
+#include <linux/sched/clock.h>
 #include <linux/sched/task.h>
 #include <linux/sched/task_stack.h>
+#include <linux/sched/isolation.h>
 #include <linux/context_tracking.h>
 #include <linux/random.h>
 #include <linux/list.h>
@@ -797,10 +798,11 @@ asmlinkage __visible void __init start_kernel(void)
 	rcu_init_nohz();
 	init_timers();
 	hrtimers_init();
+	housekeeping_init();
 	softirq_init();
 	timekeeping_init();
 	time_init();
-	sched_clock_postinit();
+	sched_clock_init();
 	printk_safe_init();
 	perf_event_init();
 	profile_init();

@@ -1206,6 +1206,8 @@ static __init int init_domain(struct exynos_cpufreq_domain *domain,
 	 */
 	init_dm(domain, dn);
 
+	dev_pm_opp_of_register_em(&domain->cpus);
+	
 	pr_info("Complete to initialize cpufreq-domain%d\n", domain->id);
 
 	return ret;

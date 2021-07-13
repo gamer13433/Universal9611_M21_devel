@@ -303,6 +303,7 @@ extern struct sigqueue *sigqueue_alloc(void);
 extern void sigqueue_free(struct sigqueue *);
 extern int send_sigqueue(struct sigqueue *,  struct task_struct *, int group);
 extern int do_sigaction(int, struct k_sigaction *, struct k_sigaction *);
+extern void calculate_sigpending(void);
 
 static inline int restart_syscall(void)
 {

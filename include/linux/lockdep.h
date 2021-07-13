@@ -757,6 +757,16 @@ static inline void print_irqtrace_events(struct task_struct *curr)
 #define lock_map_release(l)			lock_release(l, 1, _THIS_IP_)
 
 #ifdef CONFIG_PROVE_LOCKING
+#define lockdep_assert_irqs_enabled()	do {				\
+		WARN_ONCE(debug_locks && !current->lockdep_recursion &&	\
+			  !current->hardirqs_enabled,			\
+			  "IRQs not enabled as expected\n");		\
+} while (0)
+#define lockdep_assert_irqs_disabled()	do {				\
+		WARN_ONCE(debug_locks && !current->lockdep_recursion &&	\
+			  current->hardirqs_enabled,			\
+			  "IRQs not disabled as expected\n");		\
+} while (0)
 # define might_lock(lock) 						\
 do {									\
 	typecheck(struct lockdep_map *, &(lock)->dep_map);		\
@@ -772,6 +782,8 @@ do {									\
 #else
 # define might_lock(lock) do { } while (0)
 # define might_lock_read(lock) do { } while (0)
+# define lockdep_assert_irqs_enabled() do { } while (0)
+# define lockdep_assert_irqs_disabled() do { } while (0)
 #endif
 
 #ifdef CONFIG_LOCKDEP

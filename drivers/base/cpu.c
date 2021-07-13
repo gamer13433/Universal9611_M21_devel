@@ -267,17 +267,6 @@ static ssize_t print_cpus_offline(struct device *dev,
 }
 static DEVICE_ATTR(offline, 0444, print_cpus_offline, NULL);
 
-static ssize_t print_cpus_isolated(struct device *dev,
-				  struct device_attribute *attr, char *buf)
-{
-	int n = 0, len = PAGE_SIZE-2;
-
-	n = scnprintf(buf, len, "%*pbl\n", cpumask_pr_args(cpu_isolated_map));
-
-	return n;
-}
-static DEVICE_ATTR(isolated, 0444, print_cpus_isolated, NULL);
-
 #ifdef CONFIG_NO_HZ_FULL
 static ssize_t print_cpus_nohz_full(struct device *dev,
 				  struct device_attribute *attr, char *buf)
@@ -460,7 +449,6 @@ static struct attribute *cpu_root_attrs[] = {
 	&cpu_attrs[2].attr.attr,
 	&dev_attr_kernel_max.attr,
 	&dev_attr_offline.attr,
-	&dev_attr_isolated.attr,
 #ifdef CONFIG_NO_HZ_FULL
 	&dev_attr_nohz_full.attr,
 #endif
