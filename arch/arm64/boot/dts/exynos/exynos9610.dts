@@ -229,6 +229,7 @@
 			sched-energy-costs = <&A53_CPU_COST &A53_COREGROUP_COST
 				&DSU_CLUSTER_COST>;
 			cpu-idle-states = <&BOOTCL_CPU_SLEEP>;
+			capacity-dmips-mhz = <230>;
 			dynamic-power-coefficient = <450>;
 			sched-energy-data = <&A53_ENERGY>;
 		};
@@ -240,6 +241,7 @@
 			sched-energy-costs = <&A53_CPU_COST &A53_COREGROUP_COST
 				&DSU_CLUSTER_COST>;
 			cpu-idle-states = <&BOOTCL_CPU_SLEEP>;
+			capacity-dmips-mhz = <230>;
 			dynamic-power-coefficient = <450>;
 			sched-energy-data = <&A53_ENERGY>;
 		};
@@ -251,6 +253,7 @@
 			sched-energy-costs = <&A53_CPU_COST &A53_COREGROUP_COST
 				&DSU_CLUSTER_COST>;
 			cpu-idle-states = <&BOOTCL_CPU_SLEEP>;
+			capacity-dmips-mhz = <230>;
 			dynamic-power-coefficient = <450>;
 			sched-energy-data = <&A53_ENERGY>;
 		};
@@ -262,6 +265,7 @@
 			sched-energy-costs = <&A53_CPU_COST &A53_COREGROUP_COST
 				&DSU_CLUSTER_COST>;
 			cpu-idle-states = <&BOOTCL_CPU_SLEEP>;
+			capacity-dmips-mhz = <230>;
 			dynamic-power-coefficient = <450>;
 			sched-energy-data = <&A53_ENERGY>;
 		};
@@ -273,6 +277,7 @@
 			sched-energy-costs = <&A73_CPU_COST &A73_COREGROUP_COST
 				&DSU_CLUSTER_COST>;
 			cpu-idle-states = <&NONBOOTCL_CPU_SLEEP>;
+			capacity-dmips-mhz = <480>;
 			dynamic-power-coefficient = <870>;
 			sched-energy-data = <&A73_ENERGY>;
 		};
@@ -284,6 +289,7 @@
 			sched-energy-costs = <&A73_CPU_COST &A73_COREGROUP_COST
 				&DSU_CLUSTER_COST>;
 			cpu-idle-states = <&NONBOOTCL_CPU_SLEEP>;
+			capacity-dmips-mhz = <480>;
 			dynamic-power-coefficient = <870>;
 			sched-energy-data = <&A73_ENERGY>;
 		};
@@ -295,6 +301,7 @@
 			sched-energy-costs = <&A73_CPU_COST &A73_COREGROUP_COST
 				&DSU_CLUSTER_COST>;
 			cpu-idle-states = <&NONBOOTCL_CPU_SLEEP>;
+			capacity-dmips-mhz = <480>;
 			dynamic-power-coefficient = <870>;
 			sched-energy-data = <&A73_ENERGY>;
 		};
@@ -306,6 +313,7 @@
 			sched-energy-costs = <&A73_CPU_COST &A73_COREGROUP_COST
 				&DSU_CLUSTER_COST>;
 			cpu-idle-states = <&NONBOOTCL_CPU_SLEEP>;
+			capacity-dmips-mhz = <480>;
 			dynamic-power-coefficient = <870>;
 			sched-energy-data = <&A73_ENERGY>;
 		};
