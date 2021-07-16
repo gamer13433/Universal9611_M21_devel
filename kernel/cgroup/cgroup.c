@@ -3568,21 +3568,6 @@ static int cpu_stat_show(struct seq_file *seq, void *v)
 	return ret;
 }
 
-#ifdef CONFIG_PSI
-static int cgroup_io_pressure_show(struct seq_file *seq, void *v)
-{
-	return psi_show(seq, &seq_css(seq)->cgroup->psi, PSI_IO);
-}
-static int cgroup_memory_pressure_show(struct seq_file *seq, void *v)
-{
-	return psi_show(seq, &seq_css(seq)->cgroup->psi, PSI_MEM);
-}
-static int cgroup_cpu_pressure_show(struct seq_file *seq, void *v)
-{
-	return psi_show(seq, &seq_css(seq)->cgroup->psi, PSI_CPU);
-}
-#endif
-
 static int cgroup_freeze_show(struct seq_file *seq, void *v)
 {
 	struct cgroup *cgrp = seq_css(seq)->cgroup;

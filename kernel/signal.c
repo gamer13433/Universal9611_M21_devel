@@ -2214,9 +2214,6 @@ static void do_jobctl_trap(void)
 	}
 }
 
-<<<<<<< HEAD
-static int ptrace_signal(int signr, siginfo_t *info)
-=======
 /**
  * do_freezer_trap - handle the freezer jobctl trap
  *
@@ -2254,8 +2251,7 @@ static void do_freezer_trap(void)
 	freezable_schedule();
 }
 
-static int ptrace_signal(int signr, kernel_siginfo_t *info)
->>>>>>> 76f969e8948d8 (cgroup: cgroup v2 freezer)
+static int ptrace_signal(int signr, siginfo_t *info)
 {
 	/*
 	 * We do not check sig_kernel_stop(signr) but set this marker
