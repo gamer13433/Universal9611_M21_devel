@@ -189,7 +189,7 @@ struct tmpmasks {
 	cpumask_var_t new_cpus;		/* For update_cpumasks_hier() */
 };
 
-#ifdef CONFIG_CPUSET_ASSIST
+#ifdef CONFIG_CPUSETS_ASSIST
 struct cs_target {
 	const char *name;
 	char *cpus;
@@ -2420,7 +2420,7 @@ static ssize_t cpuset_write_resmask_assist(struct kernfs_open_file *of,
 static ssize_t cpuset_write_resmask_wrapper(struct kernfs_open_file *of,
 					 char *buf, size_t nbytes, loff_t off)
 {
-#ifdef CONFIG_CPUSET_ASSIST
+#ifdef CONFIG_CPUSETS_ASSIST
 	static struct cs_target cs_targets[] = {
 		{ "audio-app",		CONFIG_CPUSET_AUDIO_APP },
 		{ "background",		CONFIG_CPUSET_BG },
@@ -2434,7 +2434,7 @@ static ssize_t cpuset_write_resmask_wrapper(struct kernfs_open_file *of,
 	struct cpuset *cs = css_cs(of_css(of));
 	int i;
 
-	f (!strcmp(current->comm, "init")) {
+	if (!strcmp(current->comm, "init")) {
 		for (i = 0; i < ARRAY_SIZE(cs_targets); i++) {
 			struct cs_target tgt = cs_targets[i];
 
