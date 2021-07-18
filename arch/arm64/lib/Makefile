@@ -5,7 +5,7 @@ lib-y		:= clear_user.o delay.o copy_from_user.o		\
 		   copy_to_user.o copy_in_user.o copy_page.o		\
 		   clear_page.o insn.o memchr.o memcpy.o		\
 		   memset.o memcmp.o strcmp.o strncmp.o strlen.o	\
-		   strnlen.o strchr.o strrchr.o tishift.o
+		   strnlen.o strchr.o strrchr.o tishift.o old/old_memcpy.o old/old_memcmp.o
 
 
 ifeq ($(ld-name),lld)
