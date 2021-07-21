@@ -1025,9 +1025,6 @@ static ssize_t use_dedup_store(struct device *dev,
 }
 #endif
 
-static ssize_t compact_store(struct device *dev,
-		struct device_attribute *attr, const char *buf, size_t len)
-
 void zram_compact(void)
 {
 	if (!zram0)
