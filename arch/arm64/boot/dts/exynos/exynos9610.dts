@@ -232,6 +232,7 @@
 			capacity-dmips-mhz = <617>;
 			dynamic-power-coefficient = <112>;
 			sched-energy-data = <&A53_ENERGY>;
+                        next-level-cache = <&A53_l2>;
 		};
 		cpu1: cpu@101 {
 			device_type = "cpu";
@@ -244,6 +245,7 @@
 			capacity-dmips-mhz = <617>;
 			dynamic-power-coefficient = <112>;
 			sched-energy-data = <&A53_ENERGY>;
+                        next-level-cache = <&A53_l2>;
 		};
 		cpu2: cpu@102 {
 			device_type = "cpu";
@@ -256,6 +258,7 @@
 			capacity-dmips-mhz = <617>;
 			dynamic-power-coefficient = <112>;
 			sched-energy-data = <&A53_ENERGY>;
+                        next-level-cache = <&A53_l2>;
 		};
 		cpu3: cpu@103 {
 			device_type = "cpu";
@@ -268,6 +271,7 @@
 			capacity-dmips-mhz = <617>;
 			dynamic-power-coefficient = <112>;
 			sched-energy-data = <&A53_ENERGY>;
+                        next-level-cache = <&A53_l2>;
 		};
 		cpu4: cpu@0 {
 			device_type = "cpu";
@@ -280,6 +284,7 @@
 			capacity-dmips-mhz = <1024>;
 			dynamic-power-coefficient = <315>;
 			sched-energy-data = <&A73_ENERGY>;
+                        next-level-cache = <&A73_l2>;
 		};
 		cpu5: cpu@1 {
 			device_type = "cpu";
@@ -292,6 +297,7 @@
 			capacity-dmips-mhz = <1024>;
 			dynamic-power-coefficient = <315>;
 			sched-energy-data = <&A73_ENERGY>;
+                        next-level-cache = <&A73_l2>;
 		};
 		cpu6: cpu@2 {
 			device_type = "cpu";
@@ -304,6 +310,7 @@
 			capacity-dmips-mhz = <1024>;
 			dynamic-power-coefficient = <315>;
 			sched-energy-data = <&A73_ENERGY>;
+                        next-level-cache = <&A73_l2>;
 		};
 		cpu7: cpu@3 {
 			device_type = "cpu";
@@ -316,8 +323,16 @@
 			capacity-dmips-mhz = <1024>;
 			dynamic-power-coefficient = <315>;
 			sched-energy-data = <&A73_ENERGY>;
+                        next-level-cache = <&A73_l2>;
 		};
 
+		A53_l2: l2-cache0 {
+			compatible = "cache";
+		};
+
+		A73_l2: l2-cache1 {
+			compatible = "cache";
+		};
 		idle-states {
 			entry-method = "arm,psci";
 
