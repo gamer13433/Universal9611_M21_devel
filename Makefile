@@ -454,7 +454,7 @@ LINUXINCLUDE    := \
 SIMD_CFLAGS := \
 		   -DUSE_V8_CRYPTO_EXTENSIONS \
 		   -march=armv8-a+crypto+crc \
-		   -ftree-vectorize
+		   -ftree-vectorize -mfloat-abi=hard
 
 KBUILD_AFLAGS   := -D__ASSEMBLY__
 KBUILD_CFLAGS   := -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs \
