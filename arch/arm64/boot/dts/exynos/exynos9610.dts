@@ -229,8 +229,8 @@
 			sched-energy-costs = <&A53_CPU_COST &A53_COREGROUP_COST
 				&DSU_CLUSTER_COST>;
 			cpu-idle-states = <&BOOTCL_CPU_SLEEP>;
-			capacity-dmips-mhz = <617>;
-			dynamic-power-coefficient = <112>;
+			capacity-dmips-mhz = <343>;
+			dynamic-power-coefficient = <113>;
 			sched-energy-data = <&A53_ENERGY>;
                         next-level-cache = <&A53_l2>;
 		};
@@ -242,8 +242,8 @@
 			sched-energy-costs = <&A53_CPU_COST &A53_COREGROUP_COST
 				&DSU_CLUSTER_COST>;
 			cpu-idle-states = <&BOOTCL_CPU_SLEEP>;
-			capacity-dmips-mhz = <617>;
-			dynamic-power-coefficient = <112>;
+			capacity-dmips-mhz = <343>;
+			dynamic-power-coefficient = <113>;
 			sched-energy-data = <&A53_ENERGY>;
                         next-level-cache = <&A53_l2>;
 		};
@@ -255,8 +255,8 @@
 			sched-energy-costs = <&A53_CPU_COST &A53_COREGROUP_COST
 				&DSU_CLUSTER_COST>;
 			cpu-idle-states = <&BOOTCL_CPU_SLEEP>;
-			capacity-dmips-mhz = <617>;
-			dynamic-power-coefficient = <112>;
+			capacity-dmips-mhz = <343>;
+			dynamic-power-coefficient = <113>;
 			sched-energy-data = <&A53_ENERGY>;
                         next-level-cache = <&A53_l2>;
 		};
@@ -268,8 +268,8 @@
 			sched-energy-costs = <&A53_CPU_COST &A53_COREGROUP_COST
 				&DSU_CLUSTER_COST>;
 			cpu-idle-states = <&BOOTCL_CPU_SLEEP>;
-			capacity-dmips-mhz = <617>;
-			dynamic-power-coefficient = <112>;
+			capacity-dmips-mhz = <343>;
+			dynamic-power-coefficient = <113>;
 			sched-energy-data = <&A53_ENERGY>;
                         next-level-cache = <&A53_l2>;
 		};
@@ -282,7 +282,7 @@
 				&DSU_CLUSTER_COST>;
 			cpu-idle-states = <&NONBOOTCL_CPU_SLEEP>;
 			capacity-dmips-mhz = <1024>;
-			dynamic-power-coefficient = <315>;
+			dynamic-power-coefficient = <308>;
 			sched-energy-data = <&A73_ENERGY>;
                         next-level-cache = <&A73_l2>;
 		};
@@ -295,7 +295,7 @@
 				&DSU_CLUSTER_COST>;
 			cpu-idle-states = <&NONBOOTCL_CPU_SLEEP>;
 			capacity-dmips-mhz = <1024>;
-			dynamic-power-coefficient = <315>;
+			dynamic-power-coefficient = <308>;
 			sched-energy-data = <&A73_ENERGY>;
                         next-level-cache = <&A73_l2>;
 		};
@@ -308,7 +308,7 @@
 				&DSU_CLUSTER_COST>;
 			cpu-idle-states = <&NONBOOTCL_CPU_SLEEP>;
 			capacity-dmips-mhz = <1024>;
-			dynamic-power-coefficient = <315>;
+			dynamic-power-coefficient = <308>;
 			sched-energy-data = <&A73_ENERGY>;
                         next-level-cache = <&A73_l2>;
 		};
@@ -321,7 +321,7 @@
 				&DSU_CLUSTER_COST>;
 			cpu-idle-states = <&NONBOOTCL_CPU_SLEEP>;
 			capacity-dmips-mhz = <1024>;
-			dynamic-power-coefficient = <315>;
+			dynamic-power-coefficient = <308>;
 			sched-energy-data = <&A73_ENERGY>;
                         next-level-cache = <&A73_l2>;
 		};
