@@ -34,7 +34,7 @@ int global_boost(void)
 	return global_boost_value() > 0;
 }
 
-void global_boost_update_request(struct global_boost_request *req, u32 new_value)
+void gb_qos_update_request(struct gb_qos_request *req, u32 new_value)
 {
 	unsigned long flags;
 
