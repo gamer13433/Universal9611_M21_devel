@@ -782,8 +782,7 @@ int vb2_setup_out_fence(struct vb2_queue *q, unsigned int index);
  * The return values from this function are intended to be directly returned
  * from vidioc_qbuf handler in driver.
  */
-int vb2_core_qbuf(struct vb2_queue *q, unsigned int index, void *pb,
-		  struct dma_fence *in_fence);
+int vb2_core_qbuf(struct vb2_queue *q, unsigned int index, void *pb);
 
 /**
  * vb2_core_dqbuf() - Dequeue a buffer to the userspace

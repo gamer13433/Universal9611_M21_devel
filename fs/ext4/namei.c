@@ -2291,7 +2291,7 @@ again:
 
 			err = ext4_handle_dirty_dx_node(handle, dir,
 							frame->bh);
-			if (err)
+			if (restart || err)
 				goto journal_error;
 
 		} else {
