@@ -403,7 +403,6 @@ static inline int hb_waiters_pending(struct futex_hash_bucket *hb)
 static struct futex_hash_bucket *hash_futex(union futex_key *key)
 {
 	u32 hash = jhash2((u32 *)key, offsetof(typeof(*key), both.offset) / 4,
-
 			  key->both.offset);
 
 	return &futex_queues[hash & (futex_hashsize - 1)];
@@ -481,7 +480,6 @@ static void drop_futex_key_refs(union futex_key *key)
 
 	switch (key->both.offset & (FUT_OFF_INODE|FUT_OFF_MMSHARED)) {
 	case FUT_OFF_INODE:
-
 		break;
 	case FUT_OFF_MMSHARED:
 		mmdrop(key->private.mm);
@@ -720,7 +718,6 @@ again:
 		key->private.mm = mm;
 		key->private.address = address;
 
-
 	} else {
 		struct inode *inode;
 
@@ -751,7 +748,6 @@ again:
 
 			goto again;
 		}
-
 
 		key->both.offset |= FUT_OFF_INODE; /* inode-based key */
 		key->shared.i_seq = get_inode_sequence_number(inode);
