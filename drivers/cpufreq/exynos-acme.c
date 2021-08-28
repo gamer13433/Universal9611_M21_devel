@@ -186,6 +186,7 @@ static unsigned int get_freq(struct exynos_cpufreq_domain *domain)
 		/* On changing state, CAL returns 0 */
 		freq = domain->old;
 	}
+
 	if (unlikely(wakeup_flag))
 		enable_power_mode(cpumask_any(&domain->cpus), POWERMODE_TYPE_CLUSTER);
 
@@ -1152,6 +1153,75 @@ static int register_dm_callback(struct exynos_cpufreq_domain *domain)
 	return register_exynos_dm_freq_scaler(domain->dm_type, dm_scaler);
 }
 
+
+static unsigned long arg_cpu_min_c1 = 702000;
+
+static int __init cpufreq_read_cpu_min_c1(char *cpu_min_c1)
+{
+	unsigned long ui_khz;
+	int ret;
+
+	ret = kstrtoul(cpu_min_c1, 0, &ui_khz);
+	if (ret)
+		return -EINVAL;
+
+	arg_cpu_min_c1 = ui_khz;
+	printk("cpu_min_c1=%lu\n", arg_cpu_min_c1);
+	return ret;
+}
+__setup("cpu_min_c1=", cpufreq_read_cpu_min_c1);
+
+unsigned long arg_cpu_min_c2 = 936000;
+
+static __init int cpufreq_read_cpu_min_c2(char *cpu_min_c2)
+{
+	unsigned long ui_khz;
+	int ret;
+
+	ret = kstrtoul(cpu_min_c2, 0, &ui_khz);
+	if (ret)
+		return -EINVAL;
+
+	arg_cpu_min_c2 = ui_khz;
+	printk("cpu_min_c2=%lu\n", arg_cpu_min_c2);
+	return ret;
+}
+__setup("cpu_min_c2=", cpufreq_read_cpu_min_c2);
+
+static unsigned long arg_cpu_max_c1 = 1742000;
+
+static int __init cpufreq_read_cpu_max_c1(char *cpu_max_c1)
+{
+	unsigned long ui_khz;
+	int ret;
+
+	ret = kstrtoul(cpu_max_c1, 0, &ui_khz);
+	if (ret)
+		return -EINVAL;
+
+	arg_cpu_max_c1 = ui_khz;
+	printk("cpu_max_c1=%lu\n", arg_cpu_max_c1);
+	return ret;
+}
+__setup("cpu_max_c1=", cpufreq_read_cpu_max_c1);
+
+unsigned long arg_cpu_max_c2 = 2314000;
+
+static __init int cpufreq_read_cpu_max_c2(char *cpu_max_c2)
+{
+	unsigned long ui_khz;
+	int ret;
+
+	ret = kstrtoul(cpu_max_c2, 0, &ui_khz);
+	if (ret)
+		return -EINVAL;
+
+	arg_cpu_max_c2 = ui_khz;
+	printk("cpu_max_c2=%lu\n", arg_cpu_max_c2);
+	return ret;
+}
+__setup("cpu_max_c2=", cpufreq_read_cpu_max_c2);
+
 static __init int init_domain(struct exynos_cpufreq_domain *domain,
 					struct device_node *dn)
 {
@@ -1161,8 +1231,8 @@ static __init int init_domain(struct exynos_cpufreq_domain *domain,
 	mutex_init(&domain->lock);
 
 	/* Initialize frequency scaling */
-//	domain->max_freq = cal_dfs_get_max_freq(domain->cal_id);
-//	domain->min_freq = cal_dfs_get_min_freq(domain->cal_id);
+	domain->max_freq = cal_dfs_get_max_freq(domain->cal_id);
+	domain->min_freq = cal_dfs_get_min_freq(domain->cal_id);
 
 	/*
 	 * If max-freq property exists in device tree, max frequency is
@@ -1171,9 +1241,9 @@ static __init int init_domain(struct exynos_cpufreq_domain *domain,
 	 * to bigger one.
 	 */
 	if (!of_property_read_u32(dn, "max-freq", &val))
-		domain->max_freq = val;
+		domain->max_freq = min(domain->max_freq, val);
 	if (!of_property_read_u32(dn, "min-freq", &val))
-		domain->min_freq = val;
+		domain->min_freq = max(domain->min_freq, val);
 
 	/* If this domain has boost freq, change max */
 	val = exynos_pstate_get_boost_freq(cpumask_first(&domain->cpus));
@@ -1182,6 +1252,18 @@ static __init int init_domain(struct exynos_cpufreq_domain *domain,
 
 	if (of_property_read_bool(dn, "need-awake"))
 		domain->need_awake = true;
+
+          if (domain->id == 0) {
+		domain->max_usable_freq = arg_cpu_max_c1;
+		domain->max_freq = arg_cpu_max_c1;
+		domain->min_usable_freq = arg_cpu_min_c1;
+		domain->min_freq = arg_cpu_min_c1;
+	} else if (domain->id == 1) {
+		domain->max_usable_freq = arg_cpu_max_c2;
+		domain->max_freq = arg_cpu_max_c2;
+		domain->min_usable_freq = arg_cpu_min_c2;
+		domain->min_freq = arg_cpu_min_c2;
+	}
 
 	domain->boot_freq = cal_dfs_get_boot_freq(domain->cal_id);
 	domain->resume_freq = cal_dfs_get_resume_freq(domain->cal_id);
