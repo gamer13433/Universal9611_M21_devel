@@ -229,8 +229,8 @@
 			sched-energy-costs = <&A53_CPU_COST &A53_COREGROUP_COST
 				&DSU_CLUSTER_COST>;
 			cpu-idle-states = <&BOOTCL_CPU_SLEEP>;
-			capacity-dmips-mhz = <617>;
-			dynamic-power-coefficient = <112>;
+			capacity-dmips-mhz = <343>;
+			dynamic-power-coefficient = <113>;
 			sched-energy-data = <&A53_ENERGY>;
                         next-level-cache = <&A53_l2>;
 		};
@@ -242,8 +242,8 @@
 			sched-energy-costs = <&A53_CPU_COST &A53_COREGROUP_COST
 				&DSU_CLUSTER_COST>;
 			cpu-idle-states = <&BOOTCL_CPU_SLEEP>;
-			capacity-dmips-mhz = <617>;
-			dynamic-power-coefficient = <112>;
+			capacity-dmips-mhz = <343>;
+			dynamic-power-coefficient = <113>;
 			sched-energy-data = <&A53_ENERGY>;
                         next-level-cache = <&A53_l2>;
 		};
@@ -255,8 +255,8 @@
 			sched-energy-costs = <&A53_CPU_COST &A53_COREGROUP_COST
 				&DSU_CLUSTER_COST>;
 			cpu-idle-states = <&BOOTCL_CPU_SLEEP>;
-			capacity-dmips-mhz = <617>;
-			dynamic-power-coefficient = <112>;
+			capacity-dmips-mhz = <343>;
+			dynamic-power-coefficient = <113>;
 			sched-energy-data = <&A53_ENERGY>;
                         next-level-cache = <&A53_l2>;
 		};
@@ -268,8 +268,8 @@
 			sched-energy-costs = <&A53_CPU_COST &A53_COREGROUP_COST
 				&DSU_CLUSTER_COST>;
 			cpu-idle-states = <&BOOTCL_CPU_SLEEP>;
-			capacity-dmips-mhz = <617>;
-			dynamic-power-coefficient = <112>;
+			capacity-dmips-mhz = <343>;
+			dynamic-power-coefficient = <113>;
 			sched-energy-data = <&A53_ENERGY>;
                         next-level-cache = <&A53_l2>;
 		};
@@ -3568,7 +3568,7 @@
 			min-limit {
 				ctrl-type = <PM_QOS_MIN_LIMIT>;
 				/* big 	lit */
-				table = < 2314000  1742000
+				table = < 2314000  2054000
 					2210000 806000
 					2184000 806000
 					2080000 806000
@@ -3591,10 +3591,10 @@
 			max-limit {
 				ctrl-type = <PM_QOS_MAX_LIMIT>;
 				/* pmt 	ank */
-				table = < 2314000  1742000
-					2210000 1742000
-					2184000 1742000
-					2080000 1742000
+				table = < 2314000  2054000
+					2210000 2054000
+					2184000 1950000
+					2080000 1846000
 					1976000 1742000
 					1898000 1638000
 					1768000 1638000
@@ -3621,6 +3621,7 @@
 			cal-id = <ACPM_DVFS_CPUCL0>;
 			dm-type = <DM_CPU_CL0>;
 
+			max-freq = <2054000>;
 			min-freq = <702000>;
 
 			/* PM QoS Class ID */
@@ -3638,7 +3639,10 @@
 					const-type = <CONSTRAINT_MIN>;
 					dm-type = <DM_MIF>;
 						/*  cpu     mif  */
-					table = < 1742000  1014000
+					table = < 2054000  1014000
+						  1950000  1014000
+						  1846000  1014000
+                                                  1742000  1014000
 						  1638000  1014000
 						  1534000  1014000
 						  1456000  1014000
