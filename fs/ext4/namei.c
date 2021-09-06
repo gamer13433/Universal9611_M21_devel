@@ -34,6 +34,8 @@
 #include <linux/quotaops.h>
 #include <linux/buffer_head.h>
 #include <linux/bio.h>
+#include <linux/unicode.h>
+#include <linux/iversion.h>
 #include "ext4.h"
 #include "ext4_jbd2.h"
 
