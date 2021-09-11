@@ -2443,8 +2443,11 @@ static void compact_nodes(void)
 	for_each_online_node(nid)
 		compact_node(nid);
 }
-
+#ifdef CONFIG_ZRAM
 void zram_compact(void);
+#else
+static inline void zram_compact(void) {}
+#endif
 
 static void do_compaction(struct work_struct *work)
 {
