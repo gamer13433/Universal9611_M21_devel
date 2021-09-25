@@ -3568,7 +3568,7 @@
 			min-limit {
 				ctrl-type = <PM_QOS_MIN_LIMIT>;
 				/* big 	lit */
-				table = < 2314000  2054000
+				table = < 2314000  1950000
 					2210000 806000
 					2184000 806000
 					2080000 806000
@@ -3591,8 +3591,8 @@
 			max-limit {
 				ctrl-type = <PM_QOS_MAX_LIMIT>;
 				/* pmt 	ank */
-				table = < 2314000  2054000
-					2210000 2054000
+				table = < 2314000  1950000
+					2210000 1950000
 					2184000 1950000
 					2080000 1846000
 					1976000 1742000
@@ -3621,7 +3621,7 @@
 			cal-id = <ACPM_DVFS_CPUCL0>;
 			dm-type = <DM_CPU_CL0>;
 
-			max-freq = <2054000>;
+			max-freq = <1950000>;
 			min-freq = <702000>;
 
 			/* PM QoS Class ID */
