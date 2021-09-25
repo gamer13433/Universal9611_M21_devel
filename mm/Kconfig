@@ -897,15 +897,6 @@ config DISABLE_OOM_KILLER
 	bool "Disable OOM Killer"
 	default n
 
-config PRLMK
-	bool "Enable PRLMK"
-	depends on TASK_XACCT && ZRAM
-	depends on !PSI && !MEMCG
-	depends on !PROCESS_RECLAIM && !ANDROID_LOW_MEMORY_KILLER && !ANDROID_SIMPLE_LMK
-	default n
-	help
-	  PRLMK is a custom low-memory-killer for Android, based on the process reclaim driver.
-
 config PAGE_BOOST
 	bool "PAGE_BOOST feature"
 	depends on MMU
