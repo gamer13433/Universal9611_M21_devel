@@ -2583,22 +2583,7 @@ static inline int in_gate_area(struct mm_struct *mm, unsigned long addr)
 }
 #endif	/* __HAVE_ARCH_GATE_AREA */
 
-#if !defined(CONFIG_DISABLE_OOM_KILLER)
 extern bool process_shares_mm(struct task_struct *p, struct mm_struct *mm);
-#else
-#include <linux/sched/signal.h>
-static inline bool process_shares_mm(struct task_struct *p, struct mm_struct *mm)
-{
-	struct task_struct *t;
-
-	for_each_thread(p, t) {
-		struct mm_struct *t_mm = READ_ONCE(t->mm);
-		if (t_mm)
-			return t_mm == mm;
-	}
-	return false;
-}
-#endif
 
 #ifdef CONFIG_SYSCTL
 extern int sysctl_drop_caches;
@@ -2777,7 +2762,7 @@ extern void record_memsize_reserved(const char *name, phys_addr_t base,
 				    phys_addr_t size, bool nomap,
 				    bool reusable);
 
-#if defined(CONFIG_PROCESS_RECLAIM) || defined(CONFIG_PRLMK)
+#ifdef CONFIG_PROCESS_RECLAIM
 struct reclaim_param {
 	struct vm_area_struct *vma;
 	/* Number of pages scanned */

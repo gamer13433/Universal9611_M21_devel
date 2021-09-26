@@ -37,7 +37,7 @@ ifdef CONFIG_CROSS_MEMORY_ATTACH
 mmu-$(CONFIG_MMU)	+= process_vm_access.o
 endif
 
-obj-y			:= filemap.o mempool.o \
+obj-y			:= filemap.o mempool.o oom_kill.o \
 			   maccess.o page_alloc.o page-writeback.o \
 			   readahead.o swap.o truncate.o vmscan.o shmem.o \
 			   util.o mmzone.o vmstat.o backing-dev.o \
@@ -47,9 +47,6 @@ obj-y			:= filemap.o mempool.o \
 			   debug.o $(mmu-y) showmem_extra.o vmpressure.o
 
 obj-y += init-mm.o
-ifndef CONFIG_DISABLE_OOM_KILLER
-	obj-y += oom_kill.o
-endif
 
 ifdef CONFIG_KANOND
 obj-y += kanond.o
@@ -119,7 +116,6 @@ obj-$(CONFIG_PERCPU_STATS) += percpu-stats.o
 obj-$(CONFIG_HMM) += hmm.o
 obj-$(CONFIG_PROCESS_RECLAIM)	+= process_reclaim.o
 obj-$(CONFIG_PAGE_BOOST_RECORDING) += io_record.o
-obj-$(CONFIG_PRLMK)	+= prlmk.o
 
 # [IOPP-Wformat-v1.0.4.14.patch]
 # check calls to printf and scanf, etc.,
