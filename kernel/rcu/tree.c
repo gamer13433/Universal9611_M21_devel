@@ -3313,7 +3313,6 @@ static int __rcu_pending(struct rcu_state *rsp, struct rcu_data *rdp)
 	if (rcu_seq_current(&rnp->gp_seq) != rdp->gp_seq ||
 	    unlikely(READ_ONCE(rdp->gpwrap))) /* outside lock */
 		return 1;
-	}
 
 	/* Does this CPU need a deferred NOCB wakeup? */
 	if (rcu_nocb_need_deferred_wakeup(rdp)) {
