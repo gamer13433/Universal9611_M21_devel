@@ -1528,7 +1528,7 @@ static void rcu_gp_kthread_wake(void)
 	if ((current == rcu_state.gp_kthread &&
 	     !in_interrupt() && !in_serving_softirq()) ||
 	    !READ_ONCE(rcu_state.gp_flags) ||
-	    !rcu_state.gp_kthread)))
+	    !rcu_state.gp_kthread)
 		return;
 	swake_up_one(&rcu_state.gp_wq);
 }
@@ -2942,8 +2942,7 @@ static int rcu_pending(void)
 
 	/* Is the RCU core waiting for a quiescent state from this CPU? */
 	if (rcu_scheduler_fully_active &&
-	    rdp->core_needs_qs && rdp->cpu_no_qs.b.norm &&
-	    rdp->rcu_qs_ctr_snap == __this_cpu_read(rcu_dynticks.rcu_qs_ctr)) {
+	    rdp->core_needs_qs && rdp->cpu_no_qs.b.norm) {
 		rdp->n_rp_core_needs_qs++;
 	} else if (rdp->core_needs_qs && !rdp->cpu_no_qs.b.norm) {
 		rdp->n_rp_report_qs++;

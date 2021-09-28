@@ -557,7 +557,7 @@ static void rcu_exp_wait_wake(unsigned long s)
 	 * End the previous grace period only after acquiring the mutex
 	 * to ensure that only one GP runs concurrently with wakeups.
 	 */
-	mutex_lock(rcu_state.exp_wake_mutex);
+	mutex_lock(&rcu_state.exp_wake_mutex);
 	rcu_exp_gp_seq_end();
 
 	rcu_for_each_node_breadth_first(rnp) {

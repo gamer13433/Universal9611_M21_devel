@@ -613,7 +613,7 @@ struct uclamp_se {
 union rcu_special {
 	struct {
 		u8			blocked;
-		u8			need_qs;)
+		u8			need_qs;
 	} b; /* Bits. */
 	u16 s; /* Set of bits. */
 };
