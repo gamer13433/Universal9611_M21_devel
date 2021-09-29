@@ -1939,15 +1939,14 @@ static void __call_rcu_nocb_wake(struct rcu_data *rdp, bool was_alldone,
 }
 
 /* Wake up the no-CBs GP kthread to flush ->nocb_bypass. */
-static void do_nocb_bypass_wakeup_timer(struct timer_list *t)
+static void do_nocb_bypass_wakeup_timer(unsigned long x)
 {
 	unsigned long flags;
-	struct rcu_data *rdp = from_timer(rdp, t, nocb_bypass_timer);
 
-	trace_rcu_nocb_wake(rcu_state.name, rdp->cpu, TPS("Timer"));
-	rcu_nocb_lock_irqsave(rdp, flags);
+	trace_rcu_nocb_wake(rcu_state.name, ((struct rcu_data *)x)->cpu, TPS("Timer"));
+	rcu_nocb_lock_irqsave(((struct rcu_data *)x), flags);
 	smp_mb__after_spinlock(); /* Timer expire before wakeup. */
-	__call_rcu_nocb_wake(rdp, true, flags);
+	__call_rcu_nocb_wake(((struct rcu_data *)x), true, flags);
 }
 
 /*
