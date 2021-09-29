@@ -21,6 +21,9 @@
  *          Davidlohr Bueso <dave@stgolabs.net>
  *	Based on kernel/rcu/torture.c.
  */
+
+#define pr_fmt(fmt) fmt
+
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/kthread.h>
@@ -57,7 +60,7 @@ torture_param(int, shutdown_secs, 0, "Shutdown time (j), <= zero to disable.");
 torture_param(int, stat_interval, 60,
 	     "Number of seconds between stats printk()s");
 torture_param(int, stutter, 5, "Number of jiffies to run/halt test, 0=disable");
-torture_param(bool, verbose, true,
+torture_param(int, verbose, 1,
 	     "Enable verbose debugging printk()s");
 
 static char *torture_type = "spin_lock";
@@ -963,7 +966,7 @@ static int __init lock_torture_init(void)
 	/* Prepare torture context. */
 	if (onoff_interval > 0) {
 		firsterr = torture_onoff_init(onoff_holdoff * HZ,
-					      onoff_interval * HZ);
+					      onoff_interval * HZ, NULL);
 		if (firsterr)
 			goto unwind;
 	}
@@ -979,7 +982,7 @@ static int __init lock_torture_init(void)
 			goto unwind;
 	}
 	if (stutter > 0) {
-		firsterr = torture_stutter_init(stutter);
+		firsterr = torture_stutter_init(stutter, stutter);
 		if (firsterr)
 			goto unwind;
 	}
