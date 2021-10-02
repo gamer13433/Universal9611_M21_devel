@@ -8471,7 +8471,6 @@ static void perf_event_addr_filters_apply(struct perf_event *event)
 		return;
 
 	if (ifh->nr_file_filters) {
-
 		mm = get_task_mm(event->ctx->task);
 		if (!mm)
 			goto restart;

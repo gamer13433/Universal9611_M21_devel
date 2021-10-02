@@ -244,6 +244,15 @@ static u64 __mon_event_count(u32 rmid, struct rmid_read *rr)
 	case QOS_L3_MBM_LOCAL_EVENT_ID:
 		m = &rr->d->mbm_local[rmid];
 		break;
+<<<<<<< HEAD
+=======
+	default:
+		/*
+		 * Code would never reach here because an invalid
+		 * event id would fail the __rmid_read.
+		 */
+		return RMID_VAL_ERROR;
+>>>>>>> 1a9762f5e7ab0dd249f7f09ed8c5a21fa97a6c06
 	}
 
 	if (rr->first) {
