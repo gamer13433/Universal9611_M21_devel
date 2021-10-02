@@ -1967,7 +1967,7 @@ unsigned long arch_scale_max_freq_capacity(struct sched_domain *sd, int cpu)
 #endif
 
 #ifdef CONFIG_SMP
-#ifdef CONFIG_PREEMPTION
+#ifdef CONFIG_PREEMPT
 
 static inline void double_rq_lock(struct rq *rq1, struct rq *rq2);
 
@@ -2019,7 +2019,7 @@ static inline int _double_lock_balance(struct rq *this_rq, struct rq *busiest)
 	return ret;
 }
 
-#endif /* CONFIG_PREEMPTION */
+#endif /* CONFIG_PREEMPT */
 
 /*
  * double_lock_balance - lock the busiest runqueue, this_rq is locked already.
